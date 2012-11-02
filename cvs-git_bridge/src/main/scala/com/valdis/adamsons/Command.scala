@@ -7,7 +7,10 @@ trait Command {
     if (args.isEmpty) {
       None
     } else {
-      subcommads.toStream.find(_.aliases.contains(args.head))
+      subcommads.toStream.find(_.aliases.contains(args.head)) match{
+        case Some(x) => x.parse(args.tail)
+        case None => None
+      }
     }
   }
   def main(args: Array[String]): Unit = {
@@ -22,11 +25,12 @@ trait CommandFactory{
   
 }
 
-case class HelpCommand(val text:String) extends Command{
-  val aliases=Nil
-  val help=""
-  val usage=""
-  def apply={
+case class HelpCommand(val text: String) extends Command {
+  val aliases = Nil
+  val help = ""
+  val usage = ""
+  def apply = {
     println(text)
-    0}
+    0
+  }
 }
