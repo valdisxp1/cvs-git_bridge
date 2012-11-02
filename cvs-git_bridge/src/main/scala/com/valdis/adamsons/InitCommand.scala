@@ -19,9 +19,7 @@ object InitCommand extends Command{
   def usage = ""
 
   def apply = {
-    "mkdir cvs"!;
     "git init --bare cvs/"!;
-    "mkdir git"!;
     "git init --bare git/"!;
     0
   }
