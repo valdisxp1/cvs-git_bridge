@@ -1,11 +1,14 @@
 package com.valdis.adamsons.commands
 
 import com.valdis.adamsons.utils.GitUtils
+import scala.sys.process._
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand extends Command {
     def apply = {
       val repo = GitUtils.repo;
+      "cvs -d \"/cygdrive/c/cvs/cvsroot\" rlog cvstest2"!;
+      "cvs -d \"/cygdrive/c/cvs/cvsroot\" co -p cvstest2/file1.txt"!;
       1
     }
   
