@@ -1,14 +1,13 @@
 package com.valdis.adamsons.cvs
 
-case class CVSRepository(val cvsroot:Option[String]) {
-	//TODO find a way to use val here
-	var  module:Option[String] = None;
-	private def this(cvsroot:Option[String],module:String){
-	  this(cvsroot);
-	  this.module = Some(module);
-	}
-	
-	def module(module:String) = new CVSRepository(cvsroot,module)
-	
-	private def cvsString= "cvs "+cvsroot.map("-d "+_+" ").getOrElse("");
+case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) {
+  def this(cvsroot: Option[String]) {
+    this(cvsroot, None)
+  }
+  def this() {
+    this(None, None)
+  }
+  def module(module: String) = CVSRepository(this.cvsroot, Some(module))
+
+  private def cvsString = "cvs " + cvsroot.map("-d " + _ + " ").getOrElse("");
 }
