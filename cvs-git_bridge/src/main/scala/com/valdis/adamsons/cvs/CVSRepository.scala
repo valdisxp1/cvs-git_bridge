@@ -14,10 +14,15 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   private def cvsString = "cvs " + cvsroot.map("-d " + _ + " ").getOrElse("");
 
   def getFileContents(name: String, version: CVSFileVersion) = cvsString+"co -p "+module.map( _ + "/").getOrElse("")+name!!
-  def fileNameList = cvsString+"rlog -R "+module.getOrElse("")		  
+  def fileNameList = {
+    val response: String = cvsString + "rlog -R " + module.getOrElse("")!!;
+    response.split("\n").toList.map(x => {
+      x.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).dropRight(3)
+    })
+  }	  
 }
 
-object CVSRepository{
-    def apply()= new CVSRepository();
-    def apply(cvsroot: String, module:String)= new CVSRepository(cvsroot, module);
+object CVSRepository {
+  def apply() = new CVSRepository();
+  def apply(cvsroot: String, module: String) = new CVSRepository(cvsroot, module);
 }

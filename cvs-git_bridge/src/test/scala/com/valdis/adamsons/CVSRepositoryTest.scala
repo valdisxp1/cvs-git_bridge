@@ -9,11 +9,15 @@ import com.valdis.adamsons.cvs.CVSFileVersion
 class CVSRepositoryTest {
   var repo: CVSRepository = null;
   @Before
-  def before={
-    repo=CVSRepository("/cygdrive/c/cvs/cvsroot","cvstest2")
+  def before{
+    repo = CVSRepository("/cygdrive/c/cvs/cvsroot","cvstest2")
   }
   @Test
-  def testgetFileContents {
+  def testGetFileContents {
 	  assertEquals("1", repo.getFileContents("file1.txt", CVSFileVersion("1.1.1.1")).trim());
+  }
+  @Test
+  def testFileNameList {
+    assertEquals(List("file1.txt", "file2.txt", "file3.txt", "dir/file1.txt", "dir/file2.txt", "dir/file3.txt"),repo.fileNameList);
   }
 }
