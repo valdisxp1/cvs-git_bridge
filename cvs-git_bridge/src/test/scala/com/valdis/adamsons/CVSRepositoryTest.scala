@@ -5,12 +5,14 @@ import org.junit.Test
 import org.junit.Assert._
 import org.junit.Before
 import com.valdis.adamsons.cvs.CVSFileVersion
+import java.io.File
+import com.valdis.adamsons.utils.CVSUtils
 
 class CVSRepositoryTest {
   var repo: CVSRepository = null;
   @Before
   def before{
-    repo = CVSRepository("/cygdrive/c/cvs/cvsroot","cvstest2")
+    repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest2")
   }
   @Test
   def testGetFileContents {
