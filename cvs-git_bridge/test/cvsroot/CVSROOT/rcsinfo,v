@@ -1,0 +1,37 @@
+head     1.1;
+access   ;
+symbols  ;
+locks    ; strict;
+comment  @# @;
+
+
+1.1
+date     2013.01.26.20.50.02;  author Valdis;  state Exp;
+branches;
+next     ;
+commitid        1FG4DD088p1xgLBw;
+
+desc
+@@
+
+
+
+1.1
+log
+@initial checkin@
+text
+@# The "rcsinfo" file is used to control templates with which the editor
+# is invoked on commit and import.
+#
+# The first entry on a line is a regular expression which is tested
+# against the directory that the change is being made to, relative to the
+# $CVSROOT.  For the first match that is found, then the remainder of the
+# line is the name of the file that contains the template.
+#
+# If the repository name does not match any of the regular expressions in this
+# file, the "DEFAULT" line is used, if it is specified.
+#
+# If the name "ALL" appears as a regular expression it is always used
+# in addition to the first matching regex or "DEFAULT".
+@
+

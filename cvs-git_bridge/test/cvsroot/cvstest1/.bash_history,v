@@ -1,0 +1,197 @@
+head     1.1;
+branch   1.1.1;
+access   ;
+symbols  start:1.1.1.1 valdis:1.1.1;
+locks    ; strict;
+comment  @# @;
+
+
+1.1
+date     2013.01.26.21.08.20;  author Valdis;  state Exp;
+branches 1.1.1.1;
+next     ;
+commitid        0uvYx2GAdseOmLBw;
+
+1.1.1.1
+date     2013.01.26.21.08.20;  author Valdis;  state Exp;
+branches ;
+next     ;
+commitid        0uvYx2GAdseOmLBw;
+
+
+desc
+@@
+
+
+
+1.1
+log
+@Initial revision
+@
+text
+@cd ..
+cd C:
+cd Users/
+cd Valdis/
+git help
+git help -a
+git svn clone svn://valdis@@192.168.0.190/ -T trunk repo
+git svn clone svn://valdis:1karalis@@192.168.0.190/ -T trunk repo
+clear
+cs
+cl
+ls
+git svn clone svn://valdis@@192.168.0.190/ -T trunk repo
+git config --global user.name Valdis
+git config --global user.email valdisxp1@@gmail.com
+git config --list
+cd My\ Documents
+ls
+nano authors.txt
+git svn clone svn://valdis@@192.168.0.190/ -A authors.txt -T trunk repo
+perl -MCPAN -e shell
+git svn clone svn://valdis@@192.168.0.190/ -A authors.txt -T trunk repo
+perl -MCPAN -e shell
+git svn clone svn://valdis@@192.168.0.190/
+perl -MCPAN -i 'install Term::Readkey'
+perl -MCPAN -i 'install Term::Readkey'
+cd C:
+cd strawberry_perl_64/
+ls
+cd c
+ls
+cd bin
+ls
+chmod a+x patch.exe 
+sudo chmod a+x patch.exe 
+chmod a+x patch.exe 
+install Term::ReadKey
+cd C:
+cd Users/
+cd Valdis/
+cd My\ Documents
+ls
+git svn clone svn://valdis@@192.168.0.190/
+@@inc
+cd gitrepo/
+ls
+git status
+git status | grep -v 'modified'
+git status
+git add
+git add .
+git status
+git commit -m 'why is this going on?'
+git status
+git remote
+git svn remote
+git svn fetch
+cd ../gitrepo3
+ls
+git svn status
+git svn fetch
+pwgen
+pwgen
+man pwgen
+pwgen -A -y
+pwgen 6 -A -y
+pwgen 8 -A -y
+pwgen 8 -A
+pwgen 16 -A
+net start sshd
+net start sshd
+mkpasswd   -cl   >   /etc/passwd
+mkgroup   --local    >   /etc/group
+ssh localhost
+cd /etc/
+cat passwd 
+adduser valdis2
+useradd valdis2
+man mkpasswd
+passwd
+net stop sshd
+net start sshd
+ssh localhost
+echo $CYGWIN
+CYGWIN = ntsec mintty
+SET CYGWIN = ntsec mintty
+exit
+ssh localhost
+exit
+echo $CYGWIN\
+echo $CYGWIN
+ssh localhost
+exit
+ls
+mkpasswd   --local   >   /etc/passwd
+mkgroup   --local    >   /etc/group
+ssh Valdis2ssh@@localhost
+net start sshd
+ssh Valdis2ssh@@localhost
+ssh localhost
+nano home.sh
+sh home.sh 
+ls
+chmod +x home.sh 
+ls
+ls -la
+sh home.sh 
+./ home.sh 
+./home.sh 
+nano home.sh 
+cd /cygdrive/c/Users/Valdis
+cd C:
+cd Users/
+cd Valdis/
+cd /cygdrive/c/Users/Valdis
+cd Documents/
+cd atmosphere_framework/samples/chat
+mvn build
+cat home.sh 
+cd /cygdrive/c/Users/Valdis
+cd Documents/
+cd atmosphere_framework/
+cd samples/chat/
+ls
+mvn build
+mvn
+ls
+cd C:
+cd Program\ Files\ \(x86\)/
+ls
+cd Mumble/
+ls
+nano murmur.ini 
+nano murmur.ini 
+cd /
+man ln
+cd sharez/
+ls
+sudo su Valdis2ssh
+ssh 192.168.0.189 dd if=/dev/random
+ssh valdis@@192.168.0.189 dd if=/dev/random
+ssh valdis@@192.168.0.189 "cat /hd2/1st.txt"
+ssh valdis@@192.168.0.189 "cat /dev/random"
+vlc
+pwgen
+history | grep pwgen
+pwgen -A -y
+pwgen -A
+scala
+man windows
+man woman
+cd C:
+cd Users/Valdis/Downloads/
+ls
+ls *.gz
+man tar
+man date
+@
+
+
+1.1.1.1
+log
+@initial test1
+@
+text
+@@

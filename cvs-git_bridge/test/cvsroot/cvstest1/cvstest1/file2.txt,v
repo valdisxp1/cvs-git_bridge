@@ -1,0 +1,41 @@
+head     1.1;
+branch   1.1.1;
+access   ;
+symbols  start:1.1.1.1 valdis:1.1.1;
+locks    ; strict;
+comment  @# @;
+
+
+1.1
+date     2013.01.26.21.08.20;  author Valdis;  state Exp;
+branches 1.1.1.1;
+next     ;
+commitid        0uvYx2GAdseOmLBw;
+
+1.1.1.1
+date     2013.01.26.21.08.20;  author Valdis;  state Exp;
+branches ;
+next     ;
+commitid        0uvYx2GAdseOmLBw;
+
+
+desc
+@@
+
+
+
+1.1
+log
+@Initial revision
+@
+text
+@2
+@
+
+
+1.1.1.1
+log
+@initial test1
+@
+text
+@@
