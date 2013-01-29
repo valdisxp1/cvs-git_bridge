@@ -7,6 +7,7 @@ import com.valdis.adamsons.cvs.CVSFileVersion
 import com.valdis.adamsons.utils.CVSUtils
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.revwalk.RevCommit
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand extends Command {
@@ -28,6 +29,8 @@ object CVSImport extends CommandParser{
         println
         //does not chnge relative path
         GitUtils.stageFile(cvsrepo.getFileContents(commit.filename, commit.revision), commit.filename)
+        val revCommit = git.commit().setAuthor(commit.author, commit.author+"@nowhere.com").setMessage(commit.comment).call();
+        println(revCommit)
       })
       1
     }
