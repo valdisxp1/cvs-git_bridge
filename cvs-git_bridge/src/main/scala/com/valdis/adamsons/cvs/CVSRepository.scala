@@ -23,16 +23,19 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   
   def getFileList/*:List[CVSFile]*/={
     val response: String = cvsString + "rlog " + module.getOrElse("")!!;
-    val items = response.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList)
+    val items = response.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList.map(_.trim)).dropRight(1)
     items.map((file)=>{
-      val headerMap = file.head.split("\n?\r").toList.map(_.split(": ")).map((x)=>x(0) -> x(1)).toMap
+      val headerPairs = file.head.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length>1).map((x)=>x(0).trim -> x(1))
+      val headerMap = headerPairs.toMap
       //TODO handle errors and remove extra gets
+      println(headerMap)
       val fileName = headerMap.get("RCS file").get
+      println(headerMap.get("head").get);
       val head = CVSFileVersion(headerMap.get("head").get)
       val headerWithOutCommits = CVSFile(fileName,Nil,head)
       val commits = file.tail.map((commit)=>{
         
-      })
+      }) 
       headerWithOutCommits
     })
   }
