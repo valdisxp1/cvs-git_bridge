@@ -1,9 +1,9 @@
 package com.valdis.adamsons.utils
 
 import org.eclipse.jgit.lib.RepositoryBuilder
-
 import java.io.File
 import scala.sys.process._
+import java.io.ByteArrayInputStream
 object GitUtils {
   val gitDir="git/";
   lazy val repo = {
@@ -13,7 +13,9 @@ object GitUtils {
   }
   
   def stageFile(contents:String, path:String){
-    val adress= contents #>Process("git hash-object -w --stdin",new File(gitDir))!!;
+    val stream = new ByteArrayInputStream(contents.getBytes("UTF-8"));
+    val process = Process("git hash-object -w --stdin",new File(gitDir)).#<(stream)
+    val adress= process!!;
     println(adress)
   }
 }
