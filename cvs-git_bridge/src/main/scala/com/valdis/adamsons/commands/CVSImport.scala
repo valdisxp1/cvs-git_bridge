@@ -5,11 +5,15 @@ import scala.sys.process._
 import com.valdis.adamsons.cvs.CVSRepository
 import com.valdis.adamsons.cvs.CVSFileVersion
 import com.valdis.adamsons.utils.CVSUtils
+import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.api.Git
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand extends Command {
     def apply = {
-      val repo = GitUtils.repo;
+      val gitrepo = GitUtils.repo;
+      val git = new Git(gitrepo)
+      git.checkout().setName("master");
       val cvsrepo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest3");
       val commits = cvsrepo.getFileList.flatMap(_.commits)
       println(commits);
@@ -21,6 +25,7 @@ object CVSImport extends CommandParser{
         println
         println(commit.comment)
         println
+        git.add()
       })
       1
     }

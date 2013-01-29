@@ -7,7 +7,7 @@
 	<classpathentry kind="var" path="M2_REPO/junit/junit/4.10/junit-4.10.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar"/>
 	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_COMPILER_CONTAINER"/>
-	<classpathentry kind="lib" path="C:/Users/Valdis/.m2/repository/org/eclipse/jgit/org.eclipse.jgit/2.2.0.201212191850-r/org.eclipse.jgit-2.2.0.201212191850-r.jar">
+	<classpathentry kind="lib" path="C:/Users/Valdis/.m2/repository/org/eclipse/jgit/org.eclipse.jgit/2.2.0.201212191850-r/org.eclipse.jgit-2.2.0.201212191850-r.jar" sourcepath="lib_src/org.eclipse.jgit-2.2.0.201212191850-r-javadoc.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/cvs-git_bridge/lib_src/org.eclipse.jgit-2.2.0.201212191850-r-javadoc.jar!/"/>
 		</attributes>
