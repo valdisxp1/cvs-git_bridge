@@ -23,7 +23,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     })
   }
   
-  def getFileList/*:List[CVSFile]*/={
+  def getFileList:List[CVSFile]={
     val response: String = cvsString+ "rlog " + module.getOrElse("")!!;
     val items = response.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList.map(_.trim)).dropRight(1)
     items.map((file)=>{
@@ -44,8 +44,11 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         val date = CVSRepository.CVS_DATE_FORMAT.parse(params.get("date").get)
         val author = params.get("author").get
         val commitId = params.get("commitid");
+        val comment = lines.drop(3).mkString("\n")
+        println(comment);
+        CVSCommit(revision,date,author,comment,commitId)
       }) 
-      headerWithOutCommits
+      headerWithOutCommits.withCommits(commits);
     })
   }
 }
