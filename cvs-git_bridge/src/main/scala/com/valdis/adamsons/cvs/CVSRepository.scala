@@ -44,7 +44,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         //need a good way to determine where commit message starts
         val linesToDrop = if (lines(2).contains(": ")) { 3 } else { 2 }
         val comment = lines.drop(linesToDrop).mkString("\n").trim
-        val cvsCommit = CVSCommit(revision,date,author,comment,commitId)
+        val cvsCommit = CVSCommit(fileName,revision,date,author,comment,commitId)
         cvsCommit
       }) 
       headerWithOutCommits.withCommits(commits);

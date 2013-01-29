@@ -19,13 +19,15 @@ object CVSImport extends CommandParser{
       println(commits);
       val sortedcommits = commits.sortBy(_.date)
       sortedcommits.foreach((commit)=>{
+        println(commit.filename);
         println(commit.author);
         println(commit.revision);
         println(commit.date);
         println
         println(commit.comment)
         println
-        git.add()
+        //does not chnge relative path
+        GitUtils.stageFile(cvsrepo.getFileContents(commit.filename, commit.revision), commit.filename)
       })
       1
     }
