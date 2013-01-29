@@ -20,7 +20,10 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       x.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).dropRight(3)
     })
   }
-  def getFileList:List[CVSFile]=throw new Exception("NYI")
+  def getFileList/*:List[CVSFile]*/={
+    val response: String = cvsString + "rlog " + module.getOrElse("")!!;
+    response.split("\\r?\\n").toList
+  }
 }
 
 object CVSRepository {

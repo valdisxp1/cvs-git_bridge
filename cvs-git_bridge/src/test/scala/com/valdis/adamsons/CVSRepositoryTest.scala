@@ -22,4 +22,10 @@ class CVSRepositoryTest {
   def testFileNameList {
     assertEquals(List("file1.txt", "file2.txt", "file3.txt", "dir/file1.txt", "dir/file2.txt", "dir/file3.txt"),repo.fileNameList);
   }
+  
+  @Test
+  def testGetFileList {
+    repo.getFileList.map("{"+_+"}").foreach(println _)
+    assertTrue(true);
+  }
 }
