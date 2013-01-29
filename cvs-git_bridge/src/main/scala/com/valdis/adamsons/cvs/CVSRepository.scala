@@ -20,13 +20,27 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       x.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).dropRight(3)
     })
   }
+  
   def getFileList/*:List[CVSFile]*/={
     val response: String = cvsString + "rlog " + module.getOrElse("")!!;
-    response.split("\\r?\\n").toList
+    val items = response.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList)
+    items.map((file)=>{
+      val headerMap = file.head.split("\n?\r").toList.map(_.split(": ")).map((x)=>x(0) -> x(1)).toMap
+      //TODO handle errors and remove extra gets
+      val fileName = headerMap.get("RCS file").get
+      val head = CVSFileVersion(headerMap.get("head").get)
+      val headerWithOutCommits = CVSFile(fileName,Nil,head)
+      val commits = file.tail.map((commit)=>{
+        
+      })
+      headerWithOutCommits
+    })
   }
 }
 
 object CVSRepository {
   def apply() = new CVSRepository();
   def apply(cvsroot: String, module: String) = new CVSRepository(cvsroot, module);
+  private val FILES_SPLITTER="=============================================================================";
+  private val COMMITS_SPLITTER="----------------------------";
 }
