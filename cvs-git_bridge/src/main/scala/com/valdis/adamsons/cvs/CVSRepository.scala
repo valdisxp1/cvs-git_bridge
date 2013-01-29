@@ -14,13 +14,13 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def module(module: String) = CVSRepository(this.cvsroot, Some(module))
 
   private def cvsString = "cvs " + cvsroot.map("-d " + _ + " ").getOrElse("");
-
+  
+  def getRelativePath(absolutePath:String)= absolutePath.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).dropRight(3)
+  
   def getFileContents(name: String, version: CVSFileVersion) = cvsString+"co -p "+module.map( _ + "/").getOrElse("")+name!!
   def fileNameList = {
     val response: String = cvsString+ "rlog -R " + module.getOrElse("")!!;
-    response.split("\n").toList.map(x => {
-      x.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).dropRight(3)
-    })
+    response.split("\n").toList.map(getRelativePath)
   }
   
   def getFileList:List[CVSFile]={
@@ -30,7 +30,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       val headerPairs = file.head.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length>1).map((x)=>x(0).trim->x(1))
       val headerMap = headerPairs.toMap
       //TODO handle errors and remove extra gets
-      val fileName = headerMap.get("RCS file").get
+      val fileName = getRelativePath(headerMap.get("RCS file").get)
       val head = CVSFileVersion(headerMap.get("head").get)
       val headerWithOutCommits = CVSFile(fileName, Nil, head)
       val commits = file.tail.map((commit)=>{println
