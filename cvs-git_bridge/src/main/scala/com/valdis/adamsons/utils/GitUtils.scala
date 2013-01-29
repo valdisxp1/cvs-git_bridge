@@ -17,5 +17,7 @@ object GitUtils {
     val process = Process("git hash-object -w --stdin",new File(gitDir)).#<(stream)
     val adress= process!!;
     println(adress)
+    //stage normal file
+    "git update-index --add --cacheinfo 100644 " + adress + " "+path!!
   }
 }

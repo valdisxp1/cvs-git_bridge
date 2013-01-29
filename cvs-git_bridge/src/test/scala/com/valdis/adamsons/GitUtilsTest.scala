@@ -7,6 +7,6 @@ import com.valdis.adamsons.utils.GitUtils
 class GitUtilsTest {
   @Test
   def testStageFile {
-    GitUtils.stageFile("abcd", "test");
+    println(GitUtils.stageFile("abcd", "test"));
   }
 }
