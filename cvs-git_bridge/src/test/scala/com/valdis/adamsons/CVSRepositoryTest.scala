@@ -25,7 +25,7 @@ class CVSRepositoryTest {
   
   @Test
   def testGetFileList {
-    repo.getFileList.map("{"+_+"}").foreach(println _)
+    println(repo.getFileList)
     assertTrue(true);
   }
 }

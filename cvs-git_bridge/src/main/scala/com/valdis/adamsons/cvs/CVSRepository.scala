@@ -34,19 +34,16 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       val head = CVSFileVersion(headerMap.get("head").get)
       val headerWithOutCommits = CVSFile(fileName, Nil, head)
       val commits = file.tail.map((commit)=>{println
-    	println(commit)
-        println
         val lines = commit.split("\n?\r");
         val revisionStr = lines(0).trim.split(' ')(1)
         val revision = CVSFileVersion(revisionStr)
         val params = lines(1).trim.dropRight(1).split(';').map(_.split(": ")).map((x)=> x(0).trim->x(1).trim).toMap
-        println(params);
         val date = CVSRepository.CVS_DATE_FORMAT.parse(params.get("date").get)
         val author = params.get("author").get
         val commitId = params.get("commitid");
         val comment = lines.drop(3).mkString("\n")
-        println(comment);
-        CVSCommit(revision,date,author,comment,commitId)
+        val cvsCommit = CVSCommit(revision,date,author,comment,commitId)
+        cvsCommit
       }) 
       headerWithOutCommits.withCommits(commits);
     })
