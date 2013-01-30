@@ -13,11 +13,12 @@ object GitUtils {
   }
   
   def stageFile(contents:String, path:String){
+	println("path: "+path)
     val stream = new ByteArrayInputStream(contents.getBytes("UTF-8"));
     val process = Process("git hash-object -w --stdin",new File(gitDir)).#<(stream)
     val adress= process!!;
     println(adress)
     //stage normal file
-    "git update-index --add --cacheinfo 100644 " + adress + " "+path!!
+    Process("git update-index --add --cacheinfo 100644 " + adress + " "+path,new File(gitDir))!!;
   }
 }
