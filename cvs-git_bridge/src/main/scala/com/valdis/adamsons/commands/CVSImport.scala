@@ -34,7 +34,7 @@ object CVSImport extends CommandParser{
         println
         val commitAdress= GitUtils.commitToBranch(commit.comment, "master", commit.author,commit.author+"@nowhere.com",commit.date);
         println("committed at "+commitAdress)
-        GitUtils.addNote(fileAdress, "CVS_REV: "+commit.revision)
+        GitUtils.addNote(commitAdress, "CVS_REV: "+commit.revision)
         //val revCommit = git.commit().setAuthor(commit.author, commit.author+"@nowhere.com").setMessage(commit.comment).call();
         //println(revCommit)
       })
