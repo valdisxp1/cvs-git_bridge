@@ -36,10 +36,10 @@ object GitUtils {
   }
   def hasHeadRef(branch:String):Boolean={
     // assumes bare
-    new File(gitDir+"refs/heads"+branch).exists()
+    new File(gitDir+"refs/heads/"+branch).exists()
   }
   def getHeadRef(branch:String):Option[String]={
-    val file = new File(gitDir+"refs/heads"+branch)
+    val file = new File(gitDir+"refs/heads/"+branch)
     if (file.exists) {
     	Some(fromFile(file).getLines.mkString)
     } else {
@@ -48,7 +48,7 @@ object GitUtils {
   }
   
   def updateHeadRef(branch:String,adress:String){
-    val file = new File(gitDir+"refs/heads"+branch)
+    val file = new File(gitDir+"refs/heads/"+branch)
     if (!file.exists) {
       file.createNewFile();
     }
