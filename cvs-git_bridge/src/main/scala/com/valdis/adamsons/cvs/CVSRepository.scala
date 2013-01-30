@@ -17,7 +17,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   
   def getRelativePath(absolutePath:String)= absolutePath.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2)
   
-  def getFileContents(name: String, version: CVSFileVersion) = cvsString+"co -p "+module.map( _ + "/").getOrElse("")+name!!
+  def getFileContents(name: String, version: CVSFileVersion) = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name!!
   def fileNameList = {
     val response: String = cvsString+ "rlog -R " + module.getOrElse("")!!;
     response.split("\n").toList.map(getRelativePath)
