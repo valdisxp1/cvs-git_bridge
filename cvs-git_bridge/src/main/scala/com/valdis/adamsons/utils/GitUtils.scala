@@ -19,7 +19,7 @@ object GitUtils {
     readEnvironment().findGitDir().build();
   }
   
-  def stageFile(contents:String, path:String){
+  def stageFile(contents:String, path:String):String={
 	println("path: "+path)
     val stream = new ByteArrayInputStream(contents.getBytes("UTF-8"));
     val process = Process("git hash-object -w --stdin",new File(gitDir)).#<(stream)
@@ -27,6 +27,7 @@ object GitUtils {
     println(adress)
     //stage normal file
     Process("git update-index --add --cacheinfo 100644 " + adress + " "+path,new File(gitDir))!!;
+    adress
   }
   def commit(message:String,parentAdress:Option[String],name:String,email:String,date:Date):String={
     val writeTreeProcess = Process("git write-tree",new File(gitDir))
@@ -52,22 +53,26 @@ object GitUtils {
     }
   }
   
-  def updateHeadRef(branch:String,adress:String){
+  def updateHeadRef(branch:String,address:String){
     val file = new File(gitDir+"refs/heads/"+branch)
     if (!file.exists) {
       file.createNewFile();
     }
     val fileOutputStream = new FileOutputStream(file,false);
     try{
-    	fileOutputStream.write(adress.getBytes())
+    	fileOutputStream.write(address.getBytes())
     }finally{
       fileOutputStream.close()
     }
   }
   def commitToBranch(message:String,branch:String,name:String,email:String,date:Date):String={
-    val parentAdress = getHeadRef(branch)
-    val commitAdress = commit(message, parentAdress,name,email,date)
-    updateHeadRef(branch, commitAdress)
-    commitAdress
+    val parentAddress = getHeadRef(branch)
+    val commitAddress = commit(message, parentAddress,name,email,date)
+    updateHeadRef(branch, commitAddress)
+    commitAddress
+  }
+  def addNote(address:String,note:String){
+    val process = Process("git notes add -m \""+note+"\" "+address,new File(gitDir))
+    process!!
   }
 }
