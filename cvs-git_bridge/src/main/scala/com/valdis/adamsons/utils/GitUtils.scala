@@ -8,10 +8,11 @@ import scala.io.Source._
 import java.io.FileOutputStream
 import java.util.Date
 import java.text.SimpleDateFormat
+import java.util.Locale
 
 object GitUtils {
   val gitDir="git/";
-  val gitDateFormat = new SimpleDateFormat("yyyy-mm-dd kk:mm:ss Z")
+  val gitDateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z",Locale.UK)
   lazy val repo = {
     val builder = new RepositoryBuilder();
     builder.setGitDir(new File(gitDir)).

@@ -3,6 +3,7 @@ package com.valdis.adamsons.cvs
 import scala.sys.process._
 import java.util.Date
 import java.text.SimpleDateFormat
+import java.util.Locale
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]){
   def this(cvsroot: Option[String]) = this(cvsroot, None)
@@ -57,5 +58,5 @@ object CVSRepository {
   def apply(cvsroot: String, module: String) = new CVSRepository(cvsroot, module);
   private val FILES_SPLITTER="=============================================================================";
   private val COMMITS_SPLITTER="----------------------------";
-  private val CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-mm-dd kk:mm:ss Z")
+  private val CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-mm-dd kk:mm:ss Z",Locale.UK)
 }
