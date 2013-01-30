@@ -32,7 +32,7 @@ object CVSImport extends CommandParser{
         GitUtils.stageFile(content, commit.filename)
         println(content)
         println
-        val commitAdress= GitUtils.commitToBranch(commit.comment, "master");
+        val commitAdress= GitUtils.commitToBranch(commit.comment, "master", commit.author,commit.author+"@nowhere.com",commit.date);
         println("committed at "+commitAdress)
         //val revCommit = git.commit().setAuthor(commit.author, commit.author+"@nowhere.com").setMessage(commit.comment).call();
         //println(revCommit)
