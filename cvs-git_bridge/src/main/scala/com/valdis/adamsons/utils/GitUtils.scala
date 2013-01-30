@@ -33,11 +33,8 @@ object GitUtils {
     
     val stream = new ByteArrayInputStream(message.getBytes("UTF-8"));
     
-    "export GIT_AUTHOR_NAME=\""+name+"\""!!;
-    "export GIT_AUTHOR_EMAIL=\""+email+"\""!!;
-    "export GIT_AUTHOR_DATE=\""+gitDateFormat.format(date)+"\""!!;
-    
-    val commitTreeProcess = Process("git commit-tree "+treeAdress+parentAdress.map(" -p "+_+" ").getOrElse(""),new File(gitDir)).#<(stream)
+    val commitTreeProcess = Process("git commit-tree "+treeAdress+parentAdress.map(" -p "+_+" ").getOrElse(""),new File(gitDir),
+        ("GIT_AUTHOR_NAME" -> name),("GIT_AUTHOR_EMAIL" -> email),("GIT_AUTHOR_DATE" -> gitDateFormat.format(date))).#<(stream)
     val commitAdress = commitTreeProcess!!;
     commitAdress
   }
