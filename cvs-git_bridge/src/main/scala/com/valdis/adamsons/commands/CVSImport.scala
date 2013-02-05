@@ -10,14 +10,16 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.revwalk.RevCommit
 
 object CVSImport extends CommandParser{
-  case class CVSImportCommand extends Command {
+  case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
+    def this() = this(None,None)
+    def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
     def apply = {
-      val cvsRoot = "test/cvsroot"
-      val module = "cvstest3"
+      /* = "test/cvsroot"
+       = "cvstest3"*/
       val gitrepo = GitUtils.repo;
       val git = new Git(gitrepo)
       git.checkout().setName("master");
-      val cvsrepo = CVSRepository(CVSUtils.absolutepath(cvsRoot),module);
+      val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
       val commits = cvsrepo.getFileList.flatMap(_.commits)
       println(commits);
       val sortedcommits = commits.sortBy(_.date)
@@ -42,13 +44,18 @@ object CVSImport extends CommandParser{
       })
       1
     }
-  
+    
   def help = ""
   def usage = ""
+  }
+  object CVSImportCommand{
+      def apply()= new CVSImportCommand()
+      def apply(cvsroot: String, module: String) = new CVSImportCommand(cvsroot, module);
   }
   override def parse(args: List[String]) = super.parse(args) match {
     case None =>
       args match {
+        case List("-d",root,mod) => Some(CVSImportCommand(root,mod))
         case Nil => Some(CVSImportCommand())
         case _ => Some(HelpCommand(""))
       }
