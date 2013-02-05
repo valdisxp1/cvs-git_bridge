@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]){
+  println("root:"+cvsroot.getOrElse("NONE")+"module:"+module.getOrElse("NONE"))
   def this(cvsroot: Option[String]) = this(cvsroot, None)
   def this() = this(None, None)
   def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))

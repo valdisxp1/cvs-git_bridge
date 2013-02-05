@@ -20,6 +20,7 @@ trait CommandParser{
     }
   }
   def main(args: Array[String]): Unit = {
+    println("ARGS:"+args.toList)
     println(parse(args.toList).get.apply)
   }
   

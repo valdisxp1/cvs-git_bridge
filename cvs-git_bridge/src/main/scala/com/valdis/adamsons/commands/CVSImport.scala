@@ -14,8 +14,6 @@ object CVSImport extends CommandParser{
     def this() = this(None,None)
     def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
     def apply = {
-      /* = "test/cvsroot"
-       = "cvstest3"*/
       val gitrepo = GitUtils.repo;
       val git = new Git(gitrepo)
       git.checkout().setName("master");
@@ -53,12 +51,14 @@ object CVSImport extends CommandParser{
       def apply(cvsroot: String, module: String) = new CVSImportCommand(cvsroot, module);
   }
   override def parse(args: List[String]) = super.parse(args) match {
-    case None =>
+    case None =>{
+      println("ARGS:"+args)
       args match {
         case List("-d",root,mod) => Some(CVSImportCommand(root,mod))
         case Nil => Some(CVSImportCommand())
         case _ => Some(HelpCommand(""))
       }
+    }
 
     case x: Some[Command] => x
   } 
