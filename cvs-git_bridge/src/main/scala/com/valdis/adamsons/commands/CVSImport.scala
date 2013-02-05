@@ -14,8 +14,6 @@ object CVSImport extends CommandParser{
     def this() = this(None,None)
     def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
     def apply = {
-      /* = "test/cvsroot"
-       = "cvstest3"*/
       val gitrepo = GitUtils.repo;
       val git = new Git(gitrepo)
       git.checkout().setName("master");
@@ -31,7 +29,7 @@ object CVSImport extends CommandParser{
         println
         println(commit.comment)
         println
-        //does not chnge relative path
+        //does not change relative path
         val content = cvsrepo.getFileContents(commit.filename, commit.revision)
         val fileAdress = GitUtils.stageFile(content, commit.filename)
         println(content)
