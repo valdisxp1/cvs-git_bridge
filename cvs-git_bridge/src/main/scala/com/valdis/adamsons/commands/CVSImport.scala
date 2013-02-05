@@ -12,10 +12,12 @@ import org.eclipse.jgit.revwalk.RevCommit
 object CVSImport extends CommandParser{
   case class CVSImportCommand extends Command {
     def apply = {
+      val cvsRoot = "test/cvsroot"
+      val module = "cvstest3"
       val gitrepo = GitUtils.repo;
       val git = new Git(gitrepo)
       git.checkout().setName("master");
-      val cvsrepo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest3");
+      val cvsrepo = CVSRepository(CVSUtils.absolutepath(cvsRoot),module);
       val commits = cvsrepo.getFileList.flatMap(_.commits)
       println(commits);
       val sortedcommits = commits.sortBy(_.date)
