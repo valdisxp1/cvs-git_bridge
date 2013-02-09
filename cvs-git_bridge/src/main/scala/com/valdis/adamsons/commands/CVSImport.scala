@@ -8,17 +8,38 @@ import com.valdis.adamsons.utils.CVSUtils
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.lib.Repository
+import java.util.Date
+import org.eclipse.jgit.api.errors.NoHeadException
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
     def this() = this(None,None)
     def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
+    
+    def lastUpdated(gitrepo:Repository):Option[Date] = {
+      val git = new Git(gitrepo)
+      val revWalk = new RevWalk(gitrepo);
+      try{
+      val logs = git.log().call()
+      val iterator = logs.iterator()
+      if(iterator.hasNext()){
+        Some(new Date(revWalk.parseCommit(iterator.next()).getCommitTime()))
+      }else{
+        None
+      }
+      }catch{
+        case e:NoHeadException => None
+      }
+    }
+    
     def apply = {
       val gitrepo = GitUtils.repo;
-      val git = new Git(gitrepo)
-      git.checkout().setName("master");
       val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
-      val commits = cvsrepo.getFileList.flatMap(_.commits)
+      //get last the last updated date
+      val lastUpdatedVal = lastUpdated(gitrepo)
+      println(lastUpdatedVal)
+      val commits = cvsrepo.getFileList(lastUpdatedVal,None).flatMap(_.commits)
       println(commits);
       val sortedcommits = commits.sortBy(_.date)
       sortedcommits.foreach((commit)=>{
