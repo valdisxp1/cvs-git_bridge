@@ -21,13 +21,17 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   private def cvsString = "cvs " + cvsroot.map("-d " + _ + " ").getOrElse("");
   
   def getRelativePath(absolutePath:String)= absolutePath.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2)
-  
+  /**
+   * Should only be used for text files.
+   * Binary files get corrupted because Java tries to convert them to UTF8.
+   */
   def getFileContents(name: String, version: CVSFileVersion) = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name!!
   def getFile(name: String, version: CVSFileVersion) = {
     val process = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name
     val file = File.createTempFile("tmp", ".bin")
-    println(process.#>(file).run.exitValue);
-    println("fileLEN:"+file.length())
+    //forces the to wait until process finishes.
+    val exitvalue=process.#>(file).run.exitValue;
+    //TODO handle errors
     file
   }
   def fileNameList = {
