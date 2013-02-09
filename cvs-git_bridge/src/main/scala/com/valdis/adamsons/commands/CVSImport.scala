@@ -18,6 +18,7 @@ import java.io.FileInputStream
 import org.eclipse.jgit.lib.CommitBuilder
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.treewalk.TreeWalk
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
@@ -62,7 +63,8 @@ object CVSImport extends CommandParser{
         //stage
         val inserter = gitrepo.newObjectInserter();
         try {
-          val revWalk = new RevWalk(gitrepo);
+          val revWalk = new RevWalk(gitrepo)
+          val treeWalk = new TreeWalk(gitrepo)
           
           val parentId = GitUtils.getHeadRef("master").map(ObjectId.fromString(_))
           
@@ -70,11 +72,13 @@ object CVSImport extends CommandParser{
 
           val treeFormatter = new TreeFormatter
           treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
-          
+
           //insert parent elemets in this tree
-          parentId.foreach((id)=>{
-          val parentTree = revWalk.parseTree(id)
-          treeFormatter.append("", parentTree)
+          parentId.foreach((id) => {
+            val parentCommit = revWalk.parseCommit(id)
+            treeWalk.addTree(parentCommit.getTree())
+            val parentTreeId=parentCommit.getTree().getId()
+            println("parentTreeID:" + parentTreeId.name);
           })
           
           val treeId = inserter.insert(treeFormatter);
