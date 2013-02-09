@@ -45,20 +45,20 @@ object GitUtils {
 
   def stageFile(file: File, path: String): String = {
     println("path: " + path)
-    var dc:DirCache=null;
     val inserter = repo.newObjectInserter();
     try {
-      dc = repo.lockDirCache();
       val fileId = inserter.insert(Constants.OBJ_BLOB, file.length(), new FileInputStream(file))
       
       val treeFormatter = new TreeFormatter()
       treeFormatter.append(path, FileMode.REGULAR_FILE, fileId)
       val treeId = inserter.insert(treeFormatter);
       
-      treeId.name
+      inserter.flush()
+      println("fileID:"+fileId.name);
+      println("treeID:"+treeId.name);
+      fileId.name
     } finally {
       inserter.release()
-      if (dc != null) dc.unlock()
     }
   }
   def commit(message:String,parentAdress:Option[String],name:String,email:String,date:Date):String={
