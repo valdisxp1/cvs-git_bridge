@@ -81,6 +81,6 @@ object CVSRepository {
   def apply(cvsroot: String, module: String) = new CVSRepository(cvsroot, module);
   private val FILES_SPLITTER="=============================================================================";
   private val COMMITS_SPLITTER="----------------------------";
-  private val CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-mm-dd kk:mm:ss Z",Locale.UK)
-  private val CVS_SHORT_DATE_FORMAT= new SimpleDateFormat("yyyy/mm/dd",Locale.UK)
+  private val CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-MM-dd kk:mm:ss Z",Locale.UK)
+  private val CVS_SHORT_DATE_FORMAT= new SimpleDateFormat("yyyy/MM/dd",Locale.UK)
 }
