@@ -9,6 +9,7 @@ import java.io.FileOutputStream
 import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.io.InputStream
 
 object GitUtils {
   val gitDir="git/";
@@ -20,9 +21,23 @@ object GitUtils {
   }
   
   def stageFile(contents:String, path:String):String={
-	println("path: "+path)
     val stream = new ByteArrayInputStream(contents.getBytes("UTF-8"));
+    stageFile(stream, path)
+  }
+  
+  def stageFile(stream:InputStream, path:String):String={
+	println("path: "+path)
     val process = Process("git hash-object -w --stdin",new File(gitDir)).#<(stream)
+    val adress = process!!;
+    println(adress)
+    //stage normal file
+    Process("git update-index --add --cacheinfo 100644 " + adress + " "+path,new File(gitDir))!!;
+    adress
+  }
+  
+  def stageFile(file:File, path:String):String={
+	println("path: "+path)
+    val process = Process("git hash-object -w --stdin",new File(gitDir)).#<(file)
     val adress = process!!;
     println(adress)
     //stage normal file

@@ -4,6 +4,10 @@ import scala.sys.process._
 import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.io.ByteArrayInputStream
+import org.omg.CORBA.portable.InputStream
+import java.io.InputStream
+import java.io.File
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]){
   def this(cvsroot: Option[String]) = this(cvsroot, None)
@@ -19,6 +23,12 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def getRelativePath(absolutePath:String)= absolutePath.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2)
   
   def getFileContents(name: String, version: CVSFileVersion) = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name!!
+  def getFile(name: String, version: CVSFileVersion) = {
+    val process = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name
+    val file = File.createTempFile("tmp", ".bin")
+    process.#>(file)
+    file
+  }
   def fileNameList = {
     val response: String = cvsString+ "rlog -R " + module.getOrElse("")!!;
     response.split("\n").toList.map(getRelativePath)
