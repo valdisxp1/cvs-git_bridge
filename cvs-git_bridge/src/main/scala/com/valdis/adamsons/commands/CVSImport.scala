@@ -17,6 +17,7 @@ import org.eclipse.jgit.lib.Constants
 import java.io.FileInputStream
 import org.eclipse.jgit.lib.CommitBuilder
 import org.eclipse.jgit.lib.PersonIdent
+import org.eclipse.jgit.lib.ObjectId
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
@@ -74,20 +75,22 @@ object CVSImport extends CommandParser{
           commitBuilder.setAuthor(author)
           commitBuilder.setCommitter(author)
           commitBuilder.setMessage(commit.comment)
-          //TODO parent ID
-//          commitBuilder.setParentId(newParent)
+          
+          val parent = GitUtils.getHeadRef("master").map(ObjectId.fromString(_)).foreach({
+             commitBuilder.setParentId(_)
+          })
+         
           
           val commitId = inserter.insert(commitBuilder)
-          
           inserter.flush();
                     
-          inserter.flush()
           println("fileID:" + fileId.name);
           println("treeID:" + treeId.name);
           println("commitID:" + commitId.name);
           
           println("len:"+file.length)
           file.delete();
+          GitUtils.updateHeadRef("master", commitId.name)
           GitUtils.addNote(commitId.name, "CVS_REV: "+commit.revision)
           
         } finally {
