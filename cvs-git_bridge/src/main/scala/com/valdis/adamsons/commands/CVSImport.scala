@@ -24,7 +24,7 @@ object CVSImport extends CommandParser{
       val logs = git.log().call()
       val iterator = logs.iterator()
       if(iterator.hasNext()){
-        Some(new Date(revWalk.parseCommit(iterator.next()).getCommitTime()))
+        Some(revWalk.parseCommit(iterator.next()).getAuthorIdent().getWhen())
       }else{
         None
       }
