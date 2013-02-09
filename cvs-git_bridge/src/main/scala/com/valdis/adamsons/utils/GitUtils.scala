@@ -21,7 +21,9 @@ object GitUtils {
   
   def stageFile(contents:String, path:String):String={
 	println("path: "+path)
-    val stream = new ByteArrayInputStream(contents.getBytes("UTF-8"));
+    
+//	val stream = new ByteArrayInputStream(contents.map(_.toByte).toArray);
+	val stream = new ByteArrayInputStream(contents.getBytes("ASCII"));
     val process = Process("git hash-object -w --stdin",new File(gitDir)).#<(stream)
     val adress = process!!;
     println(adress)

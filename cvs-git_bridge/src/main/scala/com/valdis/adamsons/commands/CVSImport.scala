@@ -32,8 +32,8 @@ object CVSImport extends CommandParser{
         //does not change relative path
         val content = cvsrepo.getFileContents(commit.filename, commit.revision)
         val fileAdress = GitUtils.stageFile(content, commit.filename)
-        println(content)
-        println
+//        println(content)
+//        println
         val commitAdress= GitUtils.commitToBranch(commit.comment, "master", commit.author,commit.author+"@nowhere.com",commit.date);
         println("committed at "+commitAdress)
         GitUtils.addNote(commitAdress, "CVS_REV: "+commit.revision)
