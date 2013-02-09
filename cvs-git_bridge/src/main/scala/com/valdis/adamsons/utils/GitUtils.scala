@@ -10,6 +10,8 @@ import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.io.InputStream
+import scala.io.Source
+import java.io.FileInputStream
 
 object GitUtils {
   val gitDir="git/";

@@ -26,7 +26,8 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def getFile(name: String, version: CVSFileVersion) = {
     val process = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name
     val file = File.createTempFile("tmp", ".bin")
-    process.#>(file)
+    println(process.#>(file).run.exitValue);
+    println("fileLEN:"+file.length())
     file
   }
   def fileNameList = {
