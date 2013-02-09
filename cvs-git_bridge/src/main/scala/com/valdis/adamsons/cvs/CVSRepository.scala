@@ -44,11 +44,12 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val dateString = if (start.isDefined || end.isDefined) {
-      "-d \"" + startString.getOrElse("") + "<" + endString.getOrElse("") + "\""
+      "-d \"" + startString.getOrElse("") + "<" + endString.getOrElse("") + "\" "
      } else {
       ""
      }
-    val response: String = cvsString+ "rlog " + dateString + module.getOrElse("")!!;
+    val process = cvsString+ "rlog " + dateString + module.getOrElse("")
+    val response: String = process!!;
     val items = response.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList.map(_.trim)).dropRight(1)
     items.map((file)=>{
       val headerPairs = file.head.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length>1).map((x)=>x(0).trim->x(1))
