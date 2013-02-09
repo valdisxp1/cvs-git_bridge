@@ -11,6 +11,12 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.lib.Repository
 import java.util.Date
 import org.eclipse.jgit.api.errors.NoHeadException
+import org.eclipse.jgit.lib.TreeFormatter
+import org.eclipse.jgit.lib.FileMode
+import org.eclipse.jgit.lib.Constants
+import java.io.FileInputStream
+import org.eclipse.jgit.lib.CommitBuilder
+import org.eclipse.jgit.lib.PersonIdent
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
@@ -52,12 +58,43 @@ object CVSImport extends CommandParser{
         println
         //does not change relative path
         val file = cvsrepo.getFile(commit.filename, commit.revision)
-        val fileAdress = GitUtils.stageFile(file, commit.filename)
-        println("len:"+file.length())
-        file.delete();
-        val commitAdress= GitUtils.commitToBranch(commit.comment, "master", commit.author,commit.author+"@nowhere.com",commit.date);
-        println("committed at "+commitAdress)
-        GitUtils.addNote(commitAdress, "CVS_REV: "+commit.revision)
+        //stage
+        val inserter = gitrepo.newObjectInserter();
+        try {
+          val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
+
+          val treeFormatter = new TreeFormatter
+          treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
+          val treeId = inserter.insert(treeFormatter);
+          
+          //commit
+          val author = new PersonIdent(commit.author,commit.author+"@nowhere.com")
+          val commitBuilder = new CommitBuilder
+          commitBuilder.setTreeId(treeId)
+          commitBuilder.setAuthor(author)
+          commitBuilder.setCommitter(author)
+          commitBuilder.setMessage(commit.comment)
+          //TODO parent ID
+//          commitBuilder.setParentId(newParent)
+          
+          val commitId = inserter.insert(commitBuilder)
+          
+          inserter.flush();
+                    
+          inserter.flush()
+          println("fileID:" + fileId.name);
+          println("treeID:" + treeId.name);
+          println("commitID:" + commitId.name);
+          
+          println("len:"+file.length)
+          file.delete();
+          GitUtils.addNote(commitId.name, "CVS_REV: "+commit.revision)
+          
+        } finally {
+          inserter.release()
+        }
+        
+        
         //val revCommit = git.commit().setAuthor(commit.author, commit.author+"@nowhere.com").setMessage(commit.comment).call();
         //println(revCommit)
       })
