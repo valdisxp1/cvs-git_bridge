@@ -39,8 +39,16 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     response.split("\n").toList.map(getRelativePath)
   }
   
-  def getFileList:List[CVSFile]={
-    val response: String = cvsString+ "rlog " + module.getOrElse("")!!;
+  def getFileList:List[CVSFile]= getFileList(None,None)
+  def getFileList(start:Option[Date],end:Option[Date]):List[CVSFile]={
+    val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
+    val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
+    val dateString = if (start.isDefined || end.isDefined) {
+      "-d \"" + startString.getOrElse("") + "<" + endString.getOrElse("") + "\""
+     } else {
+      ""
+     }
+    val response: String = cvsString+ "rlog " + dateString + module.getOrElse("")!!;
     val items = response.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList.map(_.trim)).dropRight(1)
     items.map((file)=>{
       val headerPairs = file.head.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length>1).map((x)=>x(0).trim->x(1))
@@ -74,4 +82,5 @@ object CVSRepository {
   private val FILES_SPLITTER="=============================================================================";
   private val COMMITS_SPLITTER="----------------------------";
   private val CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-mm-dd kk:mm:ss Z",Locale.UK)
+  private val CVS_SHORT_DATE_FORMAT= new SimpleDateFormat("yyyy/mm/dd",Locale.UK)
 }
