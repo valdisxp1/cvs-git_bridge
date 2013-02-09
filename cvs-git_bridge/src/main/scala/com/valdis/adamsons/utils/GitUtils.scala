@@ -12,6 +12,12 @@ import java.util.Locale
 import java.io.InputStream
 import scala.io.Source
 import java.io.FileInputStream
+import org.eclipse.jgit.dircache.DirCache
+import org.eclipse.jgit.dircache.DirCacheEntry
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.TreeFormatter
+import org.eclipse.jgit.lib.FileMode
+import com.sun.jndi.ldap.Obj
 
 object GitUtils {
   val gitDir="git/";
@@ -36,15 +42,24 @@ object GitUtils {
     Process("git update-index --add --cacheinfo 100644 " + adress + " "+path,new File(gitDir))!!;
     adress
   }
-  
-  def stageFile(file:File, path:String):String={
-	println("path: "+path)
-    val process = Process("git hash-object -w --stdin",new File(gitDir)).#<(file)
-    val adress = process!!;
-    println(adress)
-    //stage normal file
-    Process("git update-index --add --cacheinfo 100644 " + adress + " "+path,new File(gitDir))!!;
-    adress
+
+  def stageFile(file: File, path: String): String = {
+    println("path: " + path)
+    val inserter = repo.newObjectInserter();
+    try {
+      val fileId = inserter.insert(Constants.OBJ_BLOB, file.length(), new FileInputStream(file))
+      
+      val treeFormatter = new TreeFormatter()
+      treeFormatter.append(path, FileMode.REGULAR_FILE, fileId)
+      val treeId = inserter.insert(treeFormatter);
+      
+      inserter.flush()
+      println("fileID:"+fileId.name);
+      println("treeID:"+treeId.name);
+      fileId.name
+    } finally {
+      inserter.release()
+    }
   }
   def commit(message:String,parentAdress:Option[String],name:String,email:String,date:Date):String={
     val writeTreeProcess = Process("git write-tree",new File(gitDir))
