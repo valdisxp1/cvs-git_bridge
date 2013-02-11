@@ -55,8 +55,4 @@ object GitUtils {
     }
   }
 
-  def addNote(address: String, note: String) {
-    val process = Process("git notes add -m \"" + note + "\" " + address, new File(gitDir))
-    process!!
-  }
 }
