@@ -73,16 +73,23 @@ object CVSImport extends CommandParser{
           val treeFormatter = new TreeFormatter
           
 
-          //insert parent elemets in this tree
+          // insert parent elements in this tree
           parentId.foreach((id) => {
             val parentCommit = revWalk.parseCommit(id)
             treeWalk.addTree(parentCommit.getTree())
-            val treeCopy = parentCommit.getTree().copy()
-//            treeFormatter.append("",parentCommit.getTree())
-            val parentTreeId=parentCommit.getTree().getId()
+            treeWalk.setRecursive(true);
+            while (treeWalk.next()) {
+              val path = treeWalk.getPathString();
+              if (path != commit.filename) {
+                // using zero as only a single tree was added
+                treeFormatter.append(path, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
+              }
+            }
+            val parentTreeId = parentCommit.getTree().getId()
             println("parentTreeID:" + parentTreeId.name);
           })
           
+          // insert current file
           treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
           
           val treeId = inserter.insert(treeFormatter);
