@@ -71,15 +71,19 @@ object CVSImport extends CommandParser{
           val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
 
           val treeFormatter = new TreeFormatter
-          treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
+          
 
           //insert parent elemets in this tree
           parentId.foreach((id) => {
             val parentCommit = revWalk.parseCommit(id)
             treeWalk.addTree(parentCommit.getTree())
+            val treeCopy = parentCommit.getTree().copy()
+//            treeFormatter.append("",parentCommit.getTree())
             val parentTreeId=parentCommit.getTree().getId()
             println("parentTreeID:" + parentTreeId.name);
           })
+          
+          treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
           
           val treeId = inserter.insert(treeFormatter);
           
@@ -106,7 +110,8 @@ object CVSImport extends CommandParser{
           println("len:"+file.length)
           file.delete();
           GitUtils.updateHeadRef("master", commitId.name)
-          GitUtils.addNote(commitId.name, "CVS_REV: "+commit.revision)
+          val git = new Git(gitrepo)
+          git.notesAdd().setMessage("CVS_REV: "+commit.revision).setObjectId(revWalk.lookupCommit(commitId)).call()
           
         } finally {
           inserter.release()
