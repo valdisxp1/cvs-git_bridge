@@ -1,6 +1,7 @@
 package com.valdis.adamsons.commands
 
 import com.valdis.adamsons.utils.GitUtils
+import com.valdis.adamsons.utils.GitUtils._
 import scala.sys.process._
 import com.valdis.adamsons.cvs.CVSRepository
 import com.valdis.adamsons.cvs.CVSFileVersion
@@ -30,7 +31,6 @@ object CVSImport extends CommandParser{
     val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
 
     def lastUpdated(gitrepo: Repository): Option[Date] = {
-      val git = new Git(gitrepo)
       val revWalk = new RevWalk(gitrepo);
       try {
         val logs = git.log().setMaxCount(1).call()
@@ -46,7 +46,6 @@ object CVSImport extends CommandParser{
     }
 
     def getRelevantCommits(sortedCommits: List[CVSCommit], branch: String, gitrepo: Repository) = {
-      val revWalk = new RevWalk(gitrepo);
       val previousHead = GitUtils.getHeadRef(branch)
       val previousCommit = previousHead.map(ObjectId.fromString(_)).map((headId) => {
         val gitCommit = revWalk.parseCommit(headId)
@@ -68,8 +67,6 @@ object CVSImport extends CommandParser{
     }
     
     def appendCommits(commits:List[CVSCommit],branch:String,gitrepo:Repository){
-      val revWalk = new RevWalk(gitrepo);
-      val git = new Git(gitrepo)
       val sortedCommits = commits.sortBy(_.date)
       val relevantCommits =  getRelevantCommits(sortedCommits, branch, gitrepo)
       relevantCommits.foreach((commit)=>{
@@ -86,7 +83,6 @@ object CVSImport extends CommandParser{
         //stage
         val inserter = gitrepo.newObjectInserter();
         try {
-          val revWalk = new RevWalk(gitrepo)
           val treeWalk = new TreeWalk(gitrepo)
           
           val parentId = GitUtils.getHeadRef(branch).map(ObjectId.fromString(_))

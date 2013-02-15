@@ -30,21 +30,22 @@ object GitUtils {
     builder.setGitDir(new File(gitDir)).
       readEnvironment().findGitDir().build();
   }
-  
-  def getNoteMessage(objectId:String):String = {
-    val git = new Git(repo)
-    val revWalk = new RevWalk(repo)
+
+  lazy val git = new Git(repo)
+  lazy val revWalk = new RevWalk(repo)
+
+  def getNoteMessage(objectId: String): String = {
     val revObject = revWalk.lookupCommit(ObjectId.fromString(objectId))
     val note = git.notesShow().setObjectId(revObject).call()
     val noteData = repo.open(note.getData()).getBytes()
     new String(noteData)
   }
-  
+
   def hasHeadRef(branch: String): Boolean = {
     // assumes bare
     new File(gitDir + "refs/heads/" + branch).exists()
   }
-  
+
   def getHeadRef(branch: String): Option[String] = {
     Option(repo.resolve(branch)).map(_.name)
   }
