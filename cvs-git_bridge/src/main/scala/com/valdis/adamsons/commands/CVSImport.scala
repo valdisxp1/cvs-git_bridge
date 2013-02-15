@@ -31,7 +31,6 @@ object CVSImport extends CommandParser{
     val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
 
     def lastUpdated(gitrepo: Repository): Option[Date] = {
-      val revWalk = new RevWalk(gitrepo);
       try {
         val logs = git.log().setMaxCount(1).call()
         val iterator = logs.iterator()
