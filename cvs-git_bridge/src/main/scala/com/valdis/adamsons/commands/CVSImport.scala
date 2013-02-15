@@ -66,6 +66,7 @@ object CVSImport extends CommandParser{
         println
         //does not change relative path
         val file = cvsrepo.getFile(commit.filename, commit.revision)
+        println("tmp file:"+file.getAbsolutePath())
         //stage
         val inserter = gitrepo.newObjectInserter();
         try {
