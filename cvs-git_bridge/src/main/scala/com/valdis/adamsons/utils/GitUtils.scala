@@ -46,12 +46,7 @@ object GitUtils {
   }
   
   def getHeadRef(branch: String): Option[String] = {
-    val file = new File(gitDir + "refs/heads/" + branch)
-    if (file.exists) {
-      Some(fromFile(file).getLines.mkString)
-    } else {
-      None
-    }
+    Option(repo.resolve(branch)).map(_.name)
   }
 
   def updateHeadRef(branch: String, address: String) {
