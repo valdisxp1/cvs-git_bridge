@@ -19,6 +19,8 @@ import org.eclipse.jgit.lib.TreeFormatter
 import org.eclipse.jgit.lib.FileMode
 import com.sun.jndi.ldap.Obj
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.revwalk.RevWalk
 
 object GitUtils {
   val gitDir = "git/";
@@ -31,8 +33,10 @@ object GitUtils {
   
   def getNoteMessage(objectId:String):String = {
     val git = new Git(repo)
-    val note = git.notesShow().setNotesRef(objectId).call()
-    val noteData = repo.open(note).getBytes()
+    val revWalk = new RevWalk(repo)
+    val revObject = revWalk.lookupCommit(ObjectId.fromString(objectId))
+    val note = git.notesShow().setObjectId(revObject).call()
+    val noteData = repo.open(note.getData()).getBytes()
     new String(noteData)
   }
   

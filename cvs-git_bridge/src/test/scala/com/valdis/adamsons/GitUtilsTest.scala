@@ -38,7 +38,6 @@ class GitUtilsTest {
     git.notesAdd().setMessage(note).setObjectId(revWalk.lookupCommit(commitId)).call()
     
     val noteString = GitUtils.getNoteMessage(commitId.name)
-    println (noteString)
     assertEquals(note, noteString)
   }
   
