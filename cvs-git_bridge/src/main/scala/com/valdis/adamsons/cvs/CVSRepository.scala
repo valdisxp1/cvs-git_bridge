@@ -66,10 +66,12 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         val date = CVSRepository.CVS_DATE_FORMAT.parse(params.get("date").get)
         val author = params.get("author").get
         val commitId = params.get("commitid");
+        val isDead = params.get("state").exists(_ == "dead")
         //need a good way to determine where commit message starts
         val linesToDrop = if (lines(2).contains(": ")) { 3 } else { 2 }
         val comment = lines.drop(linesToDrop).mkString("\n").trim
-        val cvsCommit = CVSCommit(fileName,revision,date,author,comment,commitId)
+       
+        val cvsCommit = CVSCommit(fileName,revision,isDead,date,author,comment,commitId)
         cvsCommit
       }) 
       headerWithOutCommits.withCommits(commits);
