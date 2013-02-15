@@ -14,6 +14,7 @@ import org.eclipse.jgit.lib.CommitBuilder
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.lib.TreeFormatter
 import org.eclipse.jgit.lib.PersonIdent
+import com.valdis.adamsons.utils.CVSUtils
 
 class GitUtilsTest {
   var repo:Repository = null
@@ -25,26 +26,23 @@ class GitUtilsTest {
   
   @Test
   def testGetNoteMessage{
-    //create an empty commit
-    val inserter = repo.newObjectInserter();
     val revWalk = new RevWalk(repo)
-    val treeFormatter = new TreeFormatter
-    val treeId = inserter.insert(treeFormatter)
-
-    val author = new PersonIdent("abc", "abc@nowhere.com")
-    val commitBuilder = new CommitBuilder
-    commitBuilder.setTreeId(treeId)
-    commitBuilder.setAuthor(author)
-    commitBuilder.setCommitter(author)
-    commitBuilder.setMessage(" ")
-          
-    val commitId = inserter.insert(commitBuilder)
-    inserter.flush();
+    val commitId = repo.resolve("master")
     
+    val git = new Git(repo)
+    //fetch a commit from test repo
+    val path = new File("testrepo/").getAbsolutePath().map((x)=>{
+	      if(x=='\\'){
+	        '/'
+	      }else{
+	        x
+	      }
+	    })
+    git.fetch().setRemote("file://"+path).call()
     
     //add a note
     val note = "HAHA"
-    val git = new Git(repo)
+    
     git.notesAdd().setMessage(note).setObjectId(revWalk.lookupCommit(commitId))
     
     val noteString = GitUtils.getNoteMessage(commitId.name)
