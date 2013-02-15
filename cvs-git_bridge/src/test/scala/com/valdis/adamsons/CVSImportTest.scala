@@ -34,26 +34,26 @@ class CVSImportTest {
   @Test
   def testSubdirs {
     CVSImportCommand("test/cvsroot", "cvstest1").apply
-    assertEquals(1, commitCount)
+    assertEquals(34, commitCount)
   }
   @Test
   def testSubdirs2 {
     CVSImportCommand("test/cvsroot", "cvstest2").apply
-    assertEquals(1, commitCount)
+    assertEquals(12, commitCount)
   }
   
   @Test
   def testIncremental{
     CVSImportCommand("test/cvsroot", "cvstest2").apply
     CVSImportCommand("test/cvsroot", "cvstest2").apply
-    assertEquals(1, commitCount)
+    assertEquals(12, commitCount)
     
   }
 
   @Test
   def testImages {
     CVSImportCommand("test/cvsroot", "cvsimagetest1").apply
-    assertEquals(1, commitCount)
+    assertEquals(3, commitCount)
   }
 
   @After
