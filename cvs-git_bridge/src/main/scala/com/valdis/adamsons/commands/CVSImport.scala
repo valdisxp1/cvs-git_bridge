@@ -20,6 +20,7 @@ import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.treewalk.TreeWalk
 import com.valdis.adamsons.cvs.CVSCommit
+import java.util.TimeZone
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
@@ -102,7 +103,7 @@ object CVSImport extends CommandParser{
           val treeId = inserter.insert(treeFormatter);
           
           //commit
-          val author = new PersonIdent(commit.author,commit.author+"@nowhere.com")
+          val author = new PersonIdent(commit.author,commit.author+"@nowhere.com",commit.date,TimeZone.getDefault())
           val commitBuilder = new CommitBuilder
           commitBuilder.setTreeId(treeId)
           commitBuilder.setAuthor(author)
