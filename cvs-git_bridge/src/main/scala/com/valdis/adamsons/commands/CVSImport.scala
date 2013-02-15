@@ -107,8 +107,10 @@ object CVSImport extends CommandParser{
             println("parentTreeID:" + parentTreeId.name);
           })
           
-          // insert current file
-          treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
+          // insert current file, a dead state means the file is removed instead
+          if(!commit.isDead){
+        	  treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
+          }
           
           val treeId = inserter.insert(treeFormatter);
           
