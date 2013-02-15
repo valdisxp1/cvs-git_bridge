@@ -35,7 +35,7 @@ class GitUtilsTest {
     //add a note
     val note = "HAHA"
     
-    git.notesAdd().setMessage(note).setObjectId(revWalk.lookupCommit(commitId))
+    git.notesAdd().setMessage(note).setObjectId(revWalk.lookupCommit(commitId)).call()
     
     val noteString = GitUtils.getNoteMessage(commitId.name)
     println (noteString)
