@@ -1,0 +1,57 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2013.02.15.20.29.28;	author Valdis;	state Exp;
+branches;
+next	1.2;
+commitid	QdX1IEdzXHzCvkEw;
+
+1.2
+date	2013.02.15.20.26.56;	author Valdis;	state dead;
+branches;
+next	1.1;
+commitid	0DRUHQHq4fLKukEw;
+
+1.1
+date	2013.02.15.20.26.16;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	nxmml6MFdbYvukEw;
+
+
+desc
+@@
+
+
+1.3
+log
+@evil returns
+@
+text
+@JScript MS edition
+@
+
+
+1.2
+log
+@banish the evil
+@
+text
+@d1 1
+a1 1
+VB.NET
+@
+
+
+1.1
+log
+@the evil
+@
+text
+@@
+

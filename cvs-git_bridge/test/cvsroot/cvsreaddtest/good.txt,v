@@ -1,0 +1,25 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2013.02.15.20.24.24;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	e3TbwYEMhLxStkEw;
+
+
+desc
+@@
+
+
+1.1
+log
+@the good
+@
+text
+@scala is awesome
+@

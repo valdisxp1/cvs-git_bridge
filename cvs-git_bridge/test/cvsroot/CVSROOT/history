@@ -8,3 +8,8 @@ O511e9669|Valdis|~/*0|cvsdeletetest||cvsdeletetest
 A511e96bd|Valdis|~/*0|cvsdeletetest|1.1|uglyfile.txt
 M511e9783|Valdis|~/*0|cvsdeletetest|1.2|uglyfile.txt
 R511e97c7|Valdis|~/*0|cvsdeletetest|1.3|uglyfile.txt
+O511e98c7|Valdis|~/*0|cvsreaddtest||cvsreaddtest
+A511e9979|Valdis|~/*0|cvsreaddtest|1.1|good.txt
+A511e99e8|Valdis|~/*0|cvsreaddtest|1.1|evil.txt
+R511e9a10|Valdis|~/*0|cvsreaddtest|1.2|evil.txt
+A511e9aa8|Valdis|~/*0|cvsreaddtest|1.3|evil.txt
