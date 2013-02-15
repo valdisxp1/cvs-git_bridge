@@ -1,0 +1,57 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2013.02.15.20.17.11;	author Valdis;	state dead;
+branches;
+next	1.2;
+commitid	LiusaZjxaQRorkEw;
+
+1.2
+date	2013.02.15.20.16.03;	author Valdis;	state Exp;
+branches;
+next	1.1;
+commitid	uYWlNZvIuq41rkEw;
+
+1.1
+date	2013.02.15.20.12.45;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	tqbwmDfkc6QSpkEw;
+
+
+desc
+@@
+
+
+1.3
+log
+@the evil one is gone
+@
+text
+@more uglyness
+@
+
+
+1.2
+log
+@ugly file is her
+@
+text
+@@
+
+
+1.1
+log
+@ugly file is here
+@
+text
+@d1 1
+a1 1
+blablabla
+@
+
