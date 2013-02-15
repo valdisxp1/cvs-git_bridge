@@ -46,8 +46,8 @@ object GitUtils {
     new File(gitDir + "refs/heads/" + branch).exists()
   }
 
-  def getHeadRef(branch: String): Option[String] = {
-    Option(repo.resolve(branch)).map(_.name)
+  def getHeadRef(branch: String): Option[ObjectId] = {
+    Option(repo.resolve(branch))
   }
 
   def updateHeadRef(branch: String, address: String) {

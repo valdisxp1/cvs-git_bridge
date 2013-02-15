@@ -46,7 +46,7 @@ object CVSImport extends CommandParser{
 
     def getRelevantCommits(sortedCommits: List[CVSCommit], branch: String, gitrepo: Repository) = {
       val previousHead = GitUtils.getHeadRef(branch)
-      val previousCommit = previousHead.map(ObjectId.fromString(_)).map((headId) => {
+      val previousCommit = previousHead.map((headId) => {
         val gitCommit = revWalk.parseCommit(headId)
         val noteString = GitUtils.getNoteMessage(headId.name())
         println("last note: " + noteString)
@@ -84,7 +84,7 @@ object CVSImport extends CommandParser{
         try {
           val treeWalk = new TreeWalk(gitrepo)
           
-          val parentId = GitUtils.getHeadRef(branch).map(ObjectId.fromString(_))
+          val parentId = GitUtils.getHeadRef(branch)
           
           val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
 
