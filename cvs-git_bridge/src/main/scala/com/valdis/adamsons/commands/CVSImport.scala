@@ -45,6 +45,16 @@ object CVSImport extends CommandParser{
     }
     
     def appendCommits(commits:List[CVSCommit],branch:String,gitrepo:Repository){
+      val revWalk = new RevWalk(gitrepo);
+      val git = new Git(gitrepo)
+      
+      val previousHead = GitUtils.getHeadRef(branch)
+      val previousCommit = previousHead.map(ObjectId.fromString(_)).map((headId)=>{
+        val gitCommit = revWalk.parseCommit(headId)
+        val note = git.notesShow().setNotesRef(headId.name()).call()
+        val noteString = ""
+        CVSCommit.fromGitCommit(gitCommit,noteString)
+      })
       val sortedcommits = commits.sortBy(_.date)
       sortedcommits.foreach((commit)=>{
         println(commit.filename);
@@ -113,8 +123,8 @@ object CVSImport extends CommandParser{
           println("len:"+file.length)
           file.delete();
           GitUtils.updateHeadRef(branch, commitId.name)
-          val git = new Git(gitrepo)
-          git.notesAdd().setMessage("CVS_REV: "+commit.revision).setObjectId(revWalk.lookupCommit(commitId)).call()
+          
+          git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
           
         } finally {
           inserter.release()
