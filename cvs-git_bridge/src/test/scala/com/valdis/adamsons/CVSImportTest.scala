@@ -55,7 +55,19 @@ class CVSImportTest {
     CVSImportCommand("test/cvsroot", "cvsimagetest1").apply
     assertEquals(3, commitCount)
   }
+  
+  @Test
+  def testRemove {
+    CVSImportCommand("test/cvsroot", "cvsdeletetest").apply
+    fail("need to add metrics to this test")
+  }
 
+  @Test
+  def testReAdd {
+    CVSImportCommand("test/cvsroot", "cvsreaddtest").apply
+    fail("need to add metrics to this test")
+  }
+  
   @After
   def after {
     clearDirs
