@@ -1,9 +1,12 @@
 package com.valdis.adamsons.utils
 
 import java.io.File
+import scala.io.Source
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 object FileUtils {
-	def deleteDir(file: File) {
+  def deleteDir(file: File) {
     def deleteRec(file: File): Unit = {
       if (file.isDirectory) {
         file.listFiles().foreach(deleteRec(_))
@@ -11,5 +14,24 @@ object FileUtils {
       file.delete
     }
     deleteRec(file)
+  }
+  def copyDir(src: File,dest:File) {
+    def copyRec(src: File,dest:File): Unit = {
+      println(src.getAbsolutePath()+"->"+dest.getAbsolutePath())
+      if (src.isDirectory) {
+        if(!dest.exists()){
+          dest.mkdir()
+        }
+        src.listFiles().foreach((file)=>copyRec(file,new File(dest,file.getName())))
+      }else{
+        if(!dest.exists()){
+          dest.createNewFile();
+        }
+        val in = new FileInputStream(src).getChannel()
+        val out = new FileOutputStream(dest).getChannel()
+        out.transferFrom(in, 0, in.size())
+      }
+    }
+    copyRec(src,dest)
   }
 }

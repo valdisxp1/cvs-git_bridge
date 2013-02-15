@@ -20,8 +20,9 @@ class GitUtilsTest {
   var repo:Repository = null
   @Before
   def before{
+    //copy the test repository
+    FileUtils.copyDir(new File("testrepo"), new File(GitUtils.gitDir))
     repo = GitUtils.repo
-    repo.create(true)
   }
   
   @Test
@@ -30,15 +31,6 @@ class GitUtilsTest {
     val commitId = repo.resolve("master")
     
     val git = new Git(repo)
-    //fetch a commit from test repo
-    val path = new File("testrepo/").getAbsolutePath().map((x)=>{
-	      if(x=='\\'){
-	        '/'
-	      }else{
-	        x
-	      }
-	    })
-    git.fetch().setRemote("file://"+path).call()
     
     //add a note
     val note = "HAHA"
