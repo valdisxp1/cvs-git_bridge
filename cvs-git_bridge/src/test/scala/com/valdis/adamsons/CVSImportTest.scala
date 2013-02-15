@@ -13,6 +13,8 @@ import com.valdis.adamsons.commands.Init.InitCommand
 class CVSImportTest {
 	@Before
 	def before{
+	  val gitDir = new File(GitUtils.gitDir)
+	  FileUtils.deleteDir(gitDir)
 	  InitCommand().apply
 	}
 	@Test
