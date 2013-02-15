@@ -44,28 +44,34 @@ object CVSImport extends CommandParser{
         case e: NoHeadException => None
       }
     }
-    
-    def appendCommits(commits:List[CVSCommit],branch:String,gitrepo:Repository){
+
+    def getRelevantCommits(sortedCommits: List[CVSCommit], branch: String, gitrepo: Repository) = {
       val revWalk = new RevWalk(gitrepo);
-      val git = new Git(gitrepo)
-      
       val previousHead = GitUtils.getHeadRef(branch)
-      val previousCommit = previousHead.map(ObjectId.fromString(_)).map((headId)=>{
+      val previousCommit = previousHead.map(ObjectId.fromString(_)).map((headId) => {
         val gitCommit = revWalk.parseCommit(headId)
         val noteString = GitUtils.getNoteMessage(headId.name())
-        println("last note: "+noteString)
-        CVSCommit.fromGitCommit(gitCommit,noteString)
+        println("last note: " + noteString)
+        CVSCommit.fromGitCommit(gitCommit, noteString)
       })
-      val sortedCommits = commits.sortBy(_.date)
-      val lastImportPosition = sortedCommits.indexWhere((commit)=>{previousCommit.map((prevCommit)=>{
-        prevCommit.filename == commit.filename && prevCommit.revision == commit.revision
-      }).getOrElse(false)})
-      println("last position: "+lastImportPosition)
-      val relevantCommits = if (lastImportPosition < 0) {
+      val lastImportPosition = sortedCommits.indexWhere((commit) => {
+        previousCommit.map((prevCommit) => {
+          prevCommit.filename == commit.filename && prevCommit.revision == commit.revision
+        }).getOrElse(false)
+      })
+      println("last position: " + lastImportPosition)
+      if (lastImportPosition < 0) {
         sortedCommits
       } else {
         sortedCommits.drop(lastImportPosition + 1)
       }
+    }
+    
+    def appendCommits(commits:List[CVSCommit],branch:String,gitrepo:Repository){
+      val revWalk = new RevWalk(gitrepo);
+      val git = new Git(gitrepo)
+      val sortedCommits = commits.sortBy(_.date)
+      val relevantCommits =  getRelevantCommits(sortedCommits, branch, gitrepo)
       relevantCommits.foreach((commit)=>{
         println(commit.filename);
         println(commit.author);
@@ -140,10 +146,6 @@ object CVSImport extends CommandParser{
         } finally {
           inserter.release()
         }
-        
-        
-        //val revCommit = git.commit().setAuthor(commit.author, commit.author+"@nowhere.com").setMessage(commit.comment).call();
-        //println(revCommit)
       })
     }
     
