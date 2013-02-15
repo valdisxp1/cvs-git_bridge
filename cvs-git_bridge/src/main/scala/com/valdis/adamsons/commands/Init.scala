@@ -10,9 +10,12 @@ object Init extends CommandParser{
   case class InitCommand extends Command{
     def apply = {
     	val repo = GitUtils.repo;
+    	println("Creating repository")
     	repo.create(true);
+    	println("Creating cache folders")
     	new File("cache/rlog").mkdirs()
     	new File("cache/import").mkdirs()
+    	println("Initialize done")
     0
   }
   def help = ""

@@ -11,15 +11,18 @@ import com.valdis.adamsons.commands.CVSImport.CVSImportCommand
 import com.valdis.adamsons.commands.Init.InitCommand
 
 class CVSImportTest {
+	@Before
+	def before{
+	  InitCommand().apply
+	}
 	@Test
 	def simpleTest{
-	  InitCommand.apply
 	  CVSImportCommand("test/cvsroot","cvstest2").apply
 	}
   
    @After
   def after{
     val gitDir = new File(GitUtils.gitDir)
-//    FileUtils.deleteDir(gitDir)
+    FileUtils.deleteDir(gitDir)
   }
 }
