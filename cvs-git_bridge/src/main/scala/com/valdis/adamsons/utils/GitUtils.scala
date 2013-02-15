@@ -18,6 +18,7 @@ import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.TreeFormatter
 import org.eclipse.jgit.lib.FileMode
 import com.sun.jndi.ldap.Obj
+import org.eclipse.jgit.api.Git
 
 object GitUtils {
   val gitDir = "git/";
@@ -27,7 +28,14 @@ object GitUtils {
     builder.setGitDir(new File(gitDir)).
       readEnvironment().findGitDir().build();
   }
-
+  
+  def getNoteMessage(objectId:String):String = {
+    val git = new Git(repo)
+    val note = git.notesShow().setNotesRef(objectId).call()
+    val noteData = repo.open(note).getBytes()
+    new String(noteData)
+  }
+  
   def hasHeadRef(branch: String): Boolean = {
     // assumes bare
     new File(gitDir + "refs/heads/" + branch).exists()

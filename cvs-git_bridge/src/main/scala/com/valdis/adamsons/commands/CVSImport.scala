@@ -51,8 +51,8 @@ object CVSImport extends CommandParser{
       val previousHead = GitUtils.getHeadRef(branch)
       val previousCommit = previousHead.map(ObjectId.fromString(_)).map((headId)=>{
         val gitCommit = revWalk.parseCommit(headId)
-        val note = git.notesShow().setNotesRef(headId.name()).call()
-        val noteString = ""
+        val noteString = GitUtils.getNoteMessage(headId.name())
+        println("last note: "+noteString)
         CVSCommit.fromGitCommit(gitCommit,noteString)
       })
       val sortedcommits = commits.sortBy(_.date)
