@@ -11,10 +11,15 @@ import com.valdis.adamsons.commands.CVSImport.CVSImportCommand
 import com.valdis.adamsons.commands.Init.InitCommand
 
 class CVSImportTest {
-	@Before
-	def before{
+	def clearDirs{
 	  val gitDir = new File(GitUtils.gitDir)
 	  FileUtils.deleteDir(gitDir)
+	  val cacheDir = new File("cache/")
+	  FileUtils.deleteDir(cacheDir)
+	}
+	@Before
+	def before{
+	  clearDirs
 	  InitCommand().apply
 	}
 	@Test
@@ -24,7 +29,6 @@ class CVSImportTest {
   
    @After
   def after{
-    val gitDir = new File(GitUtils.gitDir)
-    FileUtils.deleteDir(gitDir)
+    clearDirs
   }
 }
