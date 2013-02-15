@@ -5,7 +5,6 @@ import org.junit.Assert._
 import com.valdis.adamsons.utils.GitUtils
 import org.junit.After
 import org.junit.Before
-import com.valdis.adamsons.commands.CVSImport.CVSImportCommand
 import java.io.File
 import com.valdis.adamsons.utils.FileUtils
 import org.eclipse.jgit.lib.Repository
