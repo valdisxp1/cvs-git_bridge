@@ -19,36 +19,32 @@ import org.eclipse.jgit.lib.CommitBuilder
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.treewalk.TreeWalk
+import com.valdis.adamsons.cvs.CVSCommit
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
     def this() = this(None,None)
     def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
     
-    def lastUpdated(gitrepo:Repository):Option[Date] = {
+    val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
+
+    def lastUpdated(gitrepo: Repository): Option[Date] = {
       val git = new Git(gitrepo)
       val revWalk = new RevWalk(gitrepo);
-      try{
-      val logs = git.log().call()
-      val iterator = logs.iterator()
-      if(iterator.hasNext()){
-        Some(revWalk.parseCommit(iterator.next()).getAuthorIdent().getWhen())
-      }else{
-        None
-      }
-      }catch{
-        case e:NoHeadException => None
+      try {
+        val logs = git.log().setMaxCount(1).call()
+        val iterator = logs.iterator()
+        if (iterator.hasNext()) {
+          Some(revWalk.parseCommit(iterator.next()).getAuthorIdent().getWhen())
+        } else {
+          None
+        }
+      } catch {
+        case e: NoHeadException => None
       }
     }
     
-    def apply = {
-      val gitrepo = GitUtils.repo;
-      val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
-      //get last the last updated date
-      val lastUpdatedVal = lastUpdated(gitrepo)
-      println(lastUpdatedVal)
-      val commits = cvsrepo.getFileList(lastUpdatedVal,None).flatMap(_.commits)
-      println(commits);
+    def appendCommits(commits:List[CVSCommit],branch:String,gitrepo:Repository){
       val sortedcommits = commits.sortBy(_.date)
       sortedcommits.foreach((commit)=>{
         println(commit.filename);
@@ -66,7 +62,7 @@ object CVSImport extends CommandParser{
           val revWalk = new RevWalk(gitrepo)
           val treeWalk = new TreeWalk(gitrepo)
           
-          val parentId = GitUtils.getHeadRef("master").map(ObjectId.fromString(_))
+          val parentId = GitUtils.getHeadRef(branch).map(ObjectId.fromString(_))
           
           val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
 
@@ -116,7 +112,7 @@ object CVSImport extends CommandParser{
           
           println("len:"+file.length)
           file.delete();
-          GitUtils.updateHeadRef("master", commitId.name)
+          GitUtils.updateHeadRef(branch, commitId.name)
           val git = new Git(gitrepo)
           git.notesAdd().setMessage("CVS_REV: "+commit.revision).setObjectId(revWalk.lookupCommit(commitId)).call()
           
@@ -128,7 +124,17 @@ object CVSImport extends CommandParser{
         //val revCommit = git.commit().setAuthor(commit.author, commit.author+"@nowhere.com").setMessage(commit.comment).call();
         //println(revCommit)
       })
-      1
+    }
+    
+    def apply = {
+      val gitrepo = GitUtils.repo;
+      //get last the last updated date
+      val lastUpdatedVal = lastUpdated(gitrepo)
+      println(lastUpdatedVal)
+      val commits = cvsrepo.getFileList(lastUpdatedVal,None).flatMap(_.commits)
+      println(commits);
+      appendCommits(commits, "master", gitrepo)
+      0
     }
     
   def help = ""
