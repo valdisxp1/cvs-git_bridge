@@ -77,9 +77,9 @@ class CVSImportTest {
   
   @Test
   def testRemove {
-    CVSImportCommand("test/cvsroot", "cvsdeletetest").apply
-    assertEquals(5, commitCount)
-    println(getFileNames)
+    CVSImportCommand("test/cvsroot", "cvsdeltetest2").apply
+    assertEquals(4, commitCount)
+    assertEquals(List(Set("file.txt"), Set("file.txt", "evil.txt"), Set("file.txt", "evil.txt"), Set("file.txt")),getFileNames)
   }
 
   @Test
