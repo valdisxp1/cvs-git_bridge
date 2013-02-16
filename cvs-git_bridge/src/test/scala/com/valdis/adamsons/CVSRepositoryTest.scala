@@ -48,4 +48,10 @@ class CVSRepositoryTest {
     assertEquals(expected, repo.getFileList)
     assertTrue(true);
   }
+  
+  @Test
+  def testGetBranchSet {
+    val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"branchtest")
+    assertEquals(Set("branch"), repo.getBranchNameSet)
+  }
 }

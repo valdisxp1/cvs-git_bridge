@@ -39,6 +39,11 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     response.split("\n").toList.map(getRelativePath)
   }
   
+  def getBranchNameSet:Set[String]={
+    val process = cvsString+ "rlog -h"
+    val response: String = process!!;
+    response.split("\n?\r").filter(_.startsWith("        ")).map(_.split(':')(0).trim).toSet
+  }  
   
   def getFileList:List[CVSFile]= getFileList(None,None)
   def getFileList(start:Option[Date],end:Option[Date]):List[CVSFile]=getFileList(None,start,end)
