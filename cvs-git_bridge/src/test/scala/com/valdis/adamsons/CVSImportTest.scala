@@ -87,6 +87,18 @@ class CVSImportTest {
     				  Set("file.txt", "evil.txt"),
     				  Set("file.txt")), getFileNames)
   }
+  
+  @Test
+  def testRemoveSubdirs {
+    CVSImportCommand("test/cvsroot", "subdirdeletetest").apply
+    assertEquals(6, commitCount)
+    assertEquals(List(Set("good.txt", "really/good.txt"),
+    				  Set("good.txt", "really/good.txt", "really/evil.txt"),
+    				  Set("good.txt", "really/good.txt", "really/evil.txt", "evil.txt"),
+    				  Set("good.txt", "really/evil.txt", "evil.txt"),
+    				  Set("good.txt", "evil.txt"),
+    				  Set("evil.txt")), getFileNames)
+  }
 
   @Test
   def testReAdd {
