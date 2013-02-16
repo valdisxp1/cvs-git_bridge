@@ -17,26 +17,26 @@ import org.eclipse.jgit.treewalk.TreeWalk
 class CVSImportTest {
   val gitDir = new File(GitUtils.gitDir)
   val cacheDir = new File("cache/")
-  
+
   def commitCount = {
     val logs = git.log().call();
     logs.count((a) => true)
   }
-  
+
   def getFileNames = {
     val logs = git.log().call()
-    logs.map(_.getTree()).map((tree)=>{
+    logs.map(_.getTree()).map((tree) => {
       val treewalk = new TreeWalk(repo)
       treewalk.addTree(tree)
       //TODO make this variable a value
-      var fileNames :Set[String]=Set()
-      while(treewalk.next()){
+      var fileNames: Set[String] = Set()
+      while (treewalk.next()) {
         fileNames = fileNames + treewalk.getPathString()
       }
       fileNames
     }).toList
   }
-  
+
   def clearDirs {
     FileUtils.deleteDir(gitDir)
     FileUtils.deleteDir(cacheDir)
@@ -48,47 +48,56 @@ class CVSImportTest {
   }
   @Test
   def testSubdirs {
-    CVSImportCommand("test/cvsroot", "cvstest1").apply
-    assertEquals(34, commitCount)
-    println(getFileNames)
+    CVSImportCommand("test/cvsroot", "cvstest5").apply
+    assertEquals(6, commitCount)
+    assertEquals(List(Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt", "dir/3.txt"),
+    				  Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt"),
+    				  Set("1.txt", "2.txt", "3.txt", "dir/1.txt"),
+    				  Set("1.txt", "2.txt", "3.txt"),
+    				  Set("1.txt", "2.txt"),
+    				  Set("1.txt")), getFileNames)
   }
+
   @Test
-  def testSubdirs2 {
-    CVSImportCommand("test/cvsroot", "cvstest2").apply
-    assertEquals(12, commitCount)
-    println(getFileNames)
-  }
-  
-  @Test
-  def testIncremental{
-    CVSImportCommand("test/cvsroot", "cvstest2").apply
-    CVSImportCommand("test/cvsroot", "cvstest2").apply
-    assertEquals(12, commitCount)
-    println(getFileNames)
-    
+  def testIncremental {
+    CVSImportCommand("test/cvsroot", "cvstest5").apply
+    CVSImportCommand("test/cvsroot", "cvstest5").apply
+    assertEquals(6, commitCount)
+    assertEquals(List(Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt", "dir/3.txt"),
+    				  Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt"),
+    				  Set("1.txt", "2.txt", "3.txt", "dir/1.txt"),
+    				  Set("1.txt", "2.txt", "3.txt"),
+    				  Set("1.txt", "2.txt"),
+    				  Set("1.txt")), getFileNames)
   }
 
   @Test
   def testImages {
     CVSImportCommand("test/cvsroot", "cvsimagetest2").apply
     assertEquals(2, commitCount)
-    assertEquals(List(Set( "image.png"), Set("image.png")),getFileNames)
+    assertEquals(List(Set("image.png"), Set("image.png")), getFileNames)
   }
-  
+
   @Test
   def testRemove {
     CVSImportCommand("test/cvsroot", "cvsdeltetest2").apply
     assertEquals(4, commitCount)
-    assertEquals(List(Set("file.txt"), Set("file.txt", "evil.txt"), Set("file.txt", "evil.txt"), Set("file.txt")),getFileNames)
+    assertEquals(List(Set("file.txt"),
+    				  Set("file.txt", "evil.txt"),
+    				  Set("file.txt", "evil.txt"),
+    				  Set("file.txt")), getFileNames)
   }
 
   @Test
   def testReAdd {
     CVSImportCommand("test/cvsroot", "cvsreaddtest").apply
     assertEquals(4, commitCount)
-    assertEquals(List(Set("good.txt", "evil.txt"), Set("good.txt"), Set("good.txt", "evil.txt"), Set("good.txt")),getFileNames)
+    assertEquals(List(Set("good.txt", "evil.txt"),
+    				  Set("good.txt"),
+    				  Set("good.txt", "evil.txt"),
+    				  Set("good.txt")), getFileNames)
   }
-  
+
   @After
   def after {
     clearDirs
