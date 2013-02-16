@@ -39,6 +39,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     response.split("\n").toList.map(getRelativePath)
   }
   
+  
   def getFileList:List[CVSFile]= getFileList(None,None)
   def getFileList(start:Option[Date],end:Option[Date]):List[CVSFile]={
     val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
@@ -50,21 +51,26 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
      }
     val process = cvsString+ "rlog " + dateString + module.getOrElse("")
     val response: String = process!!;
-    val items = response.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList.map(_.trim)).dropRight(1)
+    parseRlog(response)
+  }
+  
+   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
+  
+  def parseRlog(rlog:String):List[CVSFile]={
+    val items = rlog.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList.map(_.trim)).dropRight(1)
     items.map((file)=>{
       val headerPairs = file.head.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length>1).map((x)=>x(0).trim->x(1))
       val headerMap = headerPairs.toMap
-      //TODO handle errors and remove extra gets
-      val fileName = getRelativePath(headerMap.get("RCS file").get)
-      val head = CVSFileVersion(headerMap.get("head").get)
+      val fileName = getRelativePath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
+      val head = CVSFileVersion(headerMap.get("head").getOrElse(missing("head")))
       val headerWithOutCommits = CVSFile(fileName, Nil, head)
-      val commits = file.tail.map((commit)=>{println
+      val commits = file.tail.map((commit)=>{
         val lines = commit.split("\n?\r");
         val revisionStr = lines(0).trim.split(' ')(1)
         val revision = CVSFileVersion(revisionStr)
         val params = lines(1).trim.dropRight(1).split(';').map(_.split(": ")).map((x)=> x(0).trim->x(1).trim).toMap
-        val date = CVSRepository.CVS_DATE_FORMAT.parse(params.get("date").get)
-        val author = params.get("author").get
+        val date = CVSRepository.CVS_DATE_FORMAT.parse(params.get("date").getOrElse(missing("date")))
+        val author = params.get("author").getOrElse(missing("author"))
         val commitId = params.get("commitid");
         val isDead = params.get("state").exists(_ == "dead")
         //need a good way to determine where commit message starts
