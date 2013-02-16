@@ -29,3 +29,10 @@ A511fbf6f|Valdis|~/cvsworkdir/*0|cvstest5|1.1|3.txt
 A511fbf6f|Valdis|~/cvsworkdir/cvstest5|cvstest5/dir|1.1|1.txt
 A511fbf6f|Valdis|~/cvsworkdir/cvstest5|cvstest5/dir|1.1|2.txt
 A511fbf6f|Valdis|~/cvsworkdir/cvstest5|cvstest5/dir|1.1|3.txt
+O511fc581|Valdis|~/cvsworkdir/*0|subdirdeletetest||subdirdeletetest
+A511fc5d9|Valdis|~/cvsworkdir/*0|subdirdeletetest|1.1|evil.txt
+A511fc5da|Valdis|~/cvsworkdir/*0|subdirdeletetest|1.1|good.txt
+A511fc63a|Valdis|~/cvsworkdir/subdirdeletetest|subdirdeletetest/really|1.1|evil.txt
+A511fc63a|Valdis|~/cvsworkdir/subdirdeletetest|subdirdeletetest/really|1.1|good.txt
+R511fc683|Valdis|~/cvsworkdir/*0|subdirdeletetest|1.2|evil.txt
+R511fc684|Valdis|~/cvsworkdir/subdirdeletetest|subdirdeletetest/really|1.2|evil.txt
