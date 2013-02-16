@@ -9,22 +9,20 @@ import java.io.File
 import com.valdis.adamsons.utils.CVSUtils
 
 class CVSRepositoryTest {
-  var repo: CVSRepository = null;
-  @Before
-  def before{
-    repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest2")
-  }
   @Test
   def testGetFileContents {
+	  val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest2")
 	  assertEquals("1", repo.getFileContents("file1.txt", CVSFileVersion("1.1.1.1")).trim());
   }
   @Test
   def testFileNameList {
+    val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest2")
     assertEquals(List("file1.txt", "file2.txt", "file3.txt", "dir/file1.txt", "dir/file2.txt", "dir/file3.txt"),repo.fileNameList);
   }
   
   @Test
   def testGetFileList {
+    val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest2")
     println(repo.getFileList)
     assertTrue(true);
   }
