@@ -147,11 +147,23 @@ object CVSImport extends CommandParser{
     def apply = {
       val gitrepo = GitUtils.repo;
       //get last the last updated date
+      
+      //main branch at master
+      {
       val lastUpdatedVal = lastUpdated(gitrepo,"master")
       println(lastUpdatedVal)
       val commits = cvsrepo.getFileList(lastUpdatedVal,None).flatMap(_.commits)
       println(commits);
       appendCommits(commits, "master", gitrepo)
+      }
+      //other branches follow
+      cvsrepo.getBranchNameSet.foreach((branch)=>{
+      val lastUpdatedVal = lastUpdated(gitrepo,branch)
+      println(lastUpdatedVal)
+      val commits = cvsrepo.getFileList(branch,lastUpdatedVal,None).flatMap(_.commits)
+      println(commits);
+      appendCommits(commits, branch, gitrepo) 
+      })
       0
     }
     
