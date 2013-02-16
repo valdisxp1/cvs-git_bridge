@@ -76,17 +76,13 @@ object CVSImport extends CommandParser{
         println
         println(commit.comment)
         println
-        //does not change relative path
-        val file = cvsrepo.getFile(commit.filename, commit.revision)
-        println("tmp file:"+file.getAbsolutePath())
+        
         //stage
         val inserter = gitrepo.newObjectInserter();
         try {
           val treeWalk = new TreeWalk(gitrepo)
           
           val parentId = GitUtils.getHeadRef(branch)
-          
-          val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
 
           val treeFormatter = new TreeFormatter
           
@@ -106,10 +102,17 @@ object CVSImport extends CommandParser{
             val parentTreeId = parentCommit.getTree().getId()
             println("parentTreeID:" + parentTreeId.name);
           })
-          
+
           // insert current file, a dead state means the file is removed instead
-          if(!commit.isDead){
-        	  treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
+          if (!commit.isDead) {
+            //does not change relative path
+            val file = cvsrepo.getFile(commit.filename, commit.revision)
+            println("tmp file:" + file.getAbsolutePath())
+            val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
+            treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
+            println("len:"+file.length)
+            file.delete();
+            println("fileID:" + fileId.name);
           }
           
           val treeId = inserter.insert(treeFormatter);
@@ -126,16 +129,12 @@ object CVSImport extends CommandParser{
              commitBuilder.setParentId(_)
           })
          
-          
           val commitId = inserter.insert(commitBuilder)
           inserter.flush();
                     
-          println("fileID:" + fileId.name);
           println("treeID:" + treeId.name);
           println("commitID:" + commitId.name);
           
-          println("len:"+file.length)
-          file.delete();
           GitUtils.updateHeadRef(branch, commitId.name)
           
           git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
