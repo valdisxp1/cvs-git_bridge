@@ -1,0 +1,57 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2013.02.16.16.51.57;	author Valdis;	state dead;
+branches;
+next	1.2;
+commitid	GPBwRbCULgj0hrEw;
+
+1.2
+date	2013.02.16.16.51.17;	author Valdis;	state Exp;
+branches;
+next	1.1;
+commitid	QFvtH5p0NpbMgrEw;
+
+1.1
+date	2013.02.16.16.50.50;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	OFwvvFFVRfsCgrEw;
+
+
+desc
+@@
+
+
+1.3
+log
+@removed evil
+@
+text
+@blablabla, ERROR
+@
+
+
+1.2
+log
+@HAHA
+@
+text
+@@
+
+
+1.1
+log
+@an evil file added
+@
+text
+@d1 1
+a1 1
+evil stuff
+@
+
