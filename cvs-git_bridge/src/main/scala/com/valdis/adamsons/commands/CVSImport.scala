@@ -30,18 +30,17 @@ object CVSImport extends CommandParser{
     
     val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
 
-    def lastUpdated(gitrepo: Repository): Option[Date] = {
-      try {
-        val logs = git.log().setMaxCount(1).call()
+    def lastUpdated(gitrepo: Repository, branch: String): Option[Date] = {
+      val ref = Option(gitrepo.resolve(branch))
+      ref.flatMap((ref) => {
+        val logs = git.log().add(ref).setMaxCount(1).call()
         val iterator = logs.iterator()
         if (iterator.hasNext()) {
           Some(revWalk.parseCommit(iterator.next()).getAuthorIdent().getWhen())
         } else {
           None
         }
-      } catch {
-        case e: NoHeadException => None
-      }
+      })
     }
 
     def getRelevantCommits(sortedCommits: List[CVSCommit], branch: String, gitrepo: Repository) = {
@@ -148,7 +147,7 @@ object CVSImport extends CommandParser{
     def apply = {
       val gitrepo = GitUtils.repo;
       //get last the last updated date
-      val lastUpdatedVal = lastUpdated(gitrepo)
+      val lastUpdatedVal = lastUpdated(gitrepo,"master")
       println(lastUpdatedVal)
       val commits = cvsrepo.getFileList(lastUpdatedVal,None).flatMap(_.commits)
       println(commits);
