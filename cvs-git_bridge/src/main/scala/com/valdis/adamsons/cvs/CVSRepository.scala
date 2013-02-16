@@ -41,7 +41,8 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   
   
   def getFileList:List[CVSFile]= getFileList(None,None)
-  def getFileList(start:Option[Date],end:Option[Date]):List[CVSFile]={
+  def getFileList(start:Option[Date],end:Option[Date]):List[CVSFile]=getFileList(None,start,end)
+  def getFileList(branch:Option[String],start:Option[Date],end:Option[Date]):List[CVSFile]={
     val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val dateString = if (start.isDefined || end.isDefined) {
@@ -49,7 +50,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
      } else {
       ""
      }
-    val process = cvsString+ "rlog -b " + dateString + module.getOrElse("")
+    val process = cvsString+ "rlog "+branch.map(" -r "+_+" ").getOrElse(" -b ") + dateString + module.getOrElse("")
     val response: String = process!!;
     parseRlog(response)
   }
