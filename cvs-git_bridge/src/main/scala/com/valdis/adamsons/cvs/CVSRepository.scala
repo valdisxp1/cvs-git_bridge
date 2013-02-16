@@ -49,7 +49,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
      } else {
       ""
      }
-    val process = cvsString+ "rlog " + dateString + module.getOrElse("")
+    val process = cvsString+ "rlog -b " + dateString + module.getOrElse("")
     val response: String = process!!;
     parseRlog(response)
   }
