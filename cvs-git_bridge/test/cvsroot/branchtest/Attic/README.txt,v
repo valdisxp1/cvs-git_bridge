@@ -1,0 +1,43 @@
+head	1.1;
+access;
+symbols
+	branch:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2013.02.16.18.25.53;	author Valdis;	state dead;
+branches
+	1.1.2.1;
+next	;
+commitid	ucwnjU0Eu0seNrEw;
+
+1.1.2.1
+date	2013.02.16.18.25.53;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	ucwnjU0Eu0seNrEw;
+
+
+desc
+@@
+
+
+1.1
+log
+@file README.txt was initially added on branch branch.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@added useless README
+@
+text
+@a0 1
+nothing here
+@
+

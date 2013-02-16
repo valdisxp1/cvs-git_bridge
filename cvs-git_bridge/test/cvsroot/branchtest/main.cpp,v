@@ -1,0 +1,56 @@
+head	1.1;
+access;
+symbols
+	branch:1.1.0.2
+	branch_start:1.1;
+locks; strict;
+comment	@// @;
+
+
+1.1
+date	2013.02.16.18.20.49;	author Valdis;	state Exp;
+branches
+	1.1.2.1;
+next	;
+commitid	W8QsQ1N4i6HuLrEw;
+
+1.1.2.1
+date	2013.02.16.18.28.28;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	60Oi7a3eCem7OrEw;
+
+
+desc
+@@
+
+
+1.1
+log
+@hello world
+@
+text
+@#include <iostream>
+using namespace std;
+int main(){
+cout<<"hello world"<<endl;
+return 0;
+}
+@
+
+
+1.1.2.1
+log
+@added a lot whitespace
+@
+text
+@a1 1
+
+a2 1
+
+d4 2
+a5 2
+	cout<<"hello world"<<endl;
+	return 0;
+@
+

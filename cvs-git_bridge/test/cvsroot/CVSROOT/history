@@ -36,3 +36,7 @@ A511fc63a|Valdis|~/cvsworkdir/subdirdeletetest|subdirdeletetest/really|1.1|evil.
 A511fc63a|Valdis|~/cvsworkdir/subdirdeletetest|subdirdeletetest/really|1.1|good.txt
 R511fc683|Valdis|~/cvsworkdir/*0|subdirdeletetest|1.2|evil.txt
 R511fc684|Valdis|~/cvsworkdir/subdirdeletetest|subdirdeletetest/really|1.2|evil.txt
+O511fcd0a|Valdis|~/cvsworkdir/*0|branchtest||branchtest
+A511fce01|Valdis|~/cvsworkdir/*0|branchtest|1.1|main.cpp
+A511fcf32|Valdis|~/cvsworkdir/*0|branchtest|1.1.2.1|README.txt
+M511fcfcc|Valdis|~/cvsworkdir/*0|branchtest|1.1.2.1|main.cpp
