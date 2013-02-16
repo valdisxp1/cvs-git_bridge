@@ -21,3 +21,11 @@ R511fb92d|Valdis|~/*0|cvsdeltetest2|1.3|evil.txt
 O511fb995|Valdis|~/cvsworkdir/*0|cvsimagetest2||cvsimagetest2
 A511fb9f0|Valdis|~/cvsworkdir/*0|cvsimagetest2|1.1|image.png
 M511fba0d|Valdis|~/cvsworkdir/*0|cvsimagetest2|1.2|image.png
+O511fbde0|Valdis|~/cvsworkdir/*0|cvstest4||cvstest4
+O511fbe6e|Valdis|~/cvsworkdir/*0|cvstest5||cvstest5
+A511fbf6e|Valdis|~/cvsworkdir/*0|cvstest5|1.1|1.txt
+A511fbf6f|Valdis|~/cvsworkdir/*0|cvstest5|1.1|2.txt
+A511fbf6f|Valdis|~/cvsworkdir/*0|cvstest5|1.1|3.txt
+A511fbf6f|Valdis|~/cvsworkdir/cvstest5|cvstest5/dir|1.1|1.txt
+A511fbf6f|Valdis|~/cvsworkdir/cvstest5|cvstest5/dir|1.1|2.txt
+A511fbf6f|Valdis|~/cvsworkdir/cvstest5|cvstest5/dir|1.1|3.txt
