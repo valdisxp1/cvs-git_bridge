@@ -70,9 +70,9 @@ class CVSImportTest {
 
   @Test
   def testImages {
-    CVSImportCommand("test/cvsroot", "cvsimagetest1").apply
-    assertEquals(3, commitCount)
-    println(getFileNames)
+    CVSImportCommand("test/cvsroot", "cvsimagetest2").apply
+    assertEquals(2, commitCount)
+    assertEquals(List(Set( "image.png"), Set("image.png")),getFileNames)
   }
   
   @Test
