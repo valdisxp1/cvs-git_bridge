@@ -59,13 +59,13 @@ class CVSImportTest {
   @Test
   def testRemove {
     CVSImportCommand("test/cvsroot", "cvsdeletetest").apply
-    fail("need to add metrics to this test")
+    assertEquals(5, commitCount)
   }
 
   @Test
   def testReAdd {
     CVSImportCommand("test/cvsroot", "cvsreaddtest").apply
-    fail("need to add metrics to this test")
+    assertEquals(4, commitCount)
   }
   
   @After
