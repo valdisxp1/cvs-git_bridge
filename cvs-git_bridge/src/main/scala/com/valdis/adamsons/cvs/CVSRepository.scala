@@ -62,6 +62,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       val headerPairs = file.head.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length>1).map((x)=>x(0).trim->x(1))
       val headerMap = headerPairs.toMap
       val fileName = getRelativePath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
+      val cleanedFileName = fileName.replace("Attic/", "")
       val head = CVSFileVersion(headerMap.get("head").getOrElse(missing("head")))
       val headerWithOutCommits = CVSFile(fileName, Nil, head)
       val commits = file.tail.map((commit)=>{
@@ -77,7 +78,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         val linesToDrop = if (lines(2).contains(": ")) { 3 } else { 2 }
         val comment = lines.drop(linesToDrop).mkString("\n").trim
        
-        val cvsCommit = CVSCommit(fileName,revision,isDead,date,author,comment,commitId)
+        val cvsCommit = CVSCommit(cleanedFileName,revision,isDead,date,author,comment,commitId)
         cvsCommit
       }) 
       headerWithOutCommits.withCommits(commits);
