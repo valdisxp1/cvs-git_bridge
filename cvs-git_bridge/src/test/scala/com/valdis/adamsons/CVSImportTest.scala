@@ -109,6 +109,16 @@ class CVSImportTest {
     				  Set("good.txt", "evil.txt"),
     				  Set("good.txt")), getFileNames("master"))
   }
+  
+  @Test
+  def testBranchAndTag{
+    CVSImportCommand("test/cvsroot", "branchtest").apply
+    assertEquals(2, commitCount("master"))
+    assertEquals(List(Set("main.cpp")), getFileNames("master"))
+    // includes "master" commits
+    assertEquals(4, commitCount("branch"))
+    assertEquals(List(Set("main.cpp","README.txt"),Set("main.cpp"),Set("main.cpp")), getFileNames("branch"))
+  }
 
   @After
   def after {
