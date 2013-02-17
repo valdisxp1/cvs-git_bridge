@@ -53,6 +53,7 @@ object GitUtils {
   }
 
   def updateHeadRef(branch: String, address: String) {
+    println("update ref:"+branch+"->"+address)
     val file = new File(gitDir + "refs/heads/" + branch)
     if (!file.exists) {
       file.createNewFile();
