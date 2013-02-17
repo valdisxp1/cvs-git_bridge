@@ -4,8 +4,17 @@ import java.util.Date
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.notes.Note
 
-case class CVSCommit(val filename: String, val revision: CVSFileVersion,val isDead: Boolean, val date: Date, val author: String, val comment: String, val commitId: Option[String]) {
-  def generateNote: String = CVSCommit.CVS_PATH_KEY+filename+"\n" + CVSCommit.CVS_REV_KEY + revision+"\n"+ (if(isDead){CVSCommit.CVS_DEAD+"\n"}else{"\n"}) +commitId.map(CVSCommit.CVS_COMMIT_ID_KEY+_+"\n")
+case class CVSCommit(val filename: String,
+					 val revision: CVSFileVersion,
+					 val isDead: Boolean,
+					 val date: Date,
+					 val author: String,
+					 val comment: String,
+					 val commitId: Option[String]) {
+  def generateNote: String = (CVSCommit.CVS_PATH_KEY + filename + "\n" +
+		  				      CVSCommit.CVS_REV_KEY + revision + "\n" +
+		  				      (if (isDead) { CVSCommit.CVS_DEAD + "\n" } else { "\n" }) +
+		  				      commitId.map(CVSCommit.CVS_COMMIT_ID_KEY + _ + "\n"))
 }
 
 object CVSCommit {
