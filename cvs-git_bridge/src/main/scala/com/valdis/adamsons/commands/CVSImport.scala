@@ -145,8 +145,13 @@ object CVSImport extends CommandParser{
       })
     }
 
-    def getGraftLocation(trunk: List[(ObjectId, CVSCommit)], branch: List[CVSCommit]): ObjectId = {
-      trunk.head._1
+    def getGraftLocation(trunk: List[(CVSCommit,ObjectId)], branch: List[CVSCommit]): Option[ObjectId] = {
+      val branchParentIds = branch.map((commit)=>(commit.filename,commit.revision.getBranchParent))
+      // we can use the first one because that will be that latest
+      trunk.find((pair)=>{
+        val posibleBranchParent = (pair._1.filename,pair._1.revision)
+        branchParentIds.contains(posibleBranchParent)
+      }).map(_._2)
     }
     
     def apply = {
@@ -170,10 +175,10 @@ object CVSImport extends CommandParser{
       if(lastUpdatedVal.isEmpty){
         val logs = git.log().add(gitrepo.resolve("master")).call()
         val truckCommits = logs.iterator().map(
-            (commit)=>(commit.getId(),CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)))).toList
+            (commit)=>(CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)),commit.getId())).toList
         val graftLocation = getGraftLocation(truckCommits, commits)
         //graft it
-//        GitUtils.updateHeadRef(branch, graftLocation.name)
+        graftLocation.foreach((location)=>GitUtils.updateHeadRef(branch, location.name))
       }
       appendCommits(commits, branch, gitrepo) 
       })
