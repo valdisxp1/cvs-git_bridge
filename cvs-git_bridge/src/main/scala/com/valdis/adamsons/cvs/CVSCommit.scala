@@ -21,7 +21,14 @@ case class CVSCommit(val filename: String,
     // if it matches check filename
     // sub directories should go last
     if (dateDiff == 0){
-      0// val diff = 
+      val thisPathLevel = this.filename.count(_=='/')
+      val thatPathLevel = that.filename.count(_=='/')
+      val pathLevelDiff = thisPathLevel - thatPathLevel
+      	if (pathLevelDiff == 0){
+      	  this.filename.compareTo(that.filename)
+      	}else{
+      	  pathLevelDiff
+      	}
     }else{
       dateDiff
     }

@@ -65,7 +65,7 @@ object CVSImport extends CommandParser{
     }
     
     def appendCommits(commits:List[CVSCommit],branch:String,gitrepo:Repository){
-      val sortedCommits = commits.sortBy(_.date)
+      val sortedCommits = commits.sorted
       val relevantCommits =  getRelevantCommits(sortedCommits, branch, gitrepo)
       relevantCommits.foreach((commit)=>{
         println(commit.filename);
