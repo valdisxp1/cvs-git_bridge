@@ -6,6 +6,11 @@ case class CVSFileVersion(val list:List[Int]) {
   }
   //TODO proper implementation
   def isBranch = list.dropRight(1).last == 0
+  def getBranchParent: Option[CVSFileVersion] = if (list.length >= 4) {
+    Some(CVSFileVersion(list.dropRight(2)))
+  } else {
+    None
+  }
   override def toString = list.mkString(".")
 }
 
