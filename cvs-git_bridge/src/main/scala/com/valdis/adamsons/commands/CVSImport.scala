@@ -147,6 +147,9 @@ object CVSImport extends CommandParser{
 
     def getGraftLocation(trunk: List[(CVSCommit,ObjectId)], branch: List[CVSCommit]): Option[ObjectId] = {
       val branchParentIds = branch.map((commit)=>(commit.filename,commit.revision.getBranchParent))
+    		  				.withFilter(_._2.isDefined).map((pair)=>(pair._1,pair._2.get))
+      println("branch:" + branchParentIds)
+      println("trunk:" + trunk.map((pair)=>(pair._1.filename,pair._1.revision)))
       // we can use the first one because that will be that latest
       trunk.find((pair)=>{
         val posibleBranchParent = (pair._1.filename,pair._1.revision)
@@ -178,6 +181,8 @@ object CVSImport extends CommandParser{
             (commit)=>(CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)),commit.getId())).toList
         val graftLocation = getGraftLocation(truckCommits, commits)
         //graft it
+        println("graft:"+graftLocation)
+        //TODO or else check for sub-branches
         graftLocation.foreach((location)=>GitUtils.updateHeadRef(branch, location.name))
       }
       appendCommits(commits, branch, gitrepo) 
