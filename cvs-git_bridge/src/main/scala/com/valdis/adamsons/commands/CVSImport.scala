@@ -22,6 +22,7 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.treewalk.TreeWalk
 import com.valdis.adamsons.cvs.CVSCommit
 import java.util.TimeZone
+import scala.collection.JavaConversions._
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
@@ -143,6 +144,10 @@ object CVSImport extends CommandParser{
         }
       })
     }
+
+    def getGraftLocation(trunk: List[(ObjectId, CVSCommit)], branch: List[CVSCommit]): ObjectId = {
+      trunk.head._1
+    }
     
     def apply = {
       val gitrepo = GitUtils.repo;
@@ -162,6 +167,14 @@ object CVSImport extends CommandParser{
       println(lastUpdatedVal)
       val commits = cvsrepo.getFileList(branch,lastUpdatedVal,None).flatMap(_.commits)
       println(commits);
+      if(lastUpdatedVal.isEmpty){
+        val logs = git.log().add(gitrepo.resolve("master")).call()
+        val truckCommits = logs.iterator().map(
+            (commit)=>(commit.getId(),CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)))).toList
+        val graftLocation = getGraftLocation(truckCommits, commits)
+        //graft it
+//        GitUtils.updateHeadRef(branch, graftLocation.name)
+      }
       appendCommits(commits, branch, gitrepo) 
       })
       0

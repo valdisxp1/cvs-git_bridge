@@ -34,8 +34,10 @@ object GitUtils {
   lazy val git = new Git(repo)
   lazy val revWalk = new RevWalk(repo)
 
-  def getNoteMessage(objectId: String): String = {
-    val revObject = revWalk.lookupCommit(ObjectId.fromString(objectId))
+  def getNoteMessage(objectId: String): String =  getNoteMessage(ObjectId.fromString(objectId))
+    
+  def getNoteMessage(objectId: ObjectId): String = {
+    val revObject = revWalk.lookupCommit(objectId)
     val note = git.notesShow().setObjectId(revObject).call()
     val noteData = repo.open(note.getData()).getBytes()
     new String(noteData)
