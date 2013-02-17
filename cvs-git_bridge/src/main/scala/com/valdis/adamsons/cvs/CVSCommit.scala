@@ -10,18 +10,29 @@ case class CVSCommit(val filename: String,
 					 val date: Date,
 					 val author: String,
 					 val comment: String,
-					 val commitId: Option[String]) {
+					 val commitId: Option[String]) extends Ordered[CVSCommit]{
   def generateNote: String = (CVSCommit.CVS_PATH_KEY + filename + "\n" +
 		  				      CVSCommit.CVS_REV_KEY + revision + "\n" +
 		  				      (if (isDead) { CVSCommit.CVS_DEAD + "\n" } else { "\n" }) +
 		  				      commitId.map(CVSCommit.CVS_COMMIT_ID_KEY + _ + "\n"))
+  def compare(that:CVSCommit) = {
+    // date is the main ordering indicator
+    val dateDiff = this.date.compareTo(that.date)
+    // if it matches check filename
+    // sub directories should go last
+    if (dateDiff == 0){
+      0// val diff = 
+    }else{
+      dateDiff
+    }
+  }
 }
 
 object CVSCommit {
   val CVS_PATH_KEY = "CVS_PATH: "
   val CVS_REV_KEY = "CVS_REV: "
   val CVS_COMMIT_ID_KEY = "CVS_COMMIT_ID: "
-  val CVS_DEAD="dead"
+  val CVS_DEAD = "dead"
   def fromGitCommit(commit: RevCommit, noteString: String): CVSCommit = {
     val author = commit.getAuthorIdent()
     val lines = noteString.split("\n")
