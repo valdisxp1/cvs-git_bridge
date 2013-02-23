@@ -60,5 +60,6 @@ class CVSRepositoryTest {
   def testResolveTag {
     val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"branchtest")
     assertEquals(CVSTag("branch",Map("README.txt"->CVSFileVersion("1.1.0.2"),"main.cpp"->CVSFileVersion("1.1.0.2"))),repo.resolveTag("branch"))
+    assertEquals(CVSTag("branch_start",Map("README.txt"->CVSFileVersion("1.1"),"main.cpp"->CVSFileVersion("1.1"))),repo.resolveTag("branch_start"))
   }
 }
