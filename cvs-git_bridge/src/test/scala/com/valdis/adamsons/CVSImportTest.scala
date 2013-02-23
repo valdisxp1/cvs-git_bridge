@@ -117,7 +117,7 @@ class CVSImportTest {
     assertEquals(List(Set("main.cpp"),Set("main.cpp")), getFileNames("master"))
     // includes "master" commits
     assertEquals(4, commitCount("branch"))
-    assertEquals(List(Set("main.cpp","README.txt"),Set("main.cpp","README.txt"),Set("main.cpp"),Set("main.cpp")), getFileNames("branch"))
+    assertEquals(List(Set("main.cpp","README.txt"),Set("main.cpp"),Set("main.cpp")), getFileNames("branch"))
   }
 
   @After

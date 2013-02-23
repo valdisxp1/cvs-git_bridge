@@ -12,6 +12,7 @@ import java.util.Date
 import com.valdis.adamsons.cvs.CVSCommit
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.valdis.adamsons.cvs.CVSTag
 
 class CVSRepositoryTest {
   @Test
@@ -53,5 +54,11 @@ class CVSRepositoryTest {
   def testGetBranchSet {
     val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"branchtest")
     assertEquals(Set("branch"), repo.getBranchNameSet)
+  }
+  
+  @Test
+  def testResolveTag {
+    val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"branchtest")
+    assertEquals(CVSTag("branch",Map("README.txt"->CVSFileVersion("1.1.0.2"),"main.cpp"->CVSFileVersion("1.1.0.2"))),repo.resolveTag("branch"))
   }
 }
