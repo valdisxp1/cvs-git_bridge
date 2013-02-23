@@ -20,7 +20,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 
   private def cvsString = "cvs " + cvsroot.map("-d " + _ + " ").getOrElse("");
   
-  def getRelativePath(absolutePath:String)= absolutePath.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2)
+  def cleanRCSpath(absolutePath:String)= absolutePath.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2).replace("Attic/", "")
   /**
    * Should only be used for text files.
    * Binary files get corrupted because Java tries to convert them to UTF8.
@@ -36,7 +36,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
   def fileNameList = {
     val response: String = cvsString+ "rlog -R " + module.getOrElse("")!!;
-    response.split("\n").toList.map(getRelativePath)
+    response.split("\n").toList.map(cleanRCSpath)
   }
   
   protected def getTagLines ={
@@ -59,7 +59,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def resolveTag(tagName: String): CVSTag = {
     val process = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
     val response: String = process!!;
-    val files = response.split(CVSRepository.FILES_SPLITTER)
+    val files = response.split(CVSRepository.FILES_SPLITTER).filter(!_.trim.isEmpty())
     files.foldLeft(CVSTag(tagName))((tag, fileHeader) => {
       val lines = fileHeader.split("\n?\r").toList
       val tagLines = lines.filter((str) => str.size > 1 && str(1) == '\t').map(_.trim)
@@ -67,7 +67,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 
       val headerPairs = lines.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
       val headerMap = headerPairs.toMap
-      val fileName = getRelativePath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
+      val fileName = cleanRCSpath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
 
       val version = tagPairs.find(_._1 == tagName).map(_._2)
       version.map(tag.withFile(fileName, _)).getOrElse(tag)
@@ -97,8 +97,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     items.map((file)=>{
       val headerPairs = file.head.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length>1).map((x)=>x(0).trim->x(1))
       val headerMap = headerPairs.toMap
-      val fileName = getRelativePath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
-      val cleanedFileName = fileName.replace("Attic/", "")
+      val fileName = cleanRCSpath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
       val head = CVSFileVersion(headerMap.get("head").getOrElse(missing("head")))
       val headerWithOutCommits = CVSFile(fileName, Nil, head)
       val commits = file.tail.map((commit)=>{
@@ -114,7 +113,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         val linesToDrop = if (lines(2).contains(": ")) { 3 } else { 2 }
         val comment = lines.drop(linesToDrop).mkString("\n").trim
        
-        val cvsCommit = CVSCommit(cleanedFileName,revision,isDead,date,author,comment,commitId)
+        val cvsCommit = CVSCommit(fileName,revision,isDead,date,author,comment,commitId)
         cvsCommit
       }) 
       headerWithOutCommits.withCommits(commits);
