@@ -49,10 +49,10 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def getBranchNameSet:Set[String]={
     val pairs = getTagLines.map(_.split(':')).map((pair)=> (pair(0),CVSFileVersion(pair(1).trim)))
     pairs.filter(_._2.isBranch).map(_._1).toSet
-  }  
-  
-  def getFileList:List[CVSFile]= getFileList(None,None)
-  def getFileList(start:Option[Date],end:Option[Date]):List[CVSFile]=getFileList(None,start,end)
+  }
+
+  def getFileList: List[CVSFile] = getFileList(None, None)
+  def getFileList(start: Option[Date], end: Option[Date]): List[CVSFile] = getFileList(None, start, end)
   def getFileList(branch:String,start:Option[Date],end:Option[Date]):List[CVSFile] = getFileList(Some(branch),start, end)
   def getFileList(branch:Option[String],start:Option[Date],end:Option[Date]):List[CVSFile]={
     val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
