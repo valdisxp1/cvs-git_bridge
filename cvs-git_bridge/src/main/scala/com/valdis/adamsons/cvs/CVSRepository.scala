@@ -50,6 +50,29 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     val pairs = getTagLines.map(_.split(':')).map((pair)=> (pair(0),CVSFileVersion(pair(1).trim)))
     pairs.filter(_._2.isBranch).map(_._1).toSet
   }
+  
+  def getTagNameSet:Set[String]={
+    val pairs = getTagLines.map(_.split(':')).map((pair)=> (pair(0),CVSFileVersion(pair(1).trim)))
+    pairs.filter(!_._2.isBranch).map(_._1).toSet
+  }
+
+  def resolveTag(tagName: String): CVSTag = {
+    val process = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    val response: String = process!!;
+    val files = response.split(CVSRepository.FILES_SPLITTER)
+    files.foldLeft(CVSTag(tagName))((tag, fileHeader) => {
+      val lines = fileHeader.split("\n?\r").toList
+      val tagLines = lines.filter((str) => str.size > 1 && str(1) == '\t').map(_.trim)
+      val tagPairs = getTagLines.map(_.split(':')).map((pair) => (pair(0), CVSFileVersion(pair(1).trim)))
+
+      val headerPairs = lines.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
+      val headerMap = headerPairs.toMap
+      val fileName = getRelativePath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
+
+      val version = tagPairs.find(_._1 == tagName).map(_._2)
+      version.map(tag.withFile(fileName, _)).getOrElse(tag)
+    })
+  }
 
   def getFileList: List[CVSFile] = getFileList(None, None)
   def getFileList(start: Option[Date], end: Option[Date]): List[CVSFile] = getFileList(None, start, end)
