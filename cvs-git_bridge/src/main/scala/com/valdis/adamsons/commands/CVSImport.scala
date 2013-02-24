@@ -154,17 +154,8 @@ object CVSImport extends CommandParser{
       possibleLocation.headOption.map(_._2)
     }
     
-    def getGraftLocation(trunk: List[(CVSCommit,ObjectId)], branch: List[CVSCommit]): Option[ObjectId] = {
-      val branchParentIds = branch.map((commit)=>(commit.filename,commit.revision.getBranchParent))
-    		  				.withFilter(_._2.isDefined).map((pair)=>(pair._1,pair._2.get))
-      println("branch:" + branchParentIds)
-      println("trunk:" + trunk.map((pair)=>(pair._1.filename,pair._1.revision)))
-      // we can use the first one because that will be that latest
-      trunk.find((pair)=>{
-        val posibleBranchParent = (pair._1.filename,pair._1.revision)
-        branchParentIds.contains(posibleBranchParent)
-      }).map(_._2)
-    }
+    def getGraftLocation(branch: CVSTag, gitrepo: Repository,trunk: String): Option[ObjectId] = lookupTag(branch.getBranchParent, gitrepo, trunk)
+    
     
     def apply = {
       val gitrepo = GitUtils.repo;
@@ -179,22 +170,20 @@ object CVSImport extends CommandParser{
       appendCommits(commits, "master", gitrepo)
       }
       //other branches follow
-      cvsrepo.getBranchNameSet.foreach((branch)=>{
-      val lastUpdatedVal = lastUpdated(gitrepo,branch)
+      val branches = cvsrepo.getBranchNameSet.map(cvsrepo.resolveTag(_))
+      branches.foreach((branch)=>{
+      val lastUpdatedVal = lastUpdated(gitrepo,branch.name)
       println(lastUpdatedVal)
-      val commits = cvsrepo.getFileList(branch,lastUpdatedVal,None).flatMap(_.commits)
+      val commits = cvsrepo.getFileList(branch.name,lastUpdatedVal,None).flatMap(_.commits)
       println(commits);
       if(lastUpdatedVal.isEmpty){
-        val logs = git.log().add(gitrepo.resolve("master")).call()
-        val truckCommits = logs.iterator().map(
-            (commit)=>(CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)),commit.getId())).toList
-        val graftLocation = getGraftLocation(truckCommits, commits)
+        val graftLocation = getGraftLocation(branch,gitrepo,"master")
         //graft it
         println("graft:"+graftLocation)
         //TODO or else check for sub-branches
-        graftLocation.foreach((location)=>GitUtils.updateHeadRef(branch, location.name))
+        graftLocation.foreach((location)=>GitUtils.updateHeadRef(branch.name, location.name))
       }
-      appendCommits(commits, branch, gitrepo) 
+      appendCommits(commits, branch.name, gitrepo) 
       })
       0
     }
