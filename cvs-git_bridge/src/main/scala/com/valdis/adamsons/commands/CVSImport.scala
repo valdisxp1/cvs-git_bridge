@@ -145,7 +145,9 @@ object CVSImport extends CommandParser{
         }
       })
     }
-
+    
+    def lookupTag(tag: CVSTag, gitrepo: Repository,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, gitrepo, branch)).headOption
+    
     def lookupTag(tag: CVSTag, gitrepo: Repository,branch:String): Option[ObjectId] = {
       val logs = git.log().add(gitrepo.resolve(branch)).call()
       val trunkCommits = logs.iterator().map(
@@ -184,6 +186,16 @@ object CVSImport extends CommandParser{
         graftLocation.foreach((location)=>GitUtils.updateHeadRef(branch.name, location.name))
       }
       appendCommits(commits, branch.name, gitrepo) 
+      })
+      //tags
+      val tags = cvsrepo.getTagNameSet.map(cvsrepo.resolveTag(_))
+      tags.foreach((tag)=>{
+      val branchNames = branches.map(_.name)
+      val objectId = lookupTag(tag, gitrepo,branchNames)
+      objectId.map(revWalk.parseAny(_)).foreach(
+          (revobj)=>git.tag().setObjectId(revobj)
+          .setName(tag.name)
+          .setMessage(tag.generateMessage).call())
       })
       0
     }
