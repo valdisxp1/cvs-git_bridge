@@ -23,6 +23,7 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import com.valdis.adamsons.cvs.CVSCommit
 import java.util.TimeZone
 import scala.collection.JavaConversions._
+import com.valdis.adamsons.cvs.CVSTag
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
@@ -145,6 +146,14 @@ object CVSImport extends CommandParser{
       })
     }
 
+    def lookupTag(tag: CVSTag, gitrepo: Repository,branch:String): Option[ObjectId] = {
+      val logs = git.log().add(gitrepo.resolve(branch)).call()
+      val trunkCommits = logs.iterator().map(
+        (commit) => (CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)), commit.getId())).toList
+      val possibleLocation = trunkCommits.filter(!_._1.isDead).filter((pair) => tag.includesCommit(pair._1)).sortBy(_._1)
+      possibleLocation.headOption.map(_._2)
+    }
+    
     def getGraftLocation(trunk: List[(CVSCommit,ObjectId)], branch: List[CVSCommit]): Option[ObjectId] = {
       val branchParentIds = branch.map((commit)=>(commit.filename,commit.revision.getBranchParent))
     		  				.withFilter(_._2.isDefined).map((pair)=>(pair._1,pair._2.get))
