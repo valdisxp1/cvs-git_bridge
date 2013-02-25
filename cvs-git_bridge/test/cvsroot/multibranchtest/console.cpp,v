@@ -1,0 +1,26 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@// @;
+
+
+1.1
+date	2013.02.25.18.34.43;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	MZx58g2hedckyBFw;
+
+
+desc
+@@
+
+
+1.1
+log
+@console will suffice
+@
+text
+@#include <iostream>
+//and nothing
+@

@@ -1,0 +1,53 @@
+head	1.1;
+access;
+symbols
+	experiment:1.1.0.6
+	experiment_start:1.1
+	directx:1.1.0.4
+	opengl:1.1.0.2
+	libs_start:1.1;
+locks; strict;
+comment	@// @;
+
+
+1.1
+date	2013.02.25.18.22.12;	author Valdis;	state Exp;
+branches
+	1.1.6.1;
+next	;
+commitid	vyrQuiQYuHV1uBFw;
+
+1.1.6.1
+date	2013.02.25.18.41.26;	author Valdis;	state dead;
+branches;
+next	;
+commitid	rMsLd555nUZCABFw;
+
+
+desc
+@@
+
+
+1.1
+log
+@the main file
+@
+text
+@#include <iostream>
+
+using namespace std;
+
+int main(){
+	cout<<"hello world"<<endl;
+	return 0;
+}
+@
+
+
+1.1.6.1
+log
+@added cool stuff
+@
+text
+@@
+

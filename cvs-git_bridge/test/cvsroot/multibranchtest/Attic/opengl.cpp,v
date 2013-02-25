@@ -1,0 +1,43 @@
+head	1.1;
+access;
+symbols
+	experiment:1.1.2.1.0.2
+	experiment_start:1.1.2.1
+	opengl:1.1.0.2;
+locks; strict;
+comment	@// @;
+
+
+1.1
+date	2013.02.25.18.36.16;	author Valdis;	state dead;
+branches
+	1.1.2.1;
+next	;
+commitid	pwm9bgPc8k8RyBFw;
+
+1.1.2.1
+date	2013.02.25.18.36.16;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	pwm9bgPc8k8RyBFw;
+
+
+desc
+@@
+
+
+1.1
+log
+@file opengl.cpp was initially added on branch opengl.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@another oGL source file
+@
+text
+@@
+

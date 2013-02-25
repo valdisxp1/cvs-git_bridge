@@ -1,0 +1,41 @@
+head	1.1;
+access;
+symbols
+	directx:1.1.0.2;
+locks; strict;
+comment	@// @;
+
+
+1.1
+date	2013.02.25.18.28.21;	author Valdis;	state dead;
+branches
+	1.1.2.1;
+next	;
+commitid	sAaw1uQ0TSD8wBFw;
+
+1.1.2.1
+date	2013.02.25.18.28.21;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	sAaw1uQ0TSD8wBFw;
+
+
+desc
+@@
+
+
+1.1
+log
+@file directx.cpp was initially added on branch directx.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@one dX source file
+@
+text
+@@
+
