@@ -180,7 +180,11 @@ object CVSImport extends CommandParser{
       branchesByDepth.toSeq.sortBy(_._1).foreach((pair) => {
         val depth = pair._1
         val branchesForDepth = pair._2
-        val possibleParentBranches = branchesByDepth.getOrElse(depth - 1, List(CVSTag("master",Map()))).map(_.name)
+        val possibleParentBranches = if (depth == 2) {
+          List("master")
+        } else {
+          branchesByDepth.get(depth - 1).flatten.map(_.name)
+        }
         branchesForDepth.foreach((branch) => {
           val lastUpdatedVal = lastUpdated(gitrepo, branch.name)
           println(lastUpdatedVal)
