@@ -147,24 +147,27 @@ object CVSImport extends CommandParser{
     }
     
     def lookupTag(tag: CVSTag, gitrepo: Repository,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, gitrepo, branch)).headOption
-    
-    def lookupTag(tag: CVSTag, gitrepo: Repository,branch:String): Option[ObjectId] = {
-      val logs = git.log().add(gitrepo.resolve(branch)).call()
-      val trunkCommits = logs.iterator().map(
-        (commit) => (CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)), commit.getId())).toList
-      val possibleLocation = trunkCommits.filter(!_._1.isDead).filter((pair) => tag.includesCommit(pair._1)).sortBy(_._1)
-      possibleLocation.headOption.map(_._2)
+
+    def lookupTag(tag: CVSTag, gitrepo: Repository, branch: String): Option[ObjectId] = {
+      val objectId = Option(gitrepo.resolve(branch))
+      objectId.flatMap((id) => {
+        val logs = git.log().add(id).call()
+        val trunkCommits = logs.iterator().map(
+          (commit) => (CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)), commit.getId())).toList
+        val possibleLocation = trunkCommits.filter(!_._1.isDead).filter((pair) => tag.includesCommit(pair._1)).sortBy(_._1)
+        possibleLocation.headOption.map(_._2)
+      })
     }
     
-    def getGraftLocation(branch: CVSTag, gitrepo: Repository,trunk: String): Option[ObjectId] = lookupTag(branch.getBranchParent, gitrepo, trunk)
+    def getGraftLocation(branch: CVSTag, gitrepo: Repository,trunk: Iterable[String]): Option[ObjectId] = lookupTag(branch.getBranchParent, gitrepo, trunk)
     
     
     def apply = {
       val gitrepo = GitUtils.repo;
-      //get last the last updated date
       
       //main branch at master
       {
+      //get last the last updated date
       val lastUpdatedVal = lastUpdated(gitrepo,"master")
       println(lastUpdatedVal)
       val commits = cvsrepo.getFileList(lastUpdatedVal,None).flatMap(_.commits)
@@ -173,20 +176,27 @@ object CVSImport extends CommandParser{
       }
       //other branches follow
       val branches = cvsrepo.getBranchNameSet.map(cvsrepo.resolveTag(_))
-      branches.foreach((branch)=>{
-      val lastUpdatedVal = lastUpdated(gitrepo,branch.name)
-      println(lastUpdatedVal)
-      val commits = cvsrepo.getFileList(branch.name,lastUpdatedVal,None).flatMap(_.commits)
-      println(commits);
-      if(lastUpdatedVal.isEmpty){
-        val graftLocation = getGraftLocation(branch,gitrepo,"master")
-        //graft it
-        println("graft:"+graftLocation)
-        //TODO or else check for sub-branches
-        graftLocation.foreach((location)=>GitUtils.updateHeadRef(branch.name, location.name))
-      }
-      appendCommits(commits, branch.name, gitrepo) 
+      val branchesByDepth = branches.groupBy(_.depth)
+      branchesByDepth.toSeq.sortBy(_._1).foreach((pair) => {
+        val depth = pair._1
+        val branchesForDepth = pair._2
+        val possibleParentBranches = branchesByDepth.getOrElse(depth - 1, List(CVSTag("master",Map()))).map(_.name)
+        branchesForDepth.foreach((branch) => {
+          val lastUpdatedVal = lastUpdated(gitrepo, branch.name)
+          println(lastUpdatedVal)
+          val commits = cvsrepo.getFileList(branch.name, lastUpdatedVal, None).flatMap(_.commits)
+          println(commits);
+          if (lastUpdatedVal.isEmpty) {
+            println("possibleParentBranches:" + possibleParentBranches)
+            val graftLocation = getGraftLocation(branch, gitrepo, possibleParentBranches)
+            //graft it
+            println("graft:" + graftLocation)
+            graftLocation.foreach((location) => GitUtils.updateHeadRef(branch.name, location.name))
+          }
+          appendCommits(commits, branch.name, gitrepo)
+        })
       })
+      
       //tags
       val tags = cvsrepo.getTagNameSet.map(cvsrepo.resolveTag(_))
       tags.foreach((tag)=>{
