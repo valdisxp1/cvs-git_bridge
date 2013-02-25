@@ -14,7 +14,7 @@ case class CVSCommit(val filename: String,
   def generateNote: String = (CVSCommit.CVS_PATH_KEY + filename + "\n" +
 		  				      CVSCommit.CVS_REV_KEY + revision + "\n" +
 		  				      (if (isDead) { CVSCommit.CVS_DEAD + "\n" } else { "\n" }) +
-		  				      commitId.map(CVSCommit.CVS_COMMIT_ID_KEY + _ + "\n"))
+		  				      commitId.map(CVSCommit.CVS_COMMIT_ID_KEY + _ + "\n").getOrElse("\n"))
   def compare(that:CVSCommit) = {
     // date is the main ordering indicator
     val dateDiff = this.date.compareTo(that.date)
