@@ -119,6 +119,13 @@ class CVSImportTest {
     assertEquals(3, commitCount("branch"))
     assertEquals(List(Set("main.cpp","README.txt"),Set("main.cpp","README.txt"),Set("main.cpp")), getFileNames("branch"))
   }
+  
+  @Test
+  def testMultiBranch{
+    CVSImportCommand("test/cvsroot", "multibranchtest").apply
+    
+  }
+  
 
   @After
   def after {
