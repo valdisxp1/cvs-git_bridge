@@ -15,7 +15,8 @@ case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion
   
   def depth = fileVersions.values.map(_.depth).max
   
-  def ignoreFile(file:String) = CVSTag(name,fileVersions - file) 
+  def ignoreFile(file:String) = CVSTag(name,fileVersions - file)
+  def ignoreFiles(files:Iterable[String]) = CVSTag(name,fileVersions -- files) 
 }
 
 object CVSTag {

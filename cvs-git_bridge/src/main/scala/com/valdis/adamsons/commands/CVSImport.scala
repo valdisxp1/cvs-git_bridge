@@ -155,6 +155,7 @@ object CVSImport extends CommandParser{
       def withCommit(objectId: ObjectId,commit: CVSCommit): TagSeachState
     }
     
+    //TODO maybe found is not needed
     private case class Found(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState{
       val isFound = true
       val objectId = Some(objectId2)
@@ -166,7 +167,12 @@ object CVSImport extends CommandParser{
       val objectId = None
       def withCommit(objectId: ObjectId, commit: CVSCommit) = {
         if (tag.includesCommit(commit)) {
-          new PartialFound(tag, objectId, Set(commit.filename))
+          val newFound = Set(commit.filename)
+          if (newFound == tag.fileVersions.keys) {
+            new Found(tag, objectId)
+          } else {
+            new PartialFound(tag, objectId, newFound)
+          }
         } else {
           this
         }
@@ -208,12 +214,19 @@ object CVSImport extends CommandParser{
         val logs = git.log().add(id).call()
         val trunkCommits = logs.iterator().map(
           (commit) => (CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)), commit.getId())).toList
-        val possibleLocations = trunkCommits.filter(!_._1.isDead).filter((pair) => tag.includesCommit(pair._1))
-        val result = possibleLocations.foldLeft[TagSeachState](new NotFound(tag))((oldstate,pair)=>{
-          println(oldstate)
+        
+        val pointlessCommits = trunkCommits.map(_._1).filter(_.isPointless)
+        val pointlessTagFiles = pointlessCommits.map((pointlessCommit)=>(pointlessCommit.filename,pointlessCommit.revision)).intersect(tag.fileVersions.toSeq).map(_._1)
+        println("commits: "+trunkCommits.map(_._1))
+        println("heads: "+trunkCommits.map(_._1).count(_.isHead))
+        println("pointless: "+pointlessCommits)
+        val cleanedTag = tag.ignoreFiles(pointlessTagFiles)
+        val result = trunkCommits.foldLeft[TagSeachState](new NotFound(cleanedTag))((oldstate,pair)=>{
+          println(oldstate+" with "+pair._1)
           oldstate.withCommit(pair._2, pair._1)
           })
-        println(possibleLocations.length)
+        
+        println(trunkCommits.length)
         println(result)
         if(result.isFound){
           result.objectId

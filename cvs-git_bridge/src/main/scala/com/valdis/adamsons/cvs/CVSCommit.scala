@@ -15,6 +15,12 @@ case class CVSCommit(val filename: String,
 		  				      CVSCommit.CVS_REV_KEY + revision + "\n" +
 		  				      (if (isDead) { CVSCommit.CVS_DEAD + "\n" } else { "\n" }) +
 		  				      commitId.map(CVSCommit.CVS_COMMIT_ID_KEY + _ + "\n").getOrElse("\n"))
+  def isHead = revision == CVSCommit.HEAD_REVISION
+  /**
+   * CVS puts a dead head - 1.1 version commit when a file is added to a branch not the trunk.
+   * This commit hold no meaning and is pointless.
+   */
+  def isPointless = isHead && isDead
   def compare(that:CVSCommit) = {
     // date is the main ordering indicator
     val dateDiff = this.date.compareTo(that.date)
@@ -36,6 +42,8 @@ case class CVSCommit(val filename: String,
 }
 
 object CVSCommit {
+  //assumes default: 1.1
+  val HEAD_REVISION = CVSFileVersion("1.1")
   val CVS_PATH_KEY = "CVS_PATH: "
   val CVS_REV_KEY = "CVS_REV: "
   val CVS_COMMIT_ID_KEY = "CVS_COMMIT_ID: "
