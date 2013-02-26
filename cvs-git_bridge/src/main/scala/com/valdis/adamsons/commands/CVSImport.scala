@@ -202,8 +202,8 @@ object CVSImport extends CommandParser{
         val logs = git.log().add(id).call()
         val trunkCommits = logs.iterator().map(
           (commit) => (CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)), commit.getId())).toList
-        val possibleLocation = trunkCommits.filter(!_._1.isDead).filter((pair) => tag.includesCommit(pair._1)).sortBy(_._1)
-        possibleLocation.headOption.map(_._2)
+        val possibleLocations = trunkCommits.filter(!_._1.isDead).filter((pair) => tag.includesCommit(pair._1))
+        possibleLocations.foldLeft[TagSeachState](new NotFound(tag))((oldstate,pair)=>oldstate.withCommit(pair._2, pair._1)).objectId
       })
     }
     
