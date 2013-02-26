@@ -148,19 +148,20 @@ object CVSImport extends CommandParser{
     
     def lookupTag(tag: CVSTag, gitrepo: Repository,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, gitrepo, branch)).headOption
 
-    private abstract class TagSeachState(val tag: CVSTag) {
+    private abstract class TagSeachState() {
+      def tag:CVSTag
       def isFound: Boolean
       def objectId: Option[ObjectId]
       def withCommit(objectId: ObjectId,commit: CVSCommit): TagSeachState
     }
     
-    private class Found(tag: CVSTag, objectId2: ObjectId) extends TagSeachState(tag){
+    private case class Found(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState{
       val isFound = true
       val objectId = Some(objectId2)
       def withCommit(objectId: ObjectId, commit: CVSCommit) = this
     }
 
-    private class NotFound(tag: CVSTag) extends TagSeachState(tag) {
+    private case class NotFound(val tag: CVSTag) extends TagSeachState {
       val isFound = false
       val objectId = None
       def withCommit(objectId: ObjectId, commit: CVSCommit) = {
@@ -172,19 +173,24 @@ object CVSImport extends CommandParser{
       }
     }
     
-    private class OutOfSync(tag: CVSTag, objectId2: ObjectId) extends TagSeachState(tag){
+    private case class OutOfSync(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState {
       val isFound = false
       val objectId = Some(objectId2)
       def withCommit(objectId: ObjectId,commit: CVSCommit) = this
     }
 
-    private class PartialFound(tag: CVSTag, objectId2: ObjectId, val found: Set[String]) extends TagSeachState(tag) {
+    private case class PartialFound(val tag: CVSTag, objectId2: ObjectId, val found: Set[String]) extends TagSeachState {
       val objectId = Some(objectId2)
       val isFound = false
       def withCommit(objectId: ObjectId, commit: CVSCommit) = {
         val filename = commit.filename
         if (tag.includesCommit(commit)) {
-          new PartialFound(tag, objectId2, found + filename)
+          val newFound = found + filename
+          if (newFound == tag.fileVersions.keys) {
+            new Found(tag, objectId2)
+          } else {
+            new PartialFound(tag, objectId2, newFound)
+          }
         } else {
           if (found.contains(filename)) {
             new OutOfSync(tag, objectId2)
@@ -203,7 +209,17 @@ object CVSImport extends CommandParser{
         val trunkCommits = logs.iterator().map(
           (commit) => (CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)), commit.getId())).toList
         val possibleLocations = trunkCommits.filter(!_._1.isDead).filter((pair) => tag.includesCommit(pair._1))
-        possibleLocations.foldLeft[TagSeachState](new NotFound(tag))((oldstate,pair)=>oldstate.withCommit(pair._2, pair._1)).objectId
+        val result = possibleLocations.foldLeft[TagSeachState](new NotFound(tag))((oldstate,pair)=>{
+          println(oldstate)
+          oldstate.withCommit(pair._2, pair._1)
+          })
+        println(possibleLocations.length)
+        println(result)
+        if(result.isFound){
+          result.objectId
+        }else{
+          None
+        }
       })
     }
     
