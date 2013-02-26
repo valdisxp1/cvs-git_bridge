@@ -61,5 +61,13 @@ class CVSRepositoryTest {
     val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"branchtest")
     assertEquals(CVSTag("branch",Map("README.txt"->CVSFileVersion("1.1.0.2"),"main.cpp"->CVSFileVersion("1.1.0.2"))),repo.resolveTag("branch"))
     assertEquals(CVSTag("branch_start",Map("README.txt"->CVSFileVersion("1.1"),"main.cpp"->CVSFileVersion("1.1"))),repo.resolveTag("branch_start"))
+    
+    val repo2 = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"multibranchtest")
+    assertEquals(CVSTag("experiment",Map("opengl.cpp"->CVSFileVersion("1.1.2.1.0.2"),
+    									 "opengl.c"->CVSFileVersion("1.1.2.1.0.2"),
+    									 "main.cpp"->CVSFileVersion("1.1.0.6"),
+    									 "cool.cpp"->CVSFileVersion("1.1.0.2"),
+    									 "awesome.txt"->CVSFileVersion("1.1.0.2")
+    									 )),repo2.resolveTag("experiment"))
   }
 }
