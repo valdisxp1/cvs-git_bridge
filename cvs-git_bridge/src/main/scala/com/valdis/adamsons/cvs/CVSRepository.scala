@@ -63,12 +63,12 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     files.foldLeft(CVSTag(tagName))((tag, fileHeader) => {
       val lines = fileHeader.split("\n?\r").toList
       val tagLines = lines.filter((str) => str.size > 1 && str(1) == '\t').map(_.trim)
-      val tagPairs = getTagLines.map(_.split(':')).map((pair) => (pair(0), CVSFileVersion(pair(1).trim)))
+      val tagPairs = tagLines.map(_.split(':')).map((pair) => (pair(0), CVSFileVersion(pair(1).trim)))
 
       val headerPairs = lines.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
       val headerMap = headerPairs.toMap
       val fileName = cleanRCSpath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
-
+      
       val version = tagPairs.find(_._1 == tagName).map(_._2)
       version.map(tag.withFile(fileName, _)).getOrElse(tag)
     })
