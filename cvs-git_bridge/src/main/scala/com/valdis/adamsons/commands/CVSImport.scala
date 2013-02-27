@@ -208,6 +208,14 @@ object CVSImport extends CommandParser{
       }
     }
     
+    def getPointlessCVSCommits(gitrepo: Repository): Iterable[CVSCommit]= {
+      val objectId = Option(gitrepo.resolve("master"))
+      objectId.map((id) => {
+        val logs = git.log().add(id).call()
+        logs.map((commit) => (CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)))).filter(_.isPointless)
+      }).flatten
+    }
+    
     def lookupTag(tag: CVSTag, gitrepo: Repository, branch: String): Option[ObjectId] = {
       val objectId = Option(gitrepo.resolve(branch))
       objectId.flatMap((id) => {
@@ -215,7 +223,7 @@ object CVSImport extends CommandParser{
         val trunkCommits = logs.iterator().map(
           (commit) => (CVSCommit.fromGitCommit(commit, GitUtils.getNoteMessage(commit.name)), commit.getId())).toList
         
-        val pointlessCommits = trunkCommits.map(_._1).filter(_.isPointless)
+        val pointlessCommits = getPointlessCVSCommits(gitrepo).toSeq
         val pointlessTagFiles = pointlessCommits.map((pointlessCommit)=>(pointlessCommit.filename,pointlessCommit.revision)).intersect(tag.fileVersions.toSeq).map(_._1)
         println("commits: "+trunkCommits.map(_._1))
         println("heads: "+trunkCommits.map(_._1).count(_.isHead))
