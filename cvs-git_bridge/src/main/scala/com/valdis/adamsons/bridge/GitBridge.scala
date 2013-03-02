@@ -12,9 +12,27 @@ import org.eclipse.jgit.lib.CommitBuilder
 import org.eclipse.jgit.lib.PersonIdent
 import java.util.TimeZone
 import com.valdis.adamsons.cvs.CVSRepository
+import com.valdis.adamsons.cvs.CVSTag
+import org.eclipse.jgit.lib.ObjectId
+import scala.collection.JavaConversions._
+import java.util.Date
 
 class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
-
+  
+   def lastUpdated(gitrepo: Repository, branch: String): Option[Date] = {
+      val ref = Option(gitrepo.resolve(branch))
+      ref.flatMap((ref) => {
+        val logs = git.log().add(ref).setMaxCount(1).call()
+        val iterator = logs.iterator()
+        if (iterator.hasNext()) {
+          Some(revWalk.parseCommit(iterator.next()).getAuthorIdent().getWhen())
+        } else {
+          None
+        }
+      })
+    }
+  
+//commits
   private def getRelevantCommits(sortedCommits: List[CVSCommit], branch: String) = {
       val previousHead = getHeadRef(branch)
       val previousCommit = previousHead.map((headId) => {
@@ -112,6 +130,105 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
           
         } finally {
           inserter.release()
+        }
+      })
+    }
+    
+    //tags
+     def lookupTag(tag: CVSTag, gitrepo: Repository,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, gitrepo, branch)).headOption
+
+    private abstract class TagSeachState() {
+      def tag:CVSTag
+      def isFound: Boolean
+      def objectId: Option[ObjectId]
+      def withCommit(objectId: ObjectId,commit: CVSCommit): TagSeachState
+    }
+    
+    //TODO maybe found is not needed
+    private case class Found(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState{
+      val isFound = true
+      val objectId = Some(objectId2)
+      def withCommit(objectId: ObjectId, commit: CVSCommit) = this
+    }
+
+    private case class NotFound(val tag: CVSTag) extends TagSeachState {
+      val isFound = false
+      val objectId = None
+      def withCommit(objectId: ObjectId, commit: CVSCommit) = {
+        if (tag.includesCommit(commit)) {
+          val newFound = Set(commit.filename)
+          if (newFound == tag.fileVersions.keys) {
+            new Found(tag, objectId)
+          } else {
+            new PartialFound(tag, objectId, newFound)
+          }
+        } else {
+          this
+        }
+      }
+    }
+    
+    private case class OutOfSync(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState {
+      val isFound = false
+      val objectId = Some(objectId2)
+      def withCommit(objectId: ObjectId,commit: CVSCommit) = this
+    }
+
+    private case class PartialFound(val tag: CVSTag, objectId2: ObjectId, val found: Set[String]) extends TagSeachState {
+      val objectId = Some(objectId2)
+      val isFound = false
+      def withCommit(objectId: ObjectId, commit: CVSCommit) = {
+        val filename = commit.filename
+        if (tag.includesCommit(commit)) {
+          val newFound = found + filename
+          if (newFound == tag.fileVersions.keys) {
+            new Found(tag, objectId2)
+          } else {
+            new PartialFound(tag, objectId2, newFound)
+          }
+        } else {
+          if (found.contains(filename)) {
+            new OutOfSync(tag, objectId2)
+          } else {
+            this
+          }
+
+        }
+      }
+    }
+    
+    def getPointlessCVSCommits(gitrepo: Repository): Iterable[CVSCommit]= {
+      val objectId = Option(gitrepo.resolve("master"))
+      objectId.map((id) => {
+        val logs = git.log().add(id).call()
+        logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.name)))).filter(_.isPointless)
+      }).flatten
+    }
+    
+    def lookupTag(tag: CVSTag, gitrepo: Repository, branch: String): Option[ObjectId] = {
+      val objectId = Option(gitrepo.resolve(branch))
+      objectId.flatMap((id) => {
+        val logs = git.log().add(id).call()
+        val trunkCommits = logs.iterator().map(
+          (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.name)), commit.getId())).toList
+        
+        val pointlessCommits = getPointlessCVSCommits(gitrepo).toSeq
+        val pointlessTagFiles = pointlessCommits.map((pointlessCommit)=>(pointlessCommit.filename,pointlessCommit.revision)).intersect(tag.fileVersions.toSeq).map(_._1)
+        println("commits: "+trunkCommits.map(_._1))
+        println("heads: "+trunkCommits.map(_._1).count(_.isHead))
+        println("pointless: "+pointlessCommits)
+        val cleanedTag = tag.ignoreFiles(pointlessTagFiles)
+        val result = trunkCommits.foldLeft[TagSeachState](new NotFound(cleanedTag))((oldstate,pair)=>{
+          println(oldstate+" with "+pair._1)
+          oldstate.withCommit(pair._2, pair._1)
+          })
+        
+        println(trunkCommits.length)
+        println(result)
+        if(result.isFound){
+          result.objectId
+        }else{
+          None
         }
       })
     }
