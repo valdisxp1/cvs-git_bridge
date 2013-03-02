@@ -4,8 +4,11 @@ import java.io.File
 import scala.io.Source
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import com.valdis.adamsons.logger.SweetLogger
+import com.valdis.adamsons.logger.Logger
 
-object FileUtils {
+object FileUtils extends SweetLogger{
+  protected val logger = Logger
   def deleteDir(file: File) {
     def deleteRec(file: File): Unit = {
       if (file.isDirectory) {
@@ -17,7 +20,7 @@ object FileUtils {
   }
   def copyDir(src: File,dest:File) {
     def copyRec(src: File,dest:File): Unit = {
-      println(src.getAbsolutePath()+"->"+dest.getAbsolutePath())
+      log(src.getAbsolutePath()+"->"+dest.getAbsolutePath())
       if (src.isDirectory) {
         if(!dest.exists()){
           dest.mkdir()

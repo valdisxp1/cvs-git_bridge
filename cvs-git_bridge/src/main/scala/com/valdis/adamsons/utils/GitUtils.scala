@@ -21,8 +21,11 @@ import com.sun.jndi.ldap.Obj
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevWalk
+import com.valdis.adamsons.logger.Logger
+import com.valdis.adamsons.logger.SweetLogger
 
-class GitUtilsImpl(val gitDir: String) {
+class GitUtilsImpl(val gitDir: String) extends SweetLogger{
+  protected val logger = Logger
   val gitDateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.UK)
   lazy val repo = {
     val builder = new RepositoryBuilder();
@@ -52,7 +55,7 @@ class GitUtilsImpl(val gitDir: String) {
   }
 
   def updateHeadRef(branch: String, address: String) {
-    println("update ref:" + branch + "->" + address)
+    log("update ref:" + branch + "->" + address)
     val file = new File(gitDir + "refs/heads/" + branch)
     if (!file.exists) {
       file.createNewFile();

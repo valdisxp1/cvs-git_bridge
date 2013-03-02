@@ -16,8 +16,11 @@ import com.valdis.adamsons.cvs.CVSTag
 import org.eclipse.jgit.lib.ObjectId
 import scala.collection.JavaConversions._
 import java.util.Date
+import com.valdis.adamsons.logger.SweetLogger
+import com.valdis.adamsons.logger.Logger
 
-class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
+class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
+  override protected val logger = Logger
   
    def lastUpdated( branch: String): Option[Date] = {
       val ref = Option(repo.resolve(branch))
@@ -38,7 +41,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
       val previousCommit = previousHead.map((headId) => {
         val gitCommit = revWalk.parseCommit(headId)
         val noteString = getNoteMessage(headId.name())
-        println("last note: " + noteString)
+        log("last note: " + noteString)
         CVSCommit.fromGitCommit(gitCommit, noteString)
       })
       val lastImportPosition = sortedCommits.indexWhere((commit) => {
@@ -46,7 +49,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
           prevCommit.filename == commit.filename && prevCommit.revision == commit.revision
         }).getOrElse(false)
       })
-      println("last position: " + lastImportPosition)
+      log("last position: " + lastImportPosition)
       if (lastImportPosition < 0) {
         sortedCommits
       } else {
@@ -58,13 +61,13 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
       val sortedCommits = commits.sorted
       val relevantCommits =  getRelevantCommits(sortedCommits, branch)
       relevantCommits.foreach((commit)=>{
-        println(commit.filename);
-        println(commit.author);
-        println(commit.revision);
-        println(commit.date);
-        println
-        println(commit.comment)
-        println
+        log(commit.filename);
+        log(commit.author);
+        log(commit.revision);
+        log(commit.date);
+        log("\n")
+        log(commit.comment)
+        log("\n")
         
         //stage
         val inserter = repo.newObjectInserter();
@@ -88,19 +91,19 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
               }
             }
             val parentTreeId = parentCommit.getTree().getId()
-            println("parentTreeID:" + parentTreeId.name);
+            log("parentTreeID:" + parentTreeId.name);
           })
 
           // insert current file, a dead state means the file is removed instead
           if (!commit.isDead) {
             //does not change relative path
             val file = cvsrepo.getFile(commit.filename, commit.revision)
-            println("tmp file:" + file.getAbsolutePath())
+            log("tmp file:" + file.getAbsolutePath())
             val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
             treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
-            println("len:"+file.length)
+            log("len:"+file.length)
             file.delete();
-            println("fileID:" + fileId.name);
+            log("fileID:" + fileId.name);
           }
           
           val treeId = inserter.insert(treeFormatter);
@@ -120,8 +123,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
           val commitId = inserter.insert(commitBuilder)
           inserter.flush();
                     
-          println("treeID:" + treeId.name);
-          println("commitID:" + commitId.name);
+          log("treeID:" + treeId.name);
+          log("commitID:" + commitId.name);
           
           updateHeadRef(branch, commitId.name)
           
@@ -203,7 +206,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
         logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.name)))).filter(_.isPointless)
       }).flatten
     }
-    
+      
     def lookupTag(tag: CVSTag, branch: String): Option[ObjectId] = {
       val objectId = Option(repo.resolve(branch))
       objectId.flatMap((id) => {
@@ -213,17 +216,17 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
         
         val pointlessCommits = getPointlessCVSCommits.toSeq
         val pointlessTagFiles = pointlessCommits.map((pointlessCommit)=>(pointlessCommit.filename,pointlessCommit.revision)).intersect(tag.fileVersions.toSeq).map(_._1)
-        println("commits: "+trunkCommits.map(_._1))
-        println("heads: "+trunkCommits.map(_._1).count(_.isHead))
-        println("pointless: "+pointlessCommits)
+        log("commits: "+trunkCommits.map(_._1))
+        log("heads: "+trunkCommits.map(_._1).count(_.isHead))
+        log("pointless: "+pointlessCommits)
         val cleanedTag = tag.ignoreFiles(pointlessTagFiles)
         val result = trunkCommits.foldLeft[TagSeachState](new NotFound(cleanedTag))((oldstate,pair)=>{
-          println(oldstate+" with "+pair._1)
+          log(oldstate+" with "+pair._1)
           oldstate.withCommit(pair._2, pair._1)
           })
         
-        println(trunkCommits.length)
-        println(result)
+        log(trunkCommits.length)
+        log(result)
         if(result.isFound){
           result.objectId
         }else{

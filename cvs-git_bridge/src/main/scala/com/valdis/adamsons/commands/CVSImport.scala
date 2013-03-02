@@ -9,9 +9,13 @@ import org.eclipse.jgit.lib.ObjectId
 import com.valdis.adamsons.cvs.CVSCommit
 import com.valdis.adamsons.cvs.CVSTag
 import com.valdis.adamsons.bridge.Bridge
+import com.valdis.adamsons.logger.SweetLogger
+import com.valdis.adamsons.logger.Logger
 
 object CVSImport extends CommandParser{
-  case class CVSImportCommand(val cvsRoot: Option[String], val module: Option[String]) extends Command {
+  case class CVSImportCommand(val cvsRoot: Option[String], val module: Option[String]) extends Command with SweetLogger{
+    protected val logger = Logger
+    
     def this() = this(None,None)
     def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
     
@@ -24,9 +28,9 @@ object CVSImport extends CommandParser{
       {
       //get last the last updated date
       val lastUpdatedVal = Bridge.lastUpdated("master")
-      println(lastUpdatedVal)
+      log(lastUpdatedVal)
       val commits = cvsrepo.getFileList(lastUpdatedVal,None).flatMap(_.commits)
-      println(commits);
+      log(commits);
       Bridge.appendCommits(commits, "master", cvsrepo)
       }
       //other branches follow
@@ -42,14 +46,14 @@ object CVSImport extends CommandParser{
         }
         branchesForDepth.foreach((branch) => {
           val lastUpdatedVal = Bridge.lastUpdated(branch.name)
-          println(lastUpdatedVal)
+          log(lastUpdatedVal)
           val commits = cvsrepo.getFileList(branch.name, lastUpdatedVal, None).flatMap(_.commits)
-          println(commits);
+          log(commits);
           if (lastUpdatedVal.isEmpty) {
-            println("possibleParentBranches:" + possibleParentBranches)
+            log("possibleParentBranches:" + possibleParentBranches)
             val graftLocation = getGraftLocation(branch, possibleParentBranches)
             //graft it
-            println("graft:" + graftLocation)
+            log("graft:" + graftLocation)
             graftLocation.foreach((location) => Bridge.updateHeadRef(branch.name, location.name))
           }
           Bridge.appendCommits(commits, branch.name, cvsrepo)
