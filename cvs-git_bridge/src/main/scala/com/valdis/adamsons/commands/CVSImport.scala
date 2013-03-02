@@ -24,6 +24,7 @@ import com.valdis.adamsons.cvs.CVSCommit
 import java.util.TimeZone
 import scala.collection.JavaConversions._
 import com.valdis.adamsons.cvs.CVSTag
+import com.valdis.adamsons.bridge.Bridge
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
@@ -45,106 +46,7 @@ object CVSImport extends CommandParser{
       })
     }
 
-    def getRelevantCommits(sortedCommits: List[CVSCommit], branch: String, gitrepo: Repository) = {
-      val previousHead = GitUtils.getHeadRef(branch)
-      val previousCommit = previousHead.map((headId) => {
-        val gitCommit = revWalk.parseCommit(headId)
-        val noteString = GitUtils.getNoteMessage(headId.name())
-        println("last note: " + noteString)
-        CVSCommit.fromGitCommit(gitCommit, noteString)
-      })
-      val lastImportPosition = sortedCommits.indexWhere((commit) => {
-        previousCommit.map((prevCommit) => {
-          prevCommit.filename == commit.filename && prevCommit.revision == commit.revision
-        }).getOrElse(false)
-      })
-      println("last position: " + lastImportPosition)
-      if (lastImportPosition < 0) {
-        sortedCommits
-      } else {
-        sortedCommits.drop(lastImportPosition + 1)
-      }
-    }
     
-    def appendCommits(commits:List[CVSCommit],branch:String,gitrepo:Repository){
-      val sortedCommits = commits.sorted
-      val relevantCommits =  getRelevantCommits(sortedCommits, branch, gitrepo)
-      relevantCommits.foreach((commit)=>{
-        println(commit.filename);
-        println(commit.author);
-        println(commit.revision);
-        println(commit.date);
-        println
-        println(commit.comment)
-        println
-        
-        //stage
-        val inserter = gitrepo.newObjectInserter();
-        try {
-          val treeWalk = new TreeWalk(gitrepo)
-          
-          val parentId = GitUtils.getHeadRef(branch)
-
-          val treeFormatter = new TreeFormatter
-          
-
-          // insert parent elements in this tree
-          parentId.foreach((id) => {
-            val parentCommit = revWalk.parseCommit(id)
-            treeWalk.addTree(parentCommit.getTree())
-            treeWalk.setRecursive(true);
-            while (treeWalk.next()) {
-              val path = treeWalk.getPathString();
-              if (path != commit.filename) {
-                // using zero as only a single tree was added
-                treeFormatter.append(path, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-              }
-            }
-            val parentTreeId = parentCommit.getTree().getId()
-            println("parentTreeID:" + parentTreeId.name);
-          })
-
-          // insert current file, a dead state means the file is removed instead
-          if (!commit.isDead) {
-            //does not change relative path
-            val file = cvsrepo.getFile(commit.filename, commit.revision)
-            println("tmp file:" + file.getAbsolutePath())
-            val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
-            treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
-            println("len:"+file.length)
-            file.delete();
-            println("fileID:" + fileId.name);
-          }
-          
-          val treeId = inserter.insert(treeFormatter);
-          
-          //commit
-          val author = new PersonIdent(commit.author,commit.author+"@nowhere.com",commit.date,TimeZone.getDefault())
-          val commitBuilder = new CommitBuilder
-          commitBuilder.setTreeId(treeId)
-          commitBuilder.setAuthor(author)
-          commitBuilder.setCommitter(author)
-          commitBuilder.setMessage(commit.comment)
-          
-          parentId.foreach({
-             commitBuilder.setParentId(_)
-          })
-         
-          val commitId = inserter.insert(commitBuilder)
-          inserter.flush();
-                    
-          println("treeID:" + treeId.name);
-          println("commitID:" + commitId.name);
-          
-          GitUtils.updateHeadRef(branch, commitId.name)
-          
-          git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
-          
-        } finally {
-          inserter.release()
-        }
-      })
-    }
     
     def lookupTag(tag: CVSTag, gitrepo: Repository,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, gitrepo, branch)).headOption
 
@@ -257,7 +159,7 @@ object CVSImport extends CommandParser{
       println(lastUpdatedVal)
       val commits = cvsrepo.getFileList(lastUpdatedVal,None).flatMap(_.commits)
       println(commits);
-      appendCommits(commits, "master", gitrepo)
+      Bridge.appendCommits(commits, "master", cvsrepo)
       }
       //other branches follow
       val branches = cvsrepo.getBranchNameSet.map(cvsrepo.resolveTag(_))
@@ -282,7 +184,7 @@ object CVSImport extends CommandParser{
             println("graft:" + graftLocation)
             graftLocation.foreach((location) => GitUtils.updateHeadRef(branch.name, location.name))
           }
-          appendCommits(commits, branch.name, gitrepo)
+          Bridge.appendCommits(commits, branch.name, cvsrepo)
         })
       })
       

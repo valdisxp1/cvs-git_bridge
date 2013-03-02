@@ -22,7 +22,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevWalk
 
-class GitUtilsImpl(val gitDir :String) {
+class GitUtilsImpl(val gitDir: String) {
   val gitDateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.UK)
   lazy val repo = {
     val builder = new RepositoryBuilder();
@@ -33,8 +33,8 @@ class GitUtilsImpl(val gitDir :String) {
   lazy val git = new Git(repo)
   lazy val revWalk = new RevWalk(repo)
 
-  def getNoteMessage(objectId: String): String =  getNoteMessage(ObjectId.fromString(objectId))
-    
+  def getNoteMessage(objectId: String): String = getNoteMessage(ObjectId.fromString(objectId))
+
   def getNoteMessage(objectId: ObjectId): String = {
     val revObject = revWalk.lookupCommit(objectId)
     val note = git.notesShow().setObjectId(revObject).call()
@@ -52,7 +52,7 @@ class GitUtilsImpl(val gitDir :String) {
   }
 
   def updateHeadRef(branch: String, address: String) {
-    println("update ref:"+branch+"->"+address)
+    println("update ref:" + branch + "->" + address)
     val file = new File(gitDir + "refs/heads/" + branch)
     if (!file.exists) {
       file.createNewFile();
@@ -67,4 +67,4 @@ class GitUtilsImpl(val gitDir :String) {
 
 }
 
-object GitUtils  extends GitUtilsImpl("git/")
+object GitUtils extends GitUtilsImpl("git/")
