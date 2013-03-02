@@ -1,3 +1,4 @@
 
 /cvs-git_bridge/target
 git
+/cvs-git_bridge/*.log
