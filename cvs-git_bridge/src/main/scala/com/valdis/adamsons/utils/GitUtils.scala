@@ -22,8 +22,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevWalk
 
-object GitUtils {
-  val gitDir = "git/";
+class GitUtilsImpl(val gitDir :String) {
   val gitDateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.UK)
   lazy val repo = {
     val builder = new RepositoryBuilder();
@@ -67,3 +66,5 @@ object GitUtils {
   }
 
 }
+
+object GitUtils  extends GitUtilsImpl("git/")
