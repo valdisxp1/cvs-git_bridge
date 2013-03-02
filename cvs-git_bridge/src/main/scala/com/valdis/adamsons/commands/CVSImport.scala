@@ -1,23 +1,17 @@
 package com.valdis.adamsons.commands
 
-import com.valdis.adamsons.utils.GitUtils
-import com.valdis.adamsons.utils.GitUtils._
 import scala.sys.process._
 import com.valdis.adamsons.cvs.CVSRepository
 import com.valdis.adamsons.cvs.CVSFileVersion
 import com.valdis.adamsons.utils.CVSUtils
 import org.eclipse.jgit.lib.Repository
-import java.util.Date
-import java.io.FileInputStream
 import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.treewalk.TreeWalk
 import com.valdis.adamsons.cvs.CVSCommit
-import java.util.TimeZone
 import com.valdis.adamsons.cvs.CVSTag
 import com.valdis.adamsons.bridge.Bridge
 
 object CVSImport extends CommandParser{
-  case class CVSImportCommand(val cvsRoot:Option[String], val module:Option[String]) extends Command {
+  case class CVSImportCommand(val cvsRoot: Option[String], val module: Option[String]) extends Command {
     def this() = this(None,None)
     def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
     
@@ -26,8 +20,6 @@ object CVSImport extends CommandParser{
     def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = Bridge.lookupTag(branch.getBranchParent, trunk)
     
     def apply = {
-      val gitrepo = GitUtils.repo;
-      
       //main branch at master
       {
       //get last the last updated date
@@ -63,16 +55,15 @@ object CVSImport extends CommandParser{
           Bridge.appendCommits(commits, branch.name, cvsrepo)
         })
       })
-      
+
       //tags
       val tags = cvsrepo.getTagNameSet.map(cvsrepo.resolveTag(_))
-      tags.foreach((tag)=>{
-      val branchNames = branches.map(_.name)
-      val objectId = Bridge.lookupTag(tag, branchNames)
-      objectId.map(revWalk.parseAny(_)).foreach(
-          (revobj)=>git.tag().setObjectId(revobj)
-          .setName(tag.name)
-          .setMessage(tag.generateMessage).call())
+      tags.foreach((tag) => {
+        val branchNames = branches.map(_.name)
+        val objectId = Bridge.lookupTag(tag, branchNames)
+        if (objectId.isDefined) {
+          Bridge.addTag(objectId.get, tag)
+        }
       })
       0
     }

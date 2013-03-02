@@ -75,7 +75,6 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
 
           val treeFormatter = new TreeFormatter
           
-
           // insert parent elements in this tree
           parentId.foreach((id) => {
             val parentCommit = revWalk.parseCommit(id)
@@ -232,7 +231,13 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
         }
       })
     }
-  
+
+  def addTag(place: ObjectId, tag: CVSTag) = {
+    val revobj = revWalk.parseAny(place)
+    git.tag().setObjectId(revobj)
+      		 .setName(tag.name)
+      		 .setMessage(tag.generateMessage).call()
+  }
 }
 
 object Bridge extends GitBridge("git/")
