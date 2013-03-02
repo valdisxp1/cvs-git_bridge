@@ -23,7 +23,7 @@ object CVSImport extends CommandParser{
     
     val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
     
-    def getGraftLocation(branch: CVSTag, gitrepo: Repository,trunk: Iterable[String]): Option[ObjectId] = Bridge.lookupTag(branch.getBranchParent, gitrepo, trunk)
+    def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = Bridge.lookupTag(branch.getBranchParent, trunk)
     
     def apply = {
       val gitrepo = GitUtils.repo;
@@ -31,7 +31,7 @@ object CVSImport extends CommandParser{
       //main branch at master
       {
       //get last the last updated date
-      val lastUpdatedVal = Bridge.lastUpdated(gitrepo,"master")
+      val lastUpdatedVal = Bridge.lastUpdated("master")
       println(lastUpdatedVal)
       val commits = cvsrepo.getFileList(lastUpdatedVal,None).flatMap(_.commits)
       println(commits);
@@ -49,16 +49,16 @@ object CVSImport extends CommandParser{
           branchesByDepth.get(depth - 1).flatten.map(_.name)
         }
         branchesForDepth.foreach((branch) => {
-          val lastUpdatedVal = Bridge.lastUpdated(gitrepo, branch.name)
+          val lastUpdatedVal = Bridge.lastUpdated(branch.name)
           println(lastUpdatedVal)
           val commits = cvsrepo.getFileList(branch.name, lastUpdatedVal, None).flatMap(_.commits)
           println(commits);
           if (lastUpdatedVal.isEmpty) {
             println("possibleParentBranches:" + possibleParentBranches)
-            val graftLocation = getGraftLocation(branch, gitrepo, possibleParentBranches)
+            val graftLocation = getGraftLocation(branch, possibleParentBranches)
             //graft it
             println("graft:" + graftLocation)
-            graftLocation.foreach((location) => GitUtils.updateHeadRef(branch.name, location.name))
+            graftLocation.foreach((location) => Bridge.updateHeadRef(branch.name, location.name))
           }
           Bridge.appendCommits(commits, branch.name, cvsrepo)
         })
@@ -68,7 +68,7 @@ object CVSImport extends CommandParser{
       val tags = cvsrepo.getTagNameSet.map(cvsrepo.resolveTag(_))
       tags.foreach((tag)=>{
       val branchNames = branches.map(_.name)
-      val objectId = Bridge.lookupTag(tag, gitrepo,branchNames)
+      val objectId = Bridge.lookupTag(tag, branchNames)
       objectId.map(revWalk.parseAny(_)).foreach(
           (revobj)=>git.tag().setObjectId(revobj)
           .setName(tag.name)

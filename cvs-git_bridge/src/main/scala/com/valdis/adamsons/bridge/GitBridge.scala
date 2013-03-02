@@ -19,8 +19,8 @@ import java.util.Date
 
 class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
   
-   def lastUpdated(gitrepo: Repository, branch: String): Option[Date] = {
-      val ref = Option(gitrepo.resolve(branch))
+   def lastUpdated( branch: String): Option[Date] = {
+      val ref = Option(repo.resolve(branch))
       ref.flatMap((ref) => {
         val logs = git.log().add(ref).setMaxCount(1).call()
         val iterator = logs.iterator()
@@ -53,8 +53,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
         sortedCommits.drop(lastImportPosition + 1)
       }
     }
-    
-    def appendCommits(commits:List[CVSCommit],branch:String,cvsrepo:CVSRepository){
+
+  def appendCommits(commits: List[CVSCommit], branch: String, cvsrepo: CVSRepository) {
       val sortedCommits = commits.sorted
       val relevantCommits =  getRelevantCommits(sortedCommits, branch)
       relevantCommits.foreach((commit)=>{
@@ -135,7 +135,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
     }
     
     //tags
-     def lookupTag(tag: CVSTag, gitrepo: Repository,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, gitrepo, branch)).headOption
+     def lookupTag(tag: CVSTag,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, branch)).headOption
 
     private abstract class TagSeachState() {
       def tag:CVSTag
@@ -197,22 +197,22 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) {
       }
     }
     
-    def getPointlessCVSCommits(gitrepo: Repository): Iterable[CVSCommit]= {
-      val objectId = Option(gitrepo.resolve("master"))
+    def getPointlessCVSCommits: Iterable[CVSCommit]= {
+      val objectId = Option(repo.resolve("master"))
       objectId.map((id) => {
         val logs = git.log().add(id).call()
         logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.name)))).filter(_.isPointless)
       }).flatten
     }
     
-    def lookupTag(tag: CVSTag, gitrepo: Repository, branch: String): Option[ObjectId] = {
-      val objectId = Option(gitrepo.resolve(branch))
+    def lookupTag(tag: CVSTag, branch: String): Option[ObjectId] = {
+      val objectId = Option(repo.resolve(branch))
       objectId.flatMap((id) => {
         val logs = git.log().add(id).call()
         val trunkCommits = logs.iterator().map(
           (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.name)), commit.getId())).toList
         
-        val pointlessCommits = getPointlessCVSCommits(gitrepo).toSeq
+        val pointlessCommits = getPointlessCVSCommits.toSeq
         val pointlessTagFiles = pointlessCommits.map((pointlessCommit)=>(pointlessCommit.filename,pointlessCommit.revision)).intersect(tag.fileVersions.toSeq).map(_._1)
         println("commits: "+trunkCommits.map(_._1))
         println("heads: "+trunkCommits.map(_._1).count(_.isHead))
