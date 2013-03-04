@@ -203,7 +203,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       val objectId = Option(repo.resolve("master"))
       objectId.map((id) => {
         val logs = git.log().add(id).call()
-        logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.name)))).filter(_.isPointless)
+        logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)))).filter(_.isPointless)
       }).flatten
     }
       
@@ -212,7 +212,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       objectId.flatMap((id) => {
         val logs = git.log().add(id).call()
         val trunkCommits = logs.iterator().map(
-          (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.name)), commit.getId())).toList
+          (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId)).toList
         
         val pointlessCommits = getPointlessCVSCommits.toSeq
         val pointlessTagFiles = pointlessCommits.map((pointlessCommit)=>(pointlessCommit.filename,pointlessCommit.revision)).intersect(tag.fileVersions.toSeq).map(_._1)

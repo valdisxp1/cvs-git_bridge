@@ -3,6 +3,8 @@ package com.valdis.adamsons.cvs
 import java.util.Date
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.notes.Note
+import com.valdis.adamsons.logger.SweetLogger
+import com.valdis.adamsons.logger.Logger
 
 case class CVSCommit(val filename: String,
 					 val revision: CVSFileVersion,
@@ -13,7 +15,7 @@ case class CVSCommit(val filename: String,
 					 val commitId: Option[String]) extends Ordered[CVSCommit]{
   def generateNote: String = (CVSCommit.CVS_PATH_KEY + filename + "\n" +
 		  				      CVSCommit.CVS_REV_KEY + revision + "\n" +
-		  				      (if (isDead) { CVSCommit.CVS_DEAD + "\n" } else { "\n" }) +
+		  				      (if (isDead) { CVSCommit.CVS_DEAD + "\n" } else { CVSCommit.CVS_ALIVE+"\n" }) +
 		  				      commitId.map(CVSCommit.CVS_COMMIT_ID_KEY + _ + "\n").getOrElse("\n"))
   def isHead = revision == CVSCommit.HEAD_REVISION
   /**
@@ -41,14 +43,17 @@ case class CVSCommit(val filename: String,
   }
 }
 
-object CVSCommit {
+object CVSCommit extends SweetLogger{
+  protected def logger = Logger
   //assumes default: 1.1
   val HEAD_REVISION = CVSFileVersion("1.1")
   val CVS_PATH_KEY = "CVS_PATH: "
   val CVS_REV_KEY = "CVS_REV: "
   val CVS_COMMIT_ID_KEY = "CVS_COMMIT_ID: "
   val CVS_DEAD = "dead"
+  val CVS_ALIVE = "alive"
   def fromGitCommit(commit: RevCommit, noteString: String): CVSCommit = {
+    log("note: "+noteString)
     val author = commit.getAuthorIdent()
     val lines = noteString.split("\n")
     val path = lines(0).drop(CVS_PATH_KEY.length())
