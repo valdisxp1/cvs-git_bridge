@@ -45,20 +45,24 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     new String(noteData)
   }
 
+  val headRefPrefix = "refs/heads/"
+  
   def hasHeadRef(branch: String): Boolean = {
     // assumes bare
-    new File(gitDir + "refs/heads/" + branch).exists()
+    new File(gitDir + headRefPrefix + branch).exists()
   }
 
   def getRef(branch: String): Option[ObjectId] = {
     Option(repo.resolve(branch))
   }
 
-  def updateRef(branch: String, address: String): Unit  = updateRef(branch, ObjectId.fromString(address))
+  def updateHeadRef(branch: String, id: ObjectId) = updateRef(headRefPrefix + branch, id)
   
-  def updateRef(branch: String, id: ObjectId): Unit = {
-    log("update ref:" + branch + "->" + id.name)
-    val updateCmd = repo.updateRef(branch);
+  def updateRef(ref: String, address: String): Unit  = updateRef(ref, ObjectId.fromString(address))
+  
+  def updateRef(ref: String, id: ObjectId): Unit = {
+    log("update ref:" + ref + "->" + id.name)
+    val updateCmd = repo.updateRef(ref);
     updateCmd.setNewObjectId(id);
     updateCmd.setForceUpdate(true);
     updateCmd.update(revWalk);

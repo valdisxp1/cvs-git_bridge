@@ -126,7 +126,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           log("treeID:" + treeId.name);
           log("commitID:" + commitId.name);
           
-          updateRef(branch, commitId)
+          updateHeadRef(branch, commitId)
           
           git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
           
