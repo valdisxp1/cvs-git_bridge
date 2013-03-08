@@ -189,7 +189,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
             new PartialFound(tag, objectId2, newFound)
           }
         } else {
-          if (found.contains(filename)) {
+          // right file but wrong version
+          if (!found.contains(filename) && tag.includesFile(filename)) {
             new OutOfSync(tag, objectId2)
           } else {
             this

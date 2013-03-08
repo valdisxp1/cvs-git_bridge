@@ -12,6 +12,7 @@ case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion
   def generateMessage = name + "\n" + fileVersions.map((pair)=>pair._1+" : "+pair._2).mkString("\n")
 
   def includesCommit(commit: CVSCommit) = fileVersions.get(commit.filename).map(_ == commit.revision).getOrElse(false)
+  def includesFile(path: String) = fileVersions.keys.exists(_ == path)
   
   def depth = fileVersions.values.map(_.depth).max
   
