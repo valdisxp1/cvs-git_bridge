@@ -37,7 +37,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   
 //commits
   private def getRelevantCommits(sortedCommits: List[CVSCommit], branch: String) = {
-      val previousHead = getHeadRef(branch)
+      val previousHead = getRef(branch)
       val previousCommit = previousHead.map((headId) => {
         val gitCommit = revWalk.parseCommit(headId)
         val noteString = getNoteMessage(headId.name())
@@ -74,7 +74,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         try {
           val treeWalk = new TreeWalk(repo)
           
-          val parentId = getHeadRef(branch)
+          val parentId = getRef(branch)
 
           val treeFormatter = new TreeFormatter
           
@@ -126,7 +126,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           log("treeID:" + treeId.name);
           log("commitID:" + commitId.name);
           
-          updateHeadRef(branch, commitId.name)
+          updateRef(branch, commitId)
           
           git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
           

@@ -50,22 +50,18 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     new File(gitDir + "refs/heads/" + branch).exists()
   }
 
-  def getHeadRef(branch: String): Option[ObjectId] = {
+  def getRef(branch: String): Option[ObjectId] = {
     Option(repo.resolve(branch))
   }
 
-  def updateHeadRef(branch: String, address: String) {
-    log("update ref:" + branch + "->" + address)
-    val file = new File(gitDir + "refs/heads/" + branch)
-    if (!file.exists) {
-      file.createNewFile();
-    }
-    val fileOutputStream = new FileOutputStream(file, false);
-    try {
-      fileOutputStream.write(address.getBytes())
-    } finally {
-      fileOutputStream.close()
-    }
+  def updateRef(branch: String, address: String): Unit  = updateRef(branch, ObjectId.fromString(address))
+  
+  def updateRef(branch: String, id: ObjectId): Unit = {
+    log("update ref:" + branch + "->" + id.name)
+    val updateCmd = repo.updateRef(branch);
+    updateCmd.setNewObjectId(id);
+    updateCmd.setForceUpdate(true);
+    updateCmd.update(revWalk);
   }
 
 }

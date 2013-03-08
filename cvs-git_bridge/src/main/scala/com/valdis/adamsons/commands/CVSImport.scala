@@ -54,7 +54,7 @@ object CVSImport extends CommandParser{
             val graftLocation = getGraftLocation(branch, possibleParentBranches)
             //graft it
             log("graft:" + graftLocation)
-            graftLocation.foreach((location) => Bridge.updateHeadRef(branch.name, location.name))
+            graftLocation.foreach((location) => Bridge.updateRef(branch.name, location))
           }
           Bridge.appendCommits(commits, branch.name, cvsrepo)
         })
