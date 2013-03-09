@@ -87,15 +87,38 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       ""
      }
     val process = cvsString+ "rlog "+branch.map(" -r"+_+" ").getOrElse(" -b ") + dateString + module.getOrElse("")
-    val response: String = process!!;
-    parseRlog(response)
+    val responseLines = stringToProcess(process).lines;
+    parseRlogLines(responseLines).toList
   }
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
 
-  private case class RlogParseState(val isInHead: Boolean, val commits: SortedSet[CVSCommit], val buffer: String) {
-    def this() = this(true, SortedSet(), "")
-    def withLine(line: String): RlogParseState = this
+  private case class RlogParseState(val isInHeader: Boolean, val commits: SortedSet[CVSCommit], val headerBuffer: String, val commitBuffer: String) {
+    def this() = this(true, SortedSet(), "", "")
+
+    private def updatedCommits = if (isInHeader) {
+      commits
+    } else {
+      commits + commitFromRLog(headerBuffer, commitBuffer)
+    }
+
+    def withLine(line: String): RlogParseState = {
+      line match {
+        case CVSRepository.FILES_SPLITTER => {
+          val isInHeader = true;
+          new RlogParseState(isInHeader, updatedCommits, "", "")
+        }
+        case CVSRepository.COMMITS_SPLITTER => {
+          val isInHeader = false;
+          new RlogParseState(isInHeader, updatedCommits, "", "")
+        }
+        case _ => {
+          val headerBuffer: String = this.headerBuffer + (if (isInHeader) { line } else { "" })
+          val commitBuffer: String = this.commitBuffer + (if (!isInHeader) { line } else { "" })
+          new RlogParseState(isInHeader, commits, headerBuffer, commitBuffer)
+        }
+      }
+    }
   }
 
   private def commitFromRLog(header: String, commit: String): CVSCommit = {
@@ -118,13 +141,17 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     val cvsCommit = CVSCommit(fileName, revision, isDead, date, author, comment, commitId)
     cvsCommit
   }
+
+  def parseRlogLines(lines: Iterable[String]): SortedSet[CVSCommit] = {
+	lines.foldLeft(new RlogParseState())(_.withLine(_)).commits
+  }
   
-  def parseRlog(rlog:String):List[CVSCommit]={
+  def parseRlog(rlog: String): List[CVSCommit] = {
     val items = rlog.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList.map(_.trim)).dropRight(1)
-    items.flatMap((file)=>{
-      val commits = file.tail.map((commit)=>{
+    items.flatMap((file) => {
+      val commits = file.tail.map((commit) => {
         commitFromRLog(file.head, commit)
-      }) 
+      })
       commits
     })
   }
