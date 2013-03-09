@@ -169,8 +169,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
 
   private def commitFromRLog(header: IndexedSeq[String], commit: IndexedSeq[String]): CVSCommit = {
-    log(header)
-    log(commit)
     val headerPairs = header.toList.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
     val headerMap = headerPairs.toMap
     val fileName = cleanRCSpath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
