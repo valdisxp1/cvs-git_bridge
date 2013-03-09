@@ -59,22 +59,64 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     pairs.filter(!_._2.isBranch).map(_._1).toSet
   }
 
-  def resolveTag(tagName: String): CVSTag = {
-    val process = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
-    val response: String = process!!;
-    val files = response.split(CVSRepository.FILES_SPLITTER).filter(!_.trim.isEmpty())
-    files.foldLeft(CVSTag(tagName))((tag, fileHeader) => {
-      val lines = fileHeader.split("\n?\r").toList
-      val tagLines = lines.filter((str) => str.size > 1 && str(1) == '\t').map(_.trim)
-      val tagPairs = tagLines.map(_.split(':')).map((pair) => (pair(0), CVSFileVersion(pair(1).trim)))
+  private case class RlogTagParseState(val isInHeader: Boolean, val fileName: String, val tag: CVSTag) {
+    def this(name: String) = this(true, "", CVSTag(name, Map()))
 
-      val headerPairs = lines.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
-      val headerMap = headerPairs.toMap
-      val fileName = cleanRCSpath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
-      
-      val version = tagPairs.find(_._1 == tagName).map(_._2)
-      version.map(tag.withFile(fileName, _)).getOrElse(tag)
-    })
+    def extractFileName(line: String): Option[String] = {
+      val arr = line.split(':')
+      if (arr.length == 2 && arr(0).trim == "RCS file") {
+        Some(cleanRCSpath(arr(1)))
+      } else {
+        None
+      }
+    }
+
+    def withLine(line: String): RlogTagParseState = {
+      line match {
+        case CVSRepository.FILES_SPLITTER => {
+          val isInHeader = true;
+          if (this.isInHeader == isInHeader) {
+            this
+          } else {
+            new RlogTagParseState(isInHeader, this.fileName, tag)
+          }
+        }
+        case CVSRepository.COMMITS_SPLITTER => {
+          val isInHeader = false;
+          if (this.isInHeader == isInHeader) {
+            this
+          } else {
+            new RlogTagParseState(isInHeader, fileName, tag)
+          }
+        }
+        case _ => {
+          if (isInHeader) {
+            val fileNameUpdated = extractFileName(line).map(new RlogTagParseState(isInHeader, _, tag))
+            fileNameUpdated.getOrElse({
+              lazy val pair = {
+                val arr = line.split(':')
+                (arr(0).trim(), CVSFileVersion(arr(1).trim))
+              }
+              def isTagLine = line.size > 1 && line(0) == '\t'
+              def isTheRightTag = tag.name == pair._1
+              if (isTagLine && isTheRightTag) {
+                new RlogTagParseState(isInHeader, this.fileName, tag.withFile(this.fileName, pair._2))
+              } else {
+                this
+              }
+            })
+          } else {
+            this
+          }
+        }
+      }
+    }
+  }
+
+  def resolveTag(tagName: String): CVSTag = {
+    val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    val lines = stringToProcess(command).lines;
+    lines.foldLeft(new RlogTagParseState(tagName))(_ withLine _).tag
   }
 
   def getCommitList: List[CVSCommit] = getCommitList(None, None)
