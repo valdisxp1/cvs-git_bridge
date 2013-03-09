@@ -9,8 +9,11 @@ import org.omg.CORBA.portable.InputStream
 import java.io.InputStream
 import java.io.File
 import scala.collection.immutable.SortedSet
+import com.valdis.adamsons.logger.SweetLogger
+import com.valdis.adamsons.logger.Logger
 
-case class CVSRepository(val cvsroot: Option[String], val module: Option[String]){
+case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger{
+  def logger = Logger
   def this(cvsroot: Option[String]) = this(cvsroot, None)
   def this() = this(None, None)
   def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
@@ -36,7 +39,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     file
   }
   def fileNameList = {
-    val response: String = cvsString+ "rlog -R " + module.getOrElse("")!!;
+    val response: String = (cvsString+ "rlog -R " + module.getOrElse(""))!!;
     response.split("\n").toList.map(cleanRCSpath)
   }
   
@@ -93,8 +96,8 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
 
-  private case class RlogParseState(val isInHeader: Boolean, val commits: SortedSet[CVSCommit], val headerBuffer: String, val commitBuffer: String) {
-    def this() = this(true, SortedSet(), "", "")
+  private case class RlogParseState(val isInHeader: Boolean, val commits: SortedSet[CVSCommit], val headerBuffer: Vector[String], val commitBuffer: Vector[String]) {
+    def this() = this(true, SortedSet(), Vector(), Vector())
 
     private def updatedCommits = if (isInHeader) {
       commits
@@ -106,37 +109,38 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       line match {
         case CVSRepository.FILES_SPLITTER => {
           val isInHeader = true;
-          new RlogParseState(isInHeader, updatedCommits, "", "")
+          new RlogParseState(isInHeader, updatedCommits, Vector(), Vector())
         }
         case CVSRepository.COMMITS_SPLITTER => {
           val isInHeader = false;
-          new RlogParseState(isInHeader, updatedCommits, "", "")
+          new RlogParseState(isInHeader, updatedCommits, headerBuffer, Vector())
         }
         case _ => {
-          val headerBuffer: String = this.headerBuffer + (if (isInHeader) { line } else { "" })
-          val commitBuffer: String = this.commitBuffer + (if (!isInHeader) { line } else { "" })
+          val headerBuffer =  (if (isInHeader) {this.headerBuffer :+ line } else { this.headerBuffer})
+          val commitBuffer =  (if (!isInHeader) {this.commitBuffer :+ line } else { this.commitBuffer })
           new RlogParseState(isInHeader, commits, headerBuffer, commitBuffer)
         }
       }
     }
   }
 
-  private def commitFromRLog(header: String, commit: String): CVSCommit = {
-    val headerPairs = header.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
+  private def commitFromRLog(header: IndexedSeq[String], commit: IndexedSeq[String]): CVSCommit = {
+    log(header)
+    log(commit)
+    val headerPairs = header.toList.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
     val headerMap = headerPairs.toMap
     val fileName = cleanRCSpath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
 
-    val lines = commit.split("\n?\r");
-    val revisionStr = lines(0).trim.split(' ')(1)
+    val revisionStr = commit(0).trim.split(' ')(1)
     val revision = CVSFileVersion(revisionStr)
-    val params = lines(1).trim.dropRight(1).split(';').map(_.split(": ")).map((x) => x(0).trim -> x(1).trim).toMap
+    val params = commit(1).trim.dropRight(1).split(';').map(_.split(": ")).map((x) => x(0).trim -> x(1).trim).toMap
     val date = CVSRepository.CVS_DATE_FORMAT.parse(params.get("date").getOrElse(missing("date")))
     val author = params.get("author").getOrElse(missing("author"))
     val commitId = params.get("commitid");
     val isDead = params.get("state").exists(_ == "dead")
     //need a good way to determine where commit message starts
-    val linesToDrop = if (lines(2).contains(": ")) { 3 } else { 2 }
-    val comment = lines.drop(linesToDrop).mkString("\n").trim
+    val linesToDrop = if (commit(2).contains(": ")) { 3 } else { 2 }
+    val comment = commit.drop(linesToDrop).mkString("\n").trim
 
     val cvsCommit = CVSCommit(fileName, revision, isDead, date, author, comment, commitId)
     cvsCommit
@@ -144,16 +148,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 
   def parseRlogLines(lines: Iterable[String]): SortedSet[CVSCommit] = {
 	lines.foldLeft(new RlogParseState())(_.withLine(_)).commits
-  }
-  
-  def parseRlog(rlog: String): List[CVSCommit] = {
-    val items = rlog.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList.map(_.trim)).dropRight(1)
-    items.flatMap((file) => {
-      val commits = file.tail.map((commit) => {
-        commitFromRLog(file.head, commit)
-      })
-      commits
-    })
   }
 }
 
