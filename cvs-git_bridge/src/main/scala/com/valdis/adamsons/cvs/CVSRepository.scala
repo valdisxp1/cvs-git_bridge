@@ -39,24 +39,23 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     file
   }
   def fileNameList = {
-    val response: String = (cvsString+ "rlog -R " + module.getOrElse(""))!!;
-    response.split("\n").toList.map(cleanRCSpath)
+    val responseLines = stringToProcess(cvsString+ "rlog -R " + module.getOrElse("")).lines;
+    responseLines.toList.map(cleanRCSpath)
   }
-  
-  protected def getTagLines ={
-    val process = cvsString+ "rlog -h" + module.map(" "+ _ + "/").getOrElse("")
-    val response: String = process!!;
-    val lines = response.split("\n?\r")
-   lines.filter((str) => str.size > 1 && str(1) == '\t').map(_.trim)
-  } 
-  
-  def getBranchNameSet:Set[String]={
-    val pairs = getTagLines.map(_.split(':')).map((pair)=> (pair(0),CVSFileVersion(pair(1).trim)))
+
+  private def getTagLines = {
+    val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    val lines = stringToProcess(command).lines;
+    lines.filter((str) => str.size > 0 && str(0) == '\t').map(_.trim)
+  }
+
+  def getBranchNameSet: Set[String] = {
+    val pairs = getTagLines.map(_.split(':')).map((pair) => (pair(0), CVSFileVersion(pair(1).trim)))
     pairs.filter(_._2.isBranch).map(_._1).toSet
   }
-  
-  def getTagNameSet:Set[String]={
-    val pairs = getTagLines.map(_.split(':')).map((pair)=> (pair(0),CVSFileVersion(pair(1).trim)))
+
+  def getTagNameSet: Set[String] = {
+    val pairs = getTagLines.map(_.split(':')).map((pair) => (pair(0), CVSFileVersion(pair(1).trim)))
     pairs.filter(!_._2.isBranch).map(_._1).toSet
   }
 
@@ -96,7 +95,10 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
 
-  private case class RlogParseState(val isInHeader: Boolean, val commits: SortedSet[CVSCommit], val headerBuffer: Vector[String], val commitBuffer: Vector[String]) {
+  private case class RlogCommitParseState(val isInHeader: Boolean,
+		  							val commits: SortedSet[CVSCommit],
+		  							val headerBuffer: Vector[String],
+		  							val commitBuffer: Vector[String]) {
     def this() = this(true, SortedSet(), Vector(), Vector())
 
     private def updatedCommits = if (isInHeader) {
@@ -105,20 +107,20 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       commits + commitFromRLog(headerBuffer, commitBuffer)
     }
 
-    def withLine(line: String): RlogParseState = {
+    def withLine(line: String): RlogCommitParseState = {
       line match {
         case CVSRepository.FILES_SPLITTER => {
           val isInHeader = true;
-          new RlogParseState(isInHeader, updatedCommits, Vector(), Vector())
+          new RlogCommitParseState(isInHeader, updatedCommits, Vector(), Vector())
         }
         case CVSRepository.COMMITS_SPLITTER => {
           val isInHeader = false;
-          new RlogParseState(isInHeader, updatedCommits, headerBuffer, Vector())
+          new RlogCommitParseState(isInHeader, updatedCommits, headerBuffer, Vector())
         }
         case _ => {
           val headerBuffer =  (if (isInHeader) {this.headerBuffer :+ line } else { this.headerBuffer})
           val commitBuffer =  (if (!isInHeader) {this.commitBuffer :+ line } else { this.commitBuffer })
-          new RlogParseState(isInHeader, commits, headerBuffer, commitBuffer)
+          new RlogCommitParseState(isInHeader, commits, headerBuffer, commitBuffer)
         }
       }
     }
@@ -147,7 +149,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
 
   def parseRlogLines(lines: Iterable[String]): SortedSet[CVSCommit] = {
-	lines.foldLeft(new RlogParseState())(_.withLine(_)).commits
+	lines.foldLeft(new RlogCommitParseState())(_.withLine(_)).commits
   }
 }
 
