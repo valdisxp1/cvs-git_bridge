@@ -97,28 +97,33 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     def this() = this(true, SortedSet(), "")
     def withLine(line: String): RlogParseState = this
   }
+
+  private def commitFromRLog(header: String, commit: String): CVSCommit = {
+    val headerPairs = header.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
+    val headerMap = headerPairs.toMap
+    val fileName = cleanRCSpath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
+
+    val lines = commit.split("\n?\r");
+    val revisionStr = lines(0).trim.split(' ')(1)
+    val revision = CVSFileVersion(revisionStr)
+    val params = lines(1).trim.dropRight(1).split(';').map(_.split(": ")).map((x) => x(0).trim -> x(1).trim).toMap
+    val date = CVSRepository.CVS_DATE_FORMAT.parse(params.get("date").getOrElse(missing("date")))
+    val author = params.get("author").getOrElse(missing("author"))
+    val commitId = params.get("commitid");
+    val isDead = params.get("state").exists(_ == "dead")
+    //need a good way to determine where commit message starts
+    val linesToDrop = if (lines(2).contains(": ")) { 3 } else { 2 }
+    val comment = lines.drop(linesToDrop).mkString("\n").trim
+
+    val cvsCommit = CVSCommit(fileName, revision, isDead, date, author, comment, commitId)
+    cvsCommit
+  }
   
   def parseRlog(rlog:String):List[CVSCommit]={
     val items = rlog.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList.map(_.trim)).dropRight(1)
     items.flatMap((file)=>{
-      val headerPairs = file.head.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length>1).map((x)=>x(0).trim->x(1))
-      val headerMap = headerPairs.toMap
-      val fileName = cleanRCSpath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
       val commits = file.tail.map((commit)=>{
-        val lines = commit.split("\n?\r");
-        val revisionStr = lines(0).trim.split(' ')(1)
-        val revision = CVSFileVersion(revisionStr)
-        val params = lines(1).trim.dropRight(1).split(';').map(_.split(": ")).map((x)=> x(0).trim->x(1).trim).toMap
-        val date = CVSRepository.CVS_DATE_FORMAT.parse(params.get("date").getOrElse(missing("date")))
-        val author = params.get("author").getOrElse(missing("author"))
-        val commitId = params.get("commitid");
-        val isDead = params.get("state").exists(_ == "dead")
-        //need a good way to determine where commit message starts
-        val linesToDrop = if (lines(2).contains(": ")) { 3 } else { 2 }
-        val comment = lines.drop(linesToDrop).mkString("\n").trim
-       
-        val cvsCommit = CVSCommit(fileName,revision,isDead,date,author,comment,commitId)
-        cvsCommit
+        commitFromRLog(file.head, commit)
       }) 
       commits
     })
