@@ -65,7 +65,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     def extractFileName(line: String): Option[String] = {
       val arr = line.split(':')
       if (arr.length == 2 && arr(0).trim == "RCS file") {
-        Some(cleanRCSpath(arr(1)))
+        Some(cleanRCSpath(arr(1).trim))
       } else {
         None
       }
