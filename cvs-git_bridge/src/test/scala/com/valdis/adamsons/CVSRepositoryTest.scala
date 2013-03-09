@@ -7,7 +7,6 @@ import org.junit.Before
 import com.valdis.adamsons.cvs.CVSFileVersion
 import java.io.File
 import com.valdis.adamsons.utils.CVSUtils
-import com.valdis.adamsons.cvs.CVSFile
 import java.util.Date
 import com.valdis.adamsons.cvs.CVSCommit
 import java.text.SimpleDateFormat
@@ -31,22 +30,16 @@ class CVSRepositoryTest {
   def date(str:String) = defaultDateFormat.parse(str)
   
   @Test
-  def testGetFileList {
+  def testGetCommitList {
     val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest5")
     val expected = List(
-        CVSFile("1.txt",List(
-    		CVSCommit("1.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:38 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw"))),CVSFileVersion("1.1")),
-        CVSFile("2.txt",List(
-            CVSCommit("2.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw"))),CVSFileVersion("1.1")),
-        CVSFile("3.txt",List(
-            CVSCommit("3.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw"))),CVSFileVersion("1.1")),
-        CVSFile("dir/1.txt",List(
-            CVSCommit("dir/1.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw"))),CVSFileVersion("1.1")),
-        CVSFile("dir/2.txt",List(
-            CVSCommit("dir/2.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw"))),CVSFileVersion("1.1")),
-        CVSFile("dir/3.txt",List(
-            CVSCommit("dir/3.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw"))),CVSFileVersion("1.1")))
-    assertEquals(expected, repo.getFileList)
+    		CVSCommit("1.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:38 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")),
+            CVSCommit("2.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")),
+            CVSCommit("3.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")),
+            CVSCommit("dir/1.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")),
+            CVSCommit("dir/2.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")),
+            CVSCommit("dir/3.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")))
+    assertEquals(expected, repo.getCommitList)
     assertTrue(true);
   }
   

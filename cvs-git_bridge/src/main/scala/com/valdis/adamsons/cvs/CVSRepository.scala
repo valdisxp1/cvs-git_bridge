@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream
 import org.omg.CORBA.portable.InputStream
 import java.io.InputStream
 import java.io.File
+import scala.collection.immutable.SortedSet
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]){
   def this(cvsroot: Option[String]) = this(cvsroot, None)
@@ -74,10 +75,10 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     })
   }
 
-  def getFileList: List[CVSFile] = getFileList(None, None)
-  def getFileList(start: Option[Date], end: Option[Date]): List[CVSFile] = getFileList(None, start, end)
-  def getFileList(branch:String,start:Option[Date],end:Option[Date]):List[CVSFile] = getFileList(Some(branch),start, end)
-  def getFileList(branch:Option[String],start:Option[Date],end:Option[Date]):List[CVSFile]={
+  def getCommitList: List[CVSCommit] = getCommitList(None, None)
+  def getCommitList(start: Option[Date], end: Option[Date]): List[CVSCommit] = getCommitList(None, start, end)
+  def getCommitList(branch:String, start:Option[Date], end:Option[Date]):List[CVSCommit] = getCommitList(Some(branch),start, end)
+  def getCommitList(branch:Option[String], start:Option[Date], end:Option[Date]):List[CVSCommit]={
     val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val dateString = if (start.isDefined || end.isDefined) {
@@ -90,16 +91,19 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     parseRlog(response)
   }
   
-   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
+  private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
+
+  private case class RlogParseState(val isInHead: Boolean, val commits: SortedSet[CVSCommit], val buffer: String) {
+    def this() = this(true, SortedSet(), "")
+    def withLine(line: String): RlogParseState = this
+  }
   
-  def parseRlog(rlog:String):List[CVSFile]={
+  def parseRlog(rlog:String):List[CVSCommit]={
     val items = rlog.split(CVSRepository.FILES_SPLITTER).toList.map(_.split(CVSRepository.COMMITS_SPLITTER).toList.map(_.trim)).dropRight(1)
-    items.map((file)=>{
+    items.flatMap((file)=>{
       val headerPairs = file.head.split("\n?\r").toList.map(_.split(": ")).toList.filter(_.length>1).map((x)=>x(0).trim->x(1))
       val headerMap = headerPairs.toMap
       val fileName = cleanRCSpath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
-      val head = CVSFileVersion(headerMap.get("head").getOrElse(missing("head")))
-      val headerWithOutCommits = CVSFile(fileName, Nil, head)
       val commits = file.tail.map((commit)=>{
         val lines = commit.split("\n?\r");
         val revisionStr = lines(0).trim.split(' ')(1)
@@ -116,7 +120,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         val cvsCommit = CVSCommit(fileName,revision,isDead,date,author,comment,commitId)
         cvsCommit
       }) 
-      headerWithOutCommits.withCommits(commits);
+      commits
     })
   }
 }

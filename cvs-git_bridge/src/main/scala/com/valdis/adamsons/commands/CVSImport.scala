@@ -29,7 +29,7 @@ object CVSImport extends CommandParser{
       //get last the last updated date
       val lastUpdatedVal = Bridge.lastUpdated("master")
       log(lastUpdatedVal)
-      val commits = cvsrepo.getFileList(lastUpdatedVal,None).flatMap(_.commits)
+      val commits = cvsrepo.getCommitList(lastUpdatedVal,None)
       log(commits);
       Bridge.appendCommits(commits, "master", cvsrepo)
       }
@@ -47,7 +47,7 @@ object CVSImport extends CommandParser{
         branchesForDepth.foreach((branch) => {
           val lastUpdatedVal = Bridge.lastUpdated(branch.name)
           log(lastUpdatedVal)
-          val commits = cvsrepo.getFileList(branch.name, lastUpdatedVal, None).flatMap(_.commits)
+          val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
           log(commits);
           if (lastUpdatedVal.isEmpty) {
             log("possibleParentBranches:" + possibleParentBranches)
