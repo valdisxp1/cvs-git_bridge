@@ -32,6 +32,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def getFileContents(name: String, version: CVSFileVersion) = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name!!
   def getFile(name: String, version: CVSFileVersion) = {
     val process = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name
+    log("running command:\n" + process)
     val file = File.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
     val exitvalue=process.#>(file).run.exitValue;
@@ -45,6 +46,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 
   private def getTagLines = {
     val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    log("running command:\n" + command)
     val lines = stringToProcess(command).lines;
     lines.filter((str) => str.size > 0 && str(0) == '\t').map(_.trim)
   }
@@ -115,6 +117,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 
   def resolveTag(tagName: String): CVSTag = {
     val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    log("running command:\n" + command)
     val lines = stringToProcess(command).lines;
     lines.foldLeft(new RlogTagParseState(tagName))(_ withLine _).tag
   }
@@ -130,8 +133,9 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
      } else {
       ""
      }
-    val process = cvsString+ "rlog "+branch.map(" -r"+_+" ").getOrElse(" -b ") + dateString + module.getOrElse("")
-    val responseLines = stringToProcess(process).lines;
+    val command = cvsString+ "rlog "+branch.map(" -r"+_+" ").getOrElse(" -b ") + dateString + module.getOrElse("")
+    log("running command:\n" + command)
+    val responseLines = stringToProcess(command).lines;
     parseRlogLines(responseLines).toList
   }
   
