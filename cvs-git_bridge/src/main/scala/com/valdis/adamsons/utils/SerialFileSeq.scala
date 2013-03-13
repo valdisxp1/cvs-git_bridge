@@ -6,7 +6,7 @@ import java.io.File
 import java.io.ObjectInputStream
 import java.io.FileInputStream
 
-class SerialFileSeq[A <: Serializable](val file: File, val length: Int) extends Seq[A] {
+class SerialFileSeq[A](val file: File, val length: Int) extends Seq[A] {
 
   class FileIterator extends Iterator[A] {
     val inStream = new ObjectInputStream(new FileInputStream(file))
@@ -25,8 +25,11 @@ class SerialFileSeq[A <: Serializable](val file: File, val length: Int) extends 
   }
   
   def apply(idx: Int): A = {
+    if (idx < 0 || idx >= length) {
+      throw new IndexOutOfBoundsException
+    }
     val iterator = this.iterator
-    while ((this.length - iterator.remaining) < idx) {
+    while ((length - iterator.remaining) < idx) {
       iterator.next
     }
     iterator.next
