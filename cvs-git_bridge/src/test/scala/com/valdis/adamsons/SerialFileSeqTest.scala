@@ -7,8 +7,8 @@ import java.io.File
 
 class SerialFileSeqTest {
 	@Test
-    def testCreate={
-	  val seq = new SerialFileSeq[Int](new File("."),0)
+    def testCreate:Unit={
+	  val seq = new SerialFileSeq[Int](new File("bridge.log"),0)
 	  seq :+ 3
 	}
 }
