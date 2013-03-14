@@ -14,9 +14,8 @@ trait SerialFileSeqLike[A] extends Seq[A] {
  def length: Int
  def position: Long
  protected lazy val fos = new FileOutputStream(file);
- protected lazy val outputStream = {
-    new ObjectOutputStream(fos)
- }
+ protected def outputStream: ObjectOutputStream
+ 
   class FileIterator extends Iterator[A] {
     lazy val inStream = new ObjectInputStream(new FileInputStream(file))
     protected var _remaining = SerialFileSeqLike.this.length
@@ -24,7 +23,9 @@ trait SerialFileSeqLike[A] extends Seq[A] {
     def hasNext: Boolean = remaining > 0
     def next: A = {
       _remaining -= 1
-      inStream.readObject().asInstanceOf[A]
+      val obj = inStream.readObject().asInstanceOf[A]
+      println(obj)
+      obj
     }
 
     override protected def finalize = {
@@ -45,12 +46,16 @@ trait SerialFileSeqLike[A] extends Seq[A] {
   }
 
   def :+(item: A): SerialFileSeqLike[A] = {
-    val fileSize = fos.getChannel().size()
+    val fileSize = file.length()
+    println("size: " + fileSize)
+    println("pos: " + position)
     //continuing on the same file to conserve space
     if (fileSize == position) {
-      outputStream.writeObject(item);
-      val newPosition = fos.getChannel().position
-      new SerialFileSeq(file, length + 1, newPosition)
+      outputStream.writeObject(item)
+      outputStream.flush()
+      val newPosition = file.length()
+      println("new pos: " + newPosition)
+      new SerialFileSeq(file, outputStream, length + 1, newPosition)
     } else {
       val newSeq: SerialFileSeqLike[A] = new EmptyFileSeq(SerialFileSeqLike.newFile) ++ this
       newSeq :+ item
@@ -69,6 +74,10 @@ object SerialFileSeqLike{
 class EmptyFileSeq[A](val file: File) extends SerialFileSeqLike[A]{
   def this() = this(SerialFileSeqLike.newFile)
   
+  protected lazy val outputStream = {
+    new ObjectOutputStream(fos)
+ }
+  
   override lazy val iterator = new FileIterator{
     override val hasNext = false
     override def next = throw new IllegalStateException("empty iterator")
@@ -79,5 +88,5 @@ class EmptyFileSeq[A](val file: File) extends SerialFileSeqLike[A]{
   val position = 0L
 }
 
-class SerialFileSeq[A](val file: File, val length: Int, val position: Long) extends SerialFileSeqLike[A] {
+class SerialFileSeq[A](val file: File,protected val outputStream: ObjectOutputStream, val length: Int, val position: Long) extends SerialFileSeqLike[A] {
 }
