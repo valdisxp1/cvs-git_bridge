@@ -13,7 +13,6 @@ trait SerialFileSeqLike[A] extends Seq[A] {
  def file: File
  def length: Int
  def position: Long
- protected lazy val fos = new FileOutputStream(file);
  protected def outputStream: ObjectOutputStream
  
   class FileIterator extends Iterator[A] {
@@ -74,9 +73,7 @@ object SerialFileSeqLike{
 class EmptyFileSeq[A](val file: File) extends SerialFileSeqLike[A]{
   def this() = this(SerialFileSeqLike.newFile)
   
-  protected lazy val outputStream = {
-    new ObjectOutputStream(fos)
- }
+  protected lazy val outputStream = new ObjectOutputStream(new FileOutputStream(file))
   
   override lazy val iterator = new FileIterator{
     override val hasNext = false
