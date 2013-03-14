@@ -17,5 +17,6 @@ class SerialFileSeqTest {
 	  assertEquals(List(3,4),seq3.toList)
 	  val seq4 = seq :+ 10
 	  assertEquals(List(10),seq4.toList)
+	  assertEquals(List(1,2,3,4,5), new EmptyFileSeq[Int]() ++ List(1,2,3,4,5))
 	}
 }
