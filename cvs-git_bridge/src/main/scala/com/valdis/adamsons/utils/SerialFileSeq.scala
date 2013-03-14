@@ -8,6 +8,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
 
+
 trait SerialFileSeqLike[A] extends Seq[A] {
  def file: File
  def length: Int
@@ -17,8 +18,8 @@ trait SerialFileSeqLike[A] extends Seq[A] {
     new ObjectOutputStream(fos)
  }
   class FileIterator extends Iterator[A] {
-    val inStream = new ObjectInputStream(new FileInputStream(file))
-    private var _remaining = SerialFileSeqLike.this.length
+    lazy val inStream = new ObjectInputStream(new FileInputStream(file))
+    protected var _remaining = SerialFileSeqLike.this.length
     def remaining = _remaining
     def hasNext: Boolean = remaining > 0
     def next: A = {
@@ -58,7 +59,7 @@ trait SerialFileSeqLike[A] extends Seq[A] {
   
   def ++ (traversable:Traversable[A]) = traversable.foldLeft(this)(_ :+ _)
   
-  def iterator = new FileIterator
+  def iterator= new FileIterator
 }
 
 object SerialFileSeqLike{
@@ -67,10 +68,16 @@ object SerialFileSeqLike{
 
 class EmptyFileSeq[A](val file: File) extends SerialFileSeqLike[A]{
   def this() = this(SerialFileSeqLike.newFile)
+  
+  override lazy val iterator = new FileIterator{
+    override val hasNext = false
+    override def next = throw new IllegalStateException("empty iterator")
+  }
+  
   val length = 0
   override val isEmpty = true
   val position = 0L
 }
 
-class SerialFileSeq[A](val file: File, val length: Int,val position: Long) extends SerialFileSeqLike[A] {
+class SerialFileSeq[A](val file: File, val length: Int, val position: Long) extends SerialFileSeqLike[A] {
 }
