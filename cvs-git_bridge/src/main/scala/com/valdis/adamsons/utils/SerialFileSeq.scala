@@ -57,7 +57,22 @@ trait SerialFileSeqLike[A] extends Seq[A] {
     }
   }
   
-  def ++ (traversable:Traversable[A]) = traversable.foldLeft(this)(_ :+ _)
+  def ++ (traversable:Traversable[A]): SerialFileSeqLike[A] = traversable.foldLeft(this)(_ :+ _)
+
+  override def sorted[B >: A](implicit ord: math.Ordering[B]): SerialFileSeqLike[A] = {
+    def unSorted(lower: A) = SerialFileSeqLike.this.filter(ord.gt(_, lower))
+    def minimal(lower: A) = unSorted(lower).min(ord)
+    val iterator = new Iterator[A] {
+      var prev: Option[A] = None
+      def next = {
+        val smallest = prev.map(minimal(_)).getOrElse(SerialFileSeqLike.this.min(ord))
+        prev = Some(smallest)
+        smallest
+      }
+      def hasNext = prev.map(!unSorted(_).isEmpty).getOrElse(SerialFileSeqLike.this.size > 0)
+    }
+    new EmptyFileSeq() ++ iterator.toTraversable
+  }
   
   def iterator= new FileIterator
 }

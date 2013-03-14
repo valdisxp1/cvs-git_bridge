@@ -25,6 +25,7 @@ class SerialFileSeqTest {
     val seq = new EmptyFileSeq[Int]() ++ List(3, 5, 1, 4, 2)
     val sorted = List(1, 2, 3, 4, 5)
     val actual = seq.sorted
+    println(actual)
     assertEquals( sorted , actual.toList)
   }
 }
