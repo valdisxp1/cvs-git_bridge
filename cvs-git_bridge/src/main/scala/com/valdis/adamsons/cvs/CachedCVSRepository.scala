@@ -36,15 +36,15 @@ class CachedCVSRepository(override val cvsroot: Option[String],override val modu
       fileOutputStream.close()
     }
   }
-  def getCachedFileList(start: Option[Date], end: Option[Date]): List[CVSCommit] = Nil
+  def getCachedFileList(start: Option[Date], end: Option[Date]): Seq[CVSCommit] = Nil
   
-  override def getCommitList(start: Option[Date], end: Option[Date]): List[CVSCommit] = {
-    val cashed: List[CVSCommit] = getCachedFileList(start,lastTimeVisited)
+  override def getCommitList(start: Option[Date], end: Option[Date]): Seq[CVSCommit] = {
+    val cashed: Seq[CVSCommit] = getCachedFileList(start,lastTimeVisited)
     val fetched = super.getCommitList(lastTimeVisited, end)
     // add fetched records to cache
     // update last visited
     setLastTimeVisited(fetched.map(_.date).max)
-    fetched ::: cashed
+    fetched// ::: cashed
   }
 }
 

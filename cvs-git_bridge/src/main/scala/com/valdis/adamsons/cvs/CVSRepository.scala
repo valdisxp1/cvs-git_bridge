@@ -11,6 +11,9 @@ import java.io.File
 import scala.collection.immutable.SortedSet
 import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
+import com.valdis.adamsons.utils.SerialFileSeq
+import com.valdis.adamsons.utils.EmptyFileSeq
+import com.valdis.adamsons.utils.SerialFileSeqLike
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger{
   def logger = Logger
@@ -122,10 +125,10 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     lines.foldLeft(new RlogTagParseState(tagName))(_ withLine _).tag
   }
 
-  def getCommitList: List[CVSCommit] = getCommitList(None, None)
-  def getCommitList(start: Option[Date], end: Option[Date]): List[CVSCommit] = getCommitList(None, start, end)
-  def getCommitList(branch:String, start:Option[Date], end:Option[Date]):List[CVSCommit] = getCommitList(Some(branch),start, end)
-  def getCommitList(branch:Option[String], start:Option[Date], end:Option[Date]):List[CVSCommit]={
+  def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
+  def getCommitList(start: Option[Date], end: Option[Date]): Seq[CVSCommit] = getCommitList(None, start, end)
+  def getCommitList(branch:String, start:Option[Date], end:Option[Date]):Seq[CVSCommit] = getCommitList(Some(branch),start, end)
+  def getCommitList(branch:Option[String], start:Option[Date], end:Option[Date]):Seq[CVSCommit]={
     val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val dateString = if (start.isDefined || end.isDefined) {
@@ -137,21 +140,21 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     log("running command:\n" + command)
     val responseLines = stringToProcess(command).lines;
     // TODO do not convert
-    parseRlogLines(responseLines).toList
+    parseRlogLines(responseLines)
   }
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
 
   private case class RlogCommitParseState(val isInHeader: Boolean,
-		  							val commits: SortedSet[CVSCommit],
+		  							val commits: SerialFileSeqLike[CVSCommit],
 		  							val headerBuffer: Vector[String],
 		  							val commitBuffer: Vector[String]) {
-    def this() = this(true, SortedSet(), Vector(), Vector())
+    def this() = this(true, new EmptyFileSeq(), Vector(), Vector())
 
     private def updatedCommits = if (isInHeader) {
       commits
     } else {
-      commits + commitFromRLog(headerBuffer, commitBuffer)
+      commits :+ commitFromRLog(headerBuffer, commitBuffer)
     }
 
     def withLine(line: String): RlogCommitParseState = {
@@ -193,7 +196,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     cvsCommit
   }
 
-  def parseRlogLines(lines: Iterable[String]): SortedSet[CVSCommit] = {
+  def parseRlogLines(lines: Iterable[String]): Seq[CVSCommit] = {
 	lines.foldLeft(new RlogCommitParseState())(_.withLine(_)).commits
   }
 }

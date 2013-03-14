@@ -36,7 +36,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     }
   
 //commits
-  private def getRelevantCommits(sortedCommits: List[CVSCommit], branch: String) = {
+  private def getRelevantCommits(sortedCommits: Seq[CVSCommit], branch: String) = {
       val previousHead = getRef(branch)
       val previousCommit = previousHead.map((headId) => {
         val gitCommit = revWalk.parseCommit(headId)
@@ -57,7 +57,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       }
     }
 
-  def appendCommits(commits: List[CVSCommit], branch: String, cvsrepo: CVSRepository) {
+  def appendCommits(commits: Seq[CVSCommit], branch: String, cvsrepo: CVSRepository) {
       val sortedCommits = commits.sorted
       val relevantCommits =  getRelevantCommits(sortedCommits, branch)
       relevantCommits.foreach((commit)=>{
