@@ -136,6 +136,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     val command = cvsString+ "rlog "+branch.map(" -r"+_+" ").getOrElse(" -b ") + dateString + module.getOrElse("")
     log("running command:\n" + command)
     val responseLines = stringToProcess(command).lines;
+    // TODO do not convert
     parseRlogLines(responseLines).toList
   }
   
