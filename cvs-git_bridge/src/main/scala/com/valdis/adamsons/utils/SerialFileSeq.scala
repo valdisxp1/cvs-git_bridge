@@ -49,6 +49,8 @@ trait SerialFileSeqLike[A] extends Seq[A] {
     if (fileSize == position) {
       outputStream.writeObject(item)
       outputStream.flush()
+      //do not cache anything
+      outputStream.reset()
       val newPosition = file.length()
       new SerialFileSeq(file, outputStream, length + 1, newPosition)
     } else {
