@@ -217,16 +217,16 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         
         val pointlessCommits = getPointlessCVSCommits.toSeq
         val pointlessTagFiles = pointlessCommits.map((pointlessCommit)=>(pointlessCommit.filename,pointlessCommit.revision)).intersect(tag.fileVersions.toSeq).map(_._1)
-        log("commits: "+trunkCommits.map(_._1))
-        log("heads: "+trunkCommits.map(_._1).count(_.isHead))
-        log("pointless: "+pointlessCommits)
+//        log("commits: "+trunkCommits.map(_._1))
+//        log("heads: "+trunkCommits.map(_._1).count(_.isHead))
+//        log("pointless: "+pointlessCommits)
         val cleanedTag = tag.ignoreFiles(pointlessTagFiles)
         val result = trunkCommits.foldLeft[TagSeachState](new NotFound(cleanedTag))((oldstate,pair)=>{
           log(oldstate+" with "+pair._1)
           oldstate.withCommit(pair._2, pair._1)
           })
         
-        log(trunkCommits.length)
+//        log(trunkCommits.length)
         log(result)
         if(result.isFound){
           result.objectId

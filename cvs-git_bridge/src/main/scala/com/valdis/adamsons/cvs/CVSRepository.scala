@@ -138,9 +138,9 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
      }
     val command = cvsString+ "rlog "+branch.map(" -r"+_+" ").getOrElse(" -b ") + dateString + module.getOrElse("")
     log("running command:\n" + command)
-    val responseLines = stringToProcess(command).lines;
+//    val responseLines = stringToProcess(command).lines;
     // TODO do not convert
-    parseRlogLines(responseLines)
+    parseRlogLines(stringToProcess(command))
   }
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
@@ -198,6 +198,12 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 
   def parseRlogLines(lines: Iterable[String]): Seq[CVSCommit] = {
 	lines.foldLeft(new RlogCommitParseState())(_.withLine(_)).commits
+  }
+  def parseRlogLines(process: ProcessBuilder): Seq[CVSCommit] = {
+    var state = new RlogCommitParseState()
+    val processLogger = ProcessLogger(line => state = state.withLine(line),line=> log(line))
+    process.run(processLogger).exitValue
+    state.commits
   }
 }
 
