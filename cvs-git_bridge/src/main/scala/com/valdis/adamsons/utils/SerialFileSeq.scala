@@ -73,7 +73,7 @@ trait SerialFileSeqLike[A] extends Seq[A] {
       }
       def hasNext = prev.map(!unSorted(_).isEmpty).getOrElse(SerialFileSeqLike.this.size > 0)
     }
-    new EmptyFileSeq() ++ iterator.toTraversable
+     iterator.foldLeft[SerialFileSeqLike[A]](new EmptyFileSeq[A]())(_ :+ _)
   }
   
   def iterator= new FileIterator
