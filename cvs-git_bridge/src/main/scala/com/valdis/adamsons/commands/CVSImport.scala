@@ -30,7 +30,7 @@ object CVSImport extends CommandParser{
       val lastUpdatedVal = Bridge.lastUpdated("master")
       log(lastUpdatedVal)
       val commits = cvsrepo.getCommitList(lastUpdatedVal,None)
-      log(commits);
+//      log(commits);
       Bridge.appendCommits(commits, "master", cvsrepo)
       }
       //other branches follow
@@ -48,7 +48,7 @@ object CVSImport extends CommandParser{
           val lastUpdatedVal = Bridge.lastUpdated(branch.name)
           log(lastUpdatedVal)
           val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
-          log(commits);
+//          log(commits);
           if (lastUpdatedVal.isEmpty) {
             log("possibleParentBranches:" + possibleParentBranches)
             val graftLocation = getGraftLocation(branch, possibleParentBranches)
