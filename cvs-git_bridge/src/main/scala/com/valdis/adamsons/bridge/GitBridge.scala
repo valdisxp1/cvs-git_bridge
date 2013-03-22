@@ -58,7 +58,9 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     }
 
   def appendCommits(commits: Seq[CVSCommit], branch: String, cvsrepo: CVSRepository) {
+	  log("Started sorting")
       val sortedCommits = commits.sorted
+      log("Sorting done")
       val relevantCommits =  getRelevantCommits(sortedCommits, branch)
       relevantCommits.foreach((commit)=>{
         log(commit.filename);
