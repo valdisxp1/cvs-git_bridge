@@ -100,6 +100,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           if (!commit.isDead) {
             //does not change relative path
             val stream = cvsrepo.openFile(commit.filename, commit.revision)
+            //using -1 to tell jGit: calculate the size yourself
             val fileId = inserter.insert(Constants.OBJ_BLOB, -1, stream)
             treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
             stream.close
