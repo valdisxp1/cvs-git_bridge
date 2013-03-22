@@ -61,6 +61,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
 	  log("Started sorting")
       val sortedCommits = commits.sorted
       log("Sorting done")
+	  log("Adding " + sortedCommits.length + " commits to branch " + branch)
       val relevantCommits =  getRelevantCommits(sortedCommits, branch)
       relevantCommits.foreach((commit)=>{
         log(commit.filename);
@@ -146,9 +147,9 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       def isFound: Boolean
       def objectId: Option[ObjectId]
       def withCommit(objectId: ObjectId,commit: CVSCommit): TagSeachState
+      override def toString = this.getClass().getSimpleName + "("+objectId+")"
     }
     
-    //TODO maybe found is not needed
     private case class Found(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState{
       val isFound = true
       val objectId = Some(objectId2)
@@ -219,16 +220,12 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         
         val pointlessCommits = getPointlessCVSCommits.toSeq
         val pointlessTagFiles = pointlessCommits.map((pointlessCommit)=>(pointlessCommit.filename,pointlessCommit.revision)).intersect(tag.fileVersions.toSeq).map(_._1)
-//        log("commits: "+trunkCommits.map(_._1))
-//        log("heads: "+trunkCommits.map(_._1).count(_.isHead))
-//        log("pointless: "+pointlessCommits)
         val cleanedTag = tag.ignoreFiles(pointlessTagFiles)
         val result = trunkCommits.foldLeft[TagSeachState](new NotFound(cleanedTag))((oldstate,pair)=>{
           log(oldstate+" with "+pair._1)
           oldstate.withCommit(pair._2, pair._1)
           })
         
-//        log(trunkCommits.length)
         log(result)
         if(result.isFound){
           result.objectId

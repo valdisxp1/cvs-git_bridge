@@ -43,8 +43,7 @@ case class CVSCommit(val filename: String,
   }
 }
 
-object CVSCommit extends SweetLogger{
-  protected def logger = Logger
+object CVSCommit{
   //assumes default: 1.1
   val HEAD_REVISION = CVSFileVersion("1.1")
   val CVS_PATH_KEY = "CVS_PATH: "
@@ -53,7 +52,6 @@ object CVSCommit extends SweetLogger{
   val CVS_DEAD = "dead"
   val CVS_ALIVE = "alive"
   def fromGitCommit(commit: RevCommit, noteString: String): CVSCommit = {
-    log("note: "+noteString)
     val author = commit.getAuthorIdent()
     val lines = noteString.split("\n")
     val path = lines(0).drop(CVS_PATH_KEY.length())
