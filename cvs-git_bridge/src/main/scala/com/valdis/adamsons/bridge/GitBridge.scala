@@ -105,7 +105,6 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
             val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
             treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
             log("len:"+file.length)
-            file.delete();
             log("fileID:" + fileId.name);
           }
           
