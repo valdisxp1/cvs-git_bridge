@@ -108,7 +108,6 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       var oldTree: Option[RevTree] = None
       while (treeWalk.next()) {
         val item = treeWalk.getPathString();
-        log("!!checking for"+path+" found "+item)
         if (item != folder) {
           // using zero as only a single tree was added
           treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
