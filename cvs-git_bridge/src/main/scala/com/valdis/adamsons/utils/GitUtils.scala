@@ -106,21 +106,32 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       treeWalk.addTree(tree);
       treeWalk.setRecursive(false);
       var oldTree: Option[RevTree] = None
-      while (treeWalk.next()) {
-        val item = treeWalk.getPathString();
-        if (item != folder) {
-          // using zero as only a single tree was added
-          treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-        } else {
-          val oldTreeId = treeWalk.getObjectId(0)
-          oldTree = Some(revWalk.parseTree(oldTreeId))
-        }
+      def item = treeWalk.getPathString();
+      //pre
+      while (treeWalk.next() && item < folder) {
+        // using zero as only a single tree was added
+        treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
       }
-      val newTree = oldTree.map(tree =>  putFile(tree, tail, filename, fileId,inserter))
-      newTree.foreach(treeFormatter.append(folder, FileMode.TREE,_))
+
+      //may be equal 
+      if (item == folder) {
+        val oldTreeId = treeWalk.getObjectId(0)
+        oldTree = Some(revWalk.parseTree(oldTreeId))
+        treeWalk.next()
+      }
+
+      val newTree = oldTree.map(tree => putFile(tree, tail, filename, fileId, inserter))
+      newTree.foreach(treeFormatter.append(folder, FileMode.TREE, _))
       if (newTree.isEmpty) {
-    	  fileId.foreach(id => treeFormatter.append(folder, FileMode.TREE, createTree(tail, filename, id,inserter)))
+        fileId.foreach(id => treeFormatter.append(folder, FileMode.TREE, createTree(tail, filename, id, inserter)))
       }
+
+      //post
+      do {
+        // using zero as only a single tree was added
+        treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
+      } while (treeWalk.next())
+      
       inserter.insert(treeFormatter)
     }
     case Nil => {
@@ -128,15 +139,25 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       val treeFormatter = new TreeFormatter
       treeWalk.addTree(tree);
       treeWalk.setRecursive(false);
-      while (treeWalk.next()) {
-        val item = treeWalk.getPathString();
-        if (item != filename) {
-          // using zero as only a single tree was added
-          treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-        } 
+      def item = treeWalk.getPathString();
+      //pre
+      while (treeWalk.next() && item < filename) {
+        // using zero as only a single tree was added
+        treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
+      }
+
+      //skip the existing file
+      if (item == filename) {
+    	  treeWalk.next()
       }
       fileId.foreach(treeFormatter.append(filename, FileMode.REGULAR_FILE, _))
 
+      //post
+      do {
+        // using zero as only a single tree was added
+        treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
+      } while (treeWalk.next())
+      
       inserter.insert(treeFormatter)
     }
   }
