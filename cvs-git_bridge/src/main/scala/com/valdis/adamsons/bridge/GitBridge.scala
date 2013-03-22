@@ -99,12 +99,10 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           // insert current file, a dead state means the file is removed instead
           if (!commit.isDead) {
             //does not change relative path
-            val file = cvsrepo.getFile(commit.filename, commit.revision)
-            log("tmp file:" + file.getAbsolutePath())
-            val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
+            val stream = cvsrepo.openFile(commit.filename, commit.revision)
+            val fileId = inserter.insert(Constants.OBJ_BLOB, -1, stream)
             treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
-            log("len:"+file.length)
-            file.delete();
+            stream.close
             log("fileID:" + fileId.name);
           }
           

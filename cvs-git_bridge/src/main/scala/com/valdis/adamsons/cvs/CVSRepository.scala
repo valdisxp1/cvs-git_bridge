@@ -5,8 +5,6 @@ import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.io.ByteArrayInputStream
-import org.omg.CORBA.portable.InputStream
-import java.io.InputStream
 import java.io.File
 import scala.collection.immutable.SortedSet
 import com.valdis.adamsons.logger.SweetLogger
@@ -14,6 +12,8 @@ import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.utils.SerialFileSeq
 import com.valdis.adamsons.utils.EmptyFileSeq
 import com.valdis.adamsons.utils.SerialFileSeqLike
+import scala.sys.process.ProcessIO
+import java.io.InputStream
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger{
   def logger = Logger
@@ -41,6 +41,17 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     val exitvalue=process.#>(file).run.exitValue;
     //TODO handle errors
     file
+  }
+  
+  def openFile(name: String, version: CVSFileVersion):InputStream = {
+    val process = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name
+    log("running command:\n" + process)
+    var stream: InputStream = null;
+    val processIO = new ProcessIO(in=>{},out=>{stream=out},err=>{})
+    //forces the to wait until process finishes.
+    val exitvalue=process.run(processIO).exitValue;
+    //TODO handle errors
+    stream
   }
   def fileNameList = {
     val responseLines = stringToProcess(cvsString+ "rlog -R " + module.getOrElse("")).lines;
