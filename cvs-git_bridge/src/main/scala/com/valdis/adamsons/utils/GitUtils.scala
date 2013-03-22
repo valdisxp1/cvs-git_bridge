@@ -143,12 +143,14 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       //pre
       while (treeWalk.next() && item < filename) {
         // using zero as only a single tree was added
+        log("@Writing "+filename)
         treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
       }
 
       //skip the existing file
       if (item == filename) {
     	  treeWalk.next()
+    	  log("@skip "+filename)
       }
       fileId.foreach(treeFormatter.append(filename, FileMode.REGULAR_FILE, _))
 
