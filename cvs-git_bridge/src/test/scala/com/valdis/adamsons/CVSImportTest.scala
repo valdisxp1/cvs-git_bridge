@@ -28,6 +28,7 @@ class CVSImportTest {
     logs.map(_.getTree()).map((tree) => {
       val treewalk = new TreeWalk(repo)
       treewalk.addTree(tree)
+      treewalk.setRecursive(true)
       //TODO make this variable a value
       var fileNames: Set[String] = Set()
       while (treewalk.next()) {
