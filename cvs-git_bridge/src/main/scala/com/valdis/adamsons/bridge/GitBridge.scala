@@ -73,42 +73,27 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         log("\n")
         
         //stage
-        val inserter = repo.newObjectInserter();
         try {
           val treeWalk = new TreeWalk(repo)
           
           val parentId = getRef(branch)
-
-          val treeFormatter = new TreeFormatter
           
-          // insert parent elements in this tree
-          parentId.foreach((id) => {
-            val parentCommit = revWalk.parseCommit(id)
-            treeWalk.addTree(parentCommit.getTree())
-            treeWalk.setRecursive(true);
-            while (treeWalk.next()) {
-              val path = treeWalk.getPathString();
-              if (path != commit.filename) {
-                // using zero as only a single tree was added
-                treeFormatter.append(path, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-              }
-            }
-            val parentTreeId = parentCommit.getTree().getId()
-            log("parentTreeID:" + parentTreeId.name);
-          })
-
-          // insert current file, a dead state means the file is removed instead
-          if (!commit.isDead) {
-            //does not change relative path
+          
+          val fileId = if(commit.isDead){None}else{
             val file = cvsrepo.getFile(commit.filename, commit.revision)
             log("tmp file:" + file.getAbsolutePath())
             val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
-            treeFormatter.append(commit.filename, FileMode.REGULAR_FILE, fileId)
             log("len:"+file.length)
             log("fileID:" + fileId.name);
-          }
+            Some(fileId)
+          } 
           
-          val treeId = inserter.insert(treeFormatter);
+          val treeId = parentId.map(revWalk.parseTree(_)).map(putFile(_, commit.filename, fileId))
+        		  .getOrElse(
+        			fileId.map(createTree(commit.filename, _))
+        			 .getOrElse(createEmptyTree)
+        			)
+          
           
           //commit
           val author = new PersonIdent(commit.author,commit.author+"@nowhere.com",commit.date,TimeZone.getDefault())
@@ -132,8 +117,6 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           
           git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
           
-        } finally {
-          inserter.release()
         }
       })
     }

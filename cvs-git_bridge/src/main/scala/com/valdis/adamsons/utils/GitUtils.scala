@@ -23,6 +23,8 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevWalk
 import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.logger.SweetLogger
+import org.eclipse.jgit.revwalk.RevTree
+import org.eclipse.jgit.treewalk.TreeWalk
 
 class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   protected val logger = Logger
@@ -35,6 +37,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
 
   lazy val git = new Git(repo)
   lazy val revWalk = new RevWalk(repo)
+  lazy val inserter = repo.newObjectInserter()
 
   def getNoteMessage(objectId: String): String = getNoteMessage(ObjectId.fromString(objectId))
 
@@ -66,6 +69,70 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     updateCmd.setNewObjectId(id);
     updateCmd.setForceUpdate(true);
     updateCmd.update(revWalk);
+  }
+
+  def createEmptyTree={
+    val treeFormatter = new TreeFormatter
+    inserter.insert(treeFormatter)
+  }
+  
+  def createTree(filename: String, fileId: ObjectId): ObjectId = {
+    val tokens = filename.split("/").toSeq
+    createTree(tokens.init, tokens.last, fileId)
+  }
+  def createTree(path: Seq[String], filename: String, fileId: ObjectId): ObjectId = path match {
+    case folder :: tail => {
+      val treeFormatter = new TreeFormatter
+      treeFormatter.append(folder, FileMode.TREE, createTree(tail, filename, fileId))
+      inserter.insert(treeFormatter)
+    }
+    case Nil => {
+      val treeFormatter = new TreeFormatter
+      treeFormatter.append(filename, FileMode.REGULAR_FILE, fileId)
+      inserter.insert(treeFormatter)
+    }
+  }
+
+  def putFile(tree: RevTree, filename: String, fileId: Option[ObjectId]): ObjectId = {
+    val tokens = filename.split("/").toSeq
+    putFile(tree, tokens.init, tokens.last, fileId)
+  }
+
+  def putFile(tree: RevTree, path: Seq[String], filename: String, fileId: Option[ObjectId]): ObjectId = path match {
+    case folder :: tail => {
+      val treeWalk = new TreeWalk(repo)
+      val treeFormatter = new TreeFormatter
+      treeWalk.addTree(tree);
+      treeWalk.setRecursive(false);
+      while (treeWalk.next()) {
+        val path = treeWalk.getPathString();
+        if (path != folder) {
+          // using zero as only a single tree was added
+          treeFormatter.append(path, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
+        } else {
+          val oldTreeId = treeWalk.getObjectId(0)
+          val oldTree = revWalk.parseTree(oldTreeId)
+          treeFormatter.append(folder, FileMode.TREE, putFile(oldTree, tail, filename, fileId))
+        }
+      }
+
+      inserter.insert(treeFormatter)
+    }
+    case Nil => {
+      val treeWalk = new TreeWalk(repo)
+      val treeFormatter = new TreeFormatter
+      treeWalk.addTree(tree);
+      treeWalk.setRecursive(false);
+      while (treeWalk.next()) {
+        val path = treeWalk.getPathString();
+        if (path != filename) {
+          // using zero as only a single tree was added
+          treeFormatter.append(path, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
+        } else fileId.foreach(treeFormatter.append(filename, FileMode.REGULAR_FILE, _))
+      }
+
+      inserter.insert(treeFormatter)
+    }
   }
 
 }
