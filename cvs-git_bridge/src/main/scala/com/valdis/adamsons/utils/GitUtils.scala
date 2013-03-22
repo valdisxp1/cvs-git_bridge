@@ -98,24 +98,30 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     putFile(tree, tokens.init, tokens.last, fileId)
   }
 
+  //TODO prune empty branches
   def putFile(tree: RevTree, path: Seq[String], filename: String, fileId: Option[ObjectId]): ObjectId = path match {
     case folder :: tail => {
       val treeWalk = new TreeWalk(repo)
       val treeFormatter = new TreeFormatter
       treeWalk.addTree(tree);
       treeWalk.setRecursive(false);
+      var oldTree: Option[RevTree] = None
       while (treeWalk.next()) {
-        val path = treeWalk.getPathString();
-        if (path != folder) {
+        val item = treeWalk.getPathString();
+        log("!!checking for"+path+" found "+item)
+        if (item != folder) {
           // using zero as only a single tree was added
-          treeFormatter.append(path, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
+          treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
         } else {
           val oldTreeId = treeWalk.getObjectId(0)
-          val oldTree = revWalk.parseTree(oldTreeId)
-          treeFormatter.append(folder, FileMode.TREE, putFile(oldTree, tail, filename, fileId))
+          oldTree = Some(revWalk.parseTree(oldTreeId))
         }
       }
-
+      val newTree = oldTree.map(tree =>  putFile(tree, tail, filename, fileId))
+      newTree.foreach(treeFormatter.append(folder, FileMode.TREE,_))
+      if (newTree.isEmpty) {
+    	  fileId.foreach(id => treeFormatter.append(folder, FileMode.TREE, createTree(tail, filename, id)))
+      }
       inserter.insert(treeFormatter)
     }
     case Nil => {
@@ -124,12 +130,13 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       treeWalk.addTree(tree);
       treeWalk.setRecursive(false);
       while (treeWalk.next()) {
-        val path = treeWalk.getPathString();
-        if (path != filename) {
+        val item = treeWalk.getPathString();
+        if (item != filename) {
           // using zero as only a single tree was added
-          treeFormatter.append(path, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-        } else fileId.foreach(treeFormatter.append(filename, FileMode.REGULAR_FILE, _))
+          treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
+        } 
       }
+      fileId.foreach(treeFormatter.append(filename, FileMode.REGULAR_FILE, _))
 
       inserter.insert(treeFormatter)
     }
