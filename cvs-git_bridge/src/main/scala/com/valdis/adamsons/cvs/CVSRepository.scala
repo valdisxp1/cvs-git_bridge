@@ -146,10 +146,11 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
 
   private case class RlogCommitParseState(val isInHeader: Boolean,
-		  							val commits: SerialFileSeqLike[CVSCommit],
+		  							val commits: Seq[CVSCommit],
 		  							val headerBuffer: Vector[String],
 		  							val commitBuffer: Vector[String]) {
     def this() = this(true, new EmptyFileSeq(), Vector(), Vector())
+    def this(emptyCollection:Seq[CVSCommit]) = this(true, emptyCollection, Vector(), Vector())
 
     private def updatedCommits = if (isInHeader) {
       commits
@@ -200,7 +201,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 	lines.foldLeft(new RlogCommitParseState())(_.withLine(_)).commits
   }
   def parseRlogLines(process: ProcessBuilder): Seq[CVSCommit] = {
-    var state = new RlogCommitParseState()
+    var state = new RlogCommitParseState(Vector[CVSCommit]())
     val processLogger = ProcessLogger(line => state = state.withLine(line),line=> log(line))
     process.run(processLogger).exitValue
     state.commits
