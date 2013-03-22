@@ -77,7 +77,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   }
   
   def createTree(filename: String, fileId: ObjectId): ObjectId = {
-    val tokens = filename.split("/").toSeq
+    val tokens = filename.split("/").toList
     createTree(tokens.init, tokens.last, fileId)
   }
   def createTree(path: Seq[String], filename: String, fileId: ObjectId): ObjectId = path match {
@@ -94,7 +94,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   }
 
   def putFile(tree: RevTree, filename: String, fileId: Option[ObjectId]): ObjectId = {
-    val tokens = filename.split("/").toSeq
+    val tokens = filename.split("/").toList
     putFile(tree, tokens.init, tokens.last, fileId)
   }
 
