@@ -25,6 +25,7 @@ import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.logger.SweetLogger
 import org.eclipse.jgit.revwalk.RevTree
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.eclipse.jgit.lib.ObjectInserter
 
 class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   protected val logger = Logger
@@ -37,7 +38,6 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
 
   lazy val git = new Git(repo)
   lazy val revWalk = new RevWalk(repo)
-  lazy val inserter = repo.newObjectInserter()
 
   def getNoteMessage(objectId: String): String = getNoteMessage(ObjectId.fromString(objectId))
 
@@ -71,19 +71,19 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     updateCmd.update(revWalk);
   }
 
-  def createEmptyTree={
+  def createEmptyTree(inserter: ObjectInserter)={
     val treeFormatter = new TreeFormatter
     inserter.insert(treeFormatter)
   }
   
-  def createTree(filename: String, fileId: ObjectId): ObjectId = {
+  def createTree(filename: String, fileId: ObjectId, inserter: ObjectInserter): ObjectId = {
     val tokens = filename.split("/").toList
-    createTree(tokens.init, tokens.last, fileId)
+    createTree(tokens.init, tokens.last, fileId, inserter)
   }
-  def createTree(path: Seq[String], filename: String, fileId: ObjectId): ObjectId = path match {
+  def createTree(path: Seq[String], filename: String, fileId: ObjectId,inserter: ObjectInserter): ObjectId = path match {
     case folder :: tail => {
       val treeFormatter = new TreeFormatter
-      treeFormatter.append(folder, FileMode.TREE, createTree(tail, filename, fileId))
+      treeFormatter.append(folder, FileMode.TREE, createTree(tail, filename, fileId,inserter))
       inserter.insert(treeFormatter)
     }
     case Nil => {
@@ -93,13 +93,13 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     }
   }
 
-  def putFile(tree: RevTree, filename: String, fileId: Option[ObjectId]): ObjectId = {
+  def putFile(tree: RevTree, filename: String, fileId: Option[ObjectId], inserter: ObjectInserter): ObjectId = {
     val tokens = filename.split("/").toList
-    putFile(tree, tokens.init, tokens.last, fileId)
+    putFile(tree, tokens.init, tokens.last, fileId, inserter)
   }
 
   //TODO prune empty branches
-  def putFile(tree: RevTree, path: Seq[String], filename: String, fileId: Option[ObjectId]): ObjectId = path match {
+  def putFile(tree: RevTree, path: Seq[String], filename: String, fileId: Option[ObjectId], inserter: ObjectInserter): ObjectId = path match {
     case folder :: tail => {
       val treeWalk = new TreeWalk(repo)
       val treeFormatter = new TreeFormatter
@@ -116,10 +116,10 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
           oldTree = Some(revWalk.parseTree(oldTreeId))
         }
       }
-      val newTree = oldTree.map(tree =>  putFile(tree, tail, filename, fileId))
+      val newTree = oldTree.map(tree =>  putFile(tree, tail, filename, fileId,inserter))
       newTree.foreach(treeFormatter.append(folder, FileMode.TREE,_))
       if (newTree.isEmpty) {
-    	  fileId.foreach(id => treeFormatter.append(folder, FileMode.TREE, createTree(tail, filename, id)))
+    	  fileId.foreach(id => treeFormatter.append(folder, FileMode.TREE, createTree(tail, filename, id,inserter)))
       }
       inserter.insert(treeFormatter)
     }

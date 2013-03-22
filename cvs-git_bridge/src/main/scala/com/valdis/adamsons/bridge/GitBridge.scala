@@ -71,7 +71,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         log("\n")
         log(commit.comment)
         log("\n")
-        
+        val inserter = repo.newObjectInserter()
         //stage
         try {
           val treeWalk = new TreeWalk(repo)
@@ -88,10 +88,10 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
             Some(fileId)
           } 
           
-          val treeId = parentId.map(revWalk.parseTree(_)).map(putFile(_, commit.filename, fileId))
+          val treeId = parentId.map(revWalk.parseTree(_)).map(putFile(_, commit.filename, fileId,inserter))
         		  .getOrElse(
-        			fileId.map(createTree(commit.filename, _))
-        			 .getOrElse(createEmptyTree)
+        			fileId.map(createTree(commit.filename, _,inserter))
+        			 .getOrElse(createEmptyTree(inserter))
         			)
           
           
@@ -117,6 +117,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           
           git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
           
+        } finally {
+        	inserter.release()
         }
       })
     }
