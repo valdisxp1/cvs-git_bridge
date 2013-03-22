@@ -18,8 +18,10 @@ object Init extends CommandParser{
     	log("Creating cache folders")
     	new File("cache/rlog").mkdirs()
     	new File("cache/import").mkdirs()
-    	log("Seting up git to ignore line endings")
+    	log("Seting up git to ignore line endings and other needed params")
     	repo.getConfig().setBoolean("core", null, "autocrlf", false);
+    	repo.getConfig().setBoolean("core", null, "filemode", false);
+    	repo.getConfig().setBoolean("core", null, "ignorecase", true);
     	log("Initialize done")
     0
   }
