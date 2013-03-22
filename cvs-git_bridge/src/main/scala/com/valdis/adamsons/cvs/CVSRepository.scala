@@ -14,6 +14,7 @@ import com.valdis.adamsons.utils.EmptyFileSeq
 import com.valdis.adamsons.utils.SerialFileSeqLike
 import scala.sys.process.ProcessIO
 import java.io.InputStream
+import scala.io.Source
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger{
   def logger = Logger
@@ -47,7 +48,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     val process = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name
     log("running command:\n" + process)
     var stream: InputStream = null;
-    val processIO = new ProcessIO(in=>{},out=>{stream=out},err=>{})
+    val processIO = new ProcessIO(in=>{},out=>{stream=out},err=>{Source.fromInputStream(err).getLines.foreach(log(_))})
     //forces the to wait until process finishes.
     val exitvalue=process.run(processIO).exitValue;
     //TODO handle errors
