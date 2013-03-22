@@ -21,8 +21,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def this() = this(None, None)
   def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
   
-  lazy val tmpFileDir = new File("cache/import")
-  
   def root = cvsroot.getOrElse("echo $CVSROOT"!!)
   
   def module(module: String) = CVSRepository(this.cvsroot, Some(module))
@@ -38,7 +36,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def getFile(name: String, version: CVSFileVersion) = {
     val process = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name
     log("running command:\n" + process)
-    val file = File.createTempFile("tmp", ".bin",tmpFileDir)
+    val file = File.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
     val exitvalue=process.#>(file).run.exitValue;
     //TODO handle errors
