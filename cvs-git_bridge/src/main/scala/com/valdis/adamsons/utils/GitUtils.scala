@@ -101,7 +101,6 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   //TODO prune empty branches
   def putFile(tree: RevTree, path: Seq[String], filename: String, fileId: Option[ObjectId], inserter: ObjectInserter): ObjectId = path match {
     case folder :: tail => {
-      log("@path "+path)
       val treeWalk = new TreeWalk(repo)
       val treeFormatter = new TreeFormatter
       treeWalk.addTree(tree);
@@ -115,6 +114,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       val newTree = entries.find(_.pathString == folder)
       	.map(oldentry => putFile(revWalk.parseTree(oldentry.objectId), tail, filename, fileId, inserter))
       	.getOrElse(fileId.map(id=> createTree(tail, filename, id, inserter))
+      	    //TODO someone remove me
       	    .getOrElse(createEmptyTree(inserter))
       	    )
       	
