@@ -106,34 +106,20 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       val treeFormatter = new TreeFormatter
       treeWalk.addTree(tree);
       treeWalk.setRecursive(false);
-      var oldTree: Option[RevTree] = None
-      def item = treeWalk.getPathString();
-      //pre
-      while (treeWalk.next() && item < folder) {
-        // using zero as only a single tree was added
-         log("@Writing "+item)
-        treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-      }
-
-      //may be equal 
-      if (item == folder) {
-        log("@skiping "+item)
-        val oldTreeId = treeWalk.getObjectId(0)
-        oldTree = Some(revWalk.parseTree(oldTreeId))
-      }
-
-      val newTree = oldTree.map(tree => putFile(tree, tail, filename, fileId, inserter))
-      newTree.foreach(treeFormatter.append(folder, FileMode.TREE, _))
-      if (newTree.isEmpty) {
-        fileId.foreach(id => treeFormatter.append(folder, FileMode.TREE, createTree(tail, filename, id, inserter)))
-      }
-
-      //post
-      while (treeWalk.next()){
-        // using zero as only a single tree was added
-        log("@Writing "+item)
-        treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-      } 
+      
+      val traversable = new SingleTreeWalkTraversable(treeWalk)
+      //stores in memory
+      val entries = traversable.toSeq
+      //TODO can be optimized, simple,algorithm
+      //TODO handle revWalkParse fail
+      val newTree = entries.find(_.pathString == folder)
+      	.map(oldentry => putFile(revWalk.parseTree(oldentry.objectId), tail, filename, fileId, inserter))
+      	.getOrElse(fileId.map(id=> createTree(tail, filename, id, inserter))
+      	    .getOrElse(createEmptyTree(inserter))
+      	    )
+      	
+      val toBeAdded = entries.filter(_.pathString != folder) :+ TreeEntry(folder,FileMode.TREE,newTree)
+      toBeAdded.sortBy(_.pathString).foreach(entry=> treeFormatter.append(entry.pathString, entry.fileMode, entry.objectId))
       
       inserter.insert(treeFormatter)
     }
@@ -143,30 +129,13 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       log("tree: "+tree)
       treeWalk.addTree(tree);
       treeWalk.setRecursive(false);
-      def item = treeWalk.getPathString();
-      //pre
-      while (treeWalk.next() && item < filename) {
-        // using zero as only a single tree was added
-        log("@Writing "+item)
-        treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-      }
-
-      //skip the existing file
-      if (item == filename) {
-    	  log("@skip "+item)
-      }
-      if(fileId.isDefined){
-    	  log("@new file "+filename+" "+fileId)
-      }
-      fileId.foreach(treeFormatter.append(filename, FileMode.REGULAR_FILE, _))
-
-      //post
-      while (treeWalk.next()){
-        // using zero as only a single tree was added
-        log("@Writing "+item)
-        treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-      } 
-      
+     
+      val traversable = new SingleTreeWalkTraversable(treeWalk)
+      //stores in memory
+      val entries = traversable.toSeq
+      //TODO can be optimized, simple,algorithm
+      val toBeAdded = entries.filter(_.pathString != filename) ++ fileId.map(TreeEntry(filename,FileMode.REGULAR_FILE,_))
+      toBeAdded.sortBy(_.pathString).foreach(entry=> treeFormatter.append(entry.pathString, entry.fileMode, entry.objectId))
       inserter.insert(treeFormatter)
     }
   }
