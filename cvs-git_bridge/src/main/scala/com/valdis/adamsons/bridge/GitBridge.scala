@@ -22,8 +22,10 @@ import com.valdis.adamsons.logger.Logger
 class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   override protected val logger = Logger
   
+  val cvsRefPrefix = "refs/remotes/cvs/"
+  
    def lastUpdated( branch: String): Option[Date] = {
-      val ref = Option(repo.resolve(branch))
+      val ref = Option(repo.resolve(cvsRefPrefix + branch))
       ref.flatMap((ref) => {
         val logs = git.log().add(ref).setMaxCount(1).call()
         val iterator = logs.iterator()
@@ -37,7 +39,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   
 //commits
   private def getRelevantCommits(sortedCommits: Seq[CVSCommit], branch: String) = {
-      val previousHead = getRef(branch)
+      val previousHead = getRef(cvsRefPrefix + branch)
       val previousCommit = previousHead.map((headId) => {
         val gitCommit = revWalk.parseCommit(headId)
         val noteString = getNoteMessage(headId.name())
@@ -76,7 +78,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         try {
           val treeWalk = new TreeWalk(repo)
           
-          val parentId = getRef(branch)
+          val parentId = getRef(cvsRefPrefix + branch)
           
           
           val fileId = if(commit.isDead){None}else{
@@ -113,6 +115,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           log("treeID:" + treeId.name);
           log("commitID:" + commitId.name);
           
+          updateRef(cvsRefPrefix + branch, commitId)
+          //here can all tranformations take place
           updateHeadRef(branch, commitId)
           
           git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
@@ -196,7 +200,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     }
       
     def lookupTag(tag: CVSTag, branch: String): Option[ObjectId] = {
-      val objectId = Option(repo.resolve(branch))
+      val objectId = Option(repo.resolve(cvsRefPrefix + branch))
       objectId.flatMap((id) => {
         val logs = git.log().add(id).call()
         val trunkCommits = logs.iterator().map(
@@ -218,7 +222,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         }
       })
     }
+    
+  def addBranch(branch: String, id: ObjectId) = updateRef(cvsRefPrefix+branch, id)
 
+  
+  
   def addTag(place: ObjectId, tag: CVSTag) = {
     val revobj = revWalk.parseAny(place)
     git.tag().setObjectId(revobj)
