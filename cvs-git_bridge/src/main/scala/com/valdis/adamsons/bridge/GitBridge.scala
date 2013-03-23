@@ -19,6 +19,7 @@ import java.util.Date
 import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
 import java.io.OutputStream
+import org.eclipse.jgit.revwalk.RevCommit
 
 class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   override protected val logger = Logger
@@ -230,9 +231,9 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   def isCVSBranch(branch: String) = hasRef(cvsRefPrefix + branch)
   def isLocalBranch(branch: String) = !hasRef(cvsRefPrefix + branch) && hasRef(headRefPrefix + branch)
   
-  def streamCVSDiff(out:OutputStream) = (branch:String,parentBranch:String,fileNames:Seq[String])=> {}
+  def streamCVSDiff(out:OutputStream) = (parent:ObjectId,changed:ObjectId,fileNames:Seq[String])=> {}
   
-  def getParentCVSBranch(branch: String) = ""
+  def getCommonCommits(parent:ObjectId,changed:ObjectId):Iterable[RevCommit] = Stream[RevCommit]()
   
   def addTag(place: ObjectId, tag: CVSTag) = {
     val revobj = revWalk.parseAny(place)
