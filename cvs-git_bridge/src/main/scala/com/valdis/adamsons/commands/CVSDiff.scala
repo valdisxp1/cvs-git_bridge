@@ -11,7 +11,7 @@ object CVSDiff extends CommandParser{
       val parentId = Bridge.getRef(parentBranch)
       val branchId = Bridge.getRef(branch)
       if (parentId.isDefined && branchId.isDefined) {
-        val commonId = Bridge.getCommonCommits(parentId.get, branchId.get).headOption
+        val commonId = Bridge.getMergeBase(parentId.get, branchId.get)
         commonId.foreach(
           Bridge.streamCVSDiff(System.out)(parentId.get, _, fileNames)
           )

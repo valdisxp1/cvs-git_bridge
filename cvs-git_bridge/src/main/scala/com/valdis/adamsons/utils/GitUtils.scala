@@ -26,6 +26,8 @@ import com.valdis.adamsons.logger.SweetLogger
 import org.eclipse.jgit.revwalk.RevTree
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.lib.ObjectInserter
+import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.filter.RevFilter
 
 class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   protected val logger = Logger
@@ -37,7 +39,10 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   }
 
   lazy val git = new Git(repo)
-  lazy val revWalk = new RevWalk(repo)
+  /**
+   * Only use for direct resolving. To avoid concurrency problems, do not use for actual revision walking.
+   */
+  protected lazy val revWalk = new RevWalk(repo)
 
   def getNoteMessage(objectId: String): String = getNoteMessage(ObjectId.fromString(objectId))
 
@@ -69,6 +74,27 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     updateCmd.setNewObjectId(id);
     updateCmd.setForceUpdate(true);
     updateCmd.update(revWalk);
+  }
+
+  def getMergeBase(id1: ObjectId, id2: ObjectId): Option[RevCommit] = {
+    val commit1 = Option(revWalk.parseCommit(id1))
+    val commit2 = Option(revWalk.parseCommit(id2))
+    if (commit1.isDefined && commit2.isDefined) {
+      getMergeBase(commit1.get, commit2.get)
+    } else None
+  }
+  
+  def getMergeBase(commit1: RevCommit, commit2: RevCommit): Option[RevCommit] = {
+    //avoids concurrency problems
+    val myRevWalk = new RevWalk(repo)
+    try {
+    	myRevWalk.setRevFilter(RevFilter.MERGE_BASE)
+    	myRevWalk.markStart(commit1);
+    	myRevWalk.markStart(commit2);
+    	Option(myRevWalk.next())
+    } finally {
+    	myRevWalk.dispose()
+    }
   }
 
   def createEmptyTree(inserter: ObjectInserter)={

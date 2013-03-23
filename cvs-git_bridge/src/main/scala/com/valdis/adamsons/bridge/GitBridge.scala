@@ -233,7 +233,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   
   def streamCVSDiff(out:OutputStream) = (parent:ObjectId,changed:ObjectId,fileNames:Seq[String])=> {}
   
-  def getCommonCommits(parent:ObjectId,changed:ObjectId):Iterable[RevCommit] = Stream[RevCommit]()
+ 
   
   def addTag(place: ObjectId, tag: CVSTag) = {
     val revobj = revWalk.parseAny(place)
