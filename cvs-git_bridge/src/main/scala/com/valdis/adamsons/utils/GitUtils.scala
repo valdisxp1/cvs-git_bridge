@@ -50,9 +50,9 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
 
   val headRefPrefix = "refs/heads/"
   
-  def hasHeadRef(branch: String): Boolean = {
+  def hasRef(ref: String): Boolean = {
     // assumes bare
-    new File(gitDir + headRefPrefix + branch).exists()
+    new File(gitDir + ref).exists()
   }
 
   def getRef(branch: String): Option[ObjectId] = {

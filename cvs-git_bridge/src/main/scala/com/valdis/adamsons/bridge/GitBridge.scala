@@ -225,7 +225,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     
   def addBranch(branch: String, id: ObjectId) = updateRef(cvsRefPrefix+branch, id)
 
-  
+  def isCVSBranch(branch: String) = hasRef(cvsRefPrefix + branch)
+  def isLocalBranch(branch: String) = !hasRef(cvsRefPrefix + branch) && hasRef(headRefPrefix + branch)
   
   def addTag(place: ObjectId, tag: CVSTag) = {
     val revobj = revWalk.parseAny(place)
