@@ -101,6 +101,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   //TODO prune empty branches
   def putFile(tree: RevTree, path: Seq[String], filename: String, fileId: Option[ObjectId], inserter: ObjectInserter): ObjectId = path match {
     case folder :: tail => {
+      log("@path "+path)
       val treeWalk = new TreeWalk(repo)
       val treeFormatter = new TreeFormatter
       treeWalk.addTree(tree);
@@ -110,14 +111,15 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       //pre
       while (treeWalk.next() && item < folder) {
         // using zero as only a single tree was added
+         log("@Writing "+item)
         treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
       }
 
       //may be equal 
       if (item == folder) {
+        log("@skiping "+item)
         val oldTreeId = treeWalk.getObjectId(0)
         oldTree = Some(revWalk.parseTree(oldTreeId))
-        treeWalk.next()
       }
 
       val newTree = oldTree.map(tree => putFile(tree, tail, filename, fileId, inserter))
@@ -127,38 +129,43 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       }
 
       //post
-      do {
+      while (treeWalk.next()){
         // using zero as only a single tree was added
+        log("@Writing "+item)
         treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-      } while (treeWalk.next())
+      } 
       
       inserter.insert(treeFormatter)
     }
     case Nil => {
       val treeWalk = new TreeWalk(repo)
       val treeFormatter = new TreeFormatter
+      log("tree: "+tree)
       treeWalk.addTree(tree);
       treeWalk.setRecursive(false);
       def item = treeWalk.getPathString();
       //pre
       while (treeWalk.next() && item < filename) {
         // using zero as only a single tree was added
-        log("@Writing "+filename)
+        log("@Writing "+item)
         treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
       }
 
       //skip the existing file
       if (item == filename) {
-    	  treeWalk.next()
-    	  log("@skip "+filename)
+    	  log("@skip "+item)
+      }
+      if(fileId.isDefined){
+    	  log("@new file "+filename+" "+fileId)
       }
       fileId.foreach(treeFormatter.append(filename, FileMode.REGULAR_FILE, _))
 
       //post
-      do {
+      while (treeWalk.next()){
         // using zero as only a single tree was added
+        log("@Writing "+item)
         treeFormatter.append(item, treeWalk.getFileMode(0), treeWalk.getObjectId(0))
-      } while (treeWalk.next())
+      } 
       
       inserter.insert(treeFormatter)
     }
