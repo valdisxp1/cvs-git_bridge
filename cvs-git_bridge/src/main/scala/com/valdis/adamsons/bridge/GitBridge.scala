@@ -20,6 +20,8 @@ import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
 import java.io.OutputStream
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.diff.DiffFormatter
+import org.eclipse.jgit.diff.DiffEntry
 
 class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   override protected val logger = Logger
@@ -231,7 +233,21 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   def isCVSBranch(branch: String) = hasRef(cvsRefPrefix + branch)
   def isLocalBranch(branch: String) = !hasRef(cvsRefPrefix + branch) && hasRef(headRefPrefix + branch)
   
-  def streamCVSDiff(out:OutputStream) = (parent:ObjectId,changed:ObjectId,fileNames:Seq[String])=> {}
+  def streamCVSDiff(out:OutputStream)(parent:ObjectId,changed:ObjectId,fileNames:Seq[String]): Unit ={
+    val commit1 = Option(revWalk.parseCommit(parent))
+    val commit2 = Option(revWalk.parseCommit(changed))
+    if (commit1.isDefined && commit2.isDefined) {
+      streamCVSDiffImpl(out)(commit1.get,commit2.get,fileNames)
+    }
+  }
+  private def streamCVSDiffImpl(out:OutputStream)(parent:RevCommit,changed:RevCommit,fileNames:Seq[String]): Unit = {
+    val formatter = new DiffFormatter(out)
+    val treeWalk = new TreeWalk(repo)
+    treeWalk.addTree(parent.getTree())
+    treeWalk.addTree(changed.getTree())
+    val changes = DiffEntry.scan(treeWalk, true);
+    formatter.format(changes)
+  }
   
  
   
