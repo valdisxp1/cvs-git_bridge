@@ -43,10 +43,11 @@ object FileUtils extends SweetLogger{
   val tempDir = "temp"
 
   def createTempFile(prefix: String, sufix: String): File = {
-    val file = new File(prefix + System.currentTimeMillis() + "_" + random.nextInt(10000) + sufix,tempDir)
+    val file = new File(tempDir, prefix + System.currentTimeMillis() + "_" + random.nextInt(10000) + sufix)
     if (file.exists()) {
       createTempFile(prefix, sufix)
     } else {
+      log("creating a temporary file " + file.getAbsolutePath())
       file.createNewFile()
       file
     }
