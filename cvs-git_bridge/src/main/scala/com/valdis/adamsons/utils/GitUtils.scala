@@ -61,8 +61,6 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
 
   def updateHeadRef(branch: String, id: ObjectId) = updateRef(headRefPrefix + branch, id)
   
-  def updateRef(ref: String, address: String): Unit  = updateRef(ref, ObjectId.fromString(address))
-  
   def updateRef(ref: String, id: ObjectId): Unit = {
     log("update ref:" + ref + "->" + id.name)
     val updateCmd = repo.updateRef(ref);
