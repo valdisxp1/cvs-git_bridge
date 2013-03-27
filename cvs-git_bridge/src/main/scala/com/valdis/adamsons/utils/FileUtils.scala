@@ -40,10 +40,10 @@ object FileUtils extends SweetLogger{
   }
   
   lazy val random = new Random
-  lazy val tempDir = new File("cache/import")
+  val tempDir = "temp"
 
   def createTempFile(prefix: String, sufix: String): File = {
-    val file = new File(prefix + System.currentTimeMillis() + "_" + random.nextInt(10000) + sufix)
+    val file = new File(prefix + System.currentTimeMillis() + "_" + random.nextInt(10000) + sufix,tempDir)
     if (file.exists()) {
       createTempFile(prefix, sufix)
     } else {

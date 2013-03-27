@@ -11,6 +11,7 @@ import com.valdis.adamsons.cvs.CVSTag
 import com.valdis.adamsons.bridge.Bridge
 import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
+import com.valdis.adamsons.bridge.GitBridge
 
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot: Option[String], val module: Option[String]) extends Command with SweetLogger{
@@ -19,15 +20,16 @@ object CVSImport extends CommandParser{
     def this() = this(None,None)
     def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
     
+    val bridge: GitBridge = Bridge
     val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
     
-    def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = Bridge.lookupTag(branch.getBranchParent, trunk)
+    def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = bridge.lookupTag(branch.getBranchParent, trunk)
     
     def apply = {
       //main branch at master
       {
       //get last the last updated date
-      val lastUpdatedVal = Bridge.lastUpdated("master")
+      val lastUpdatedVal = bridge.lastUpdated("master")
       log(lastUpdatedVal)
       val commits = cvsrepo.getCommitList(lastUpdatedVal,None)
 //      log(commits);
@@ -45,7 +47,7 @@ object CVSImport extends CommandParser{
           branchesByDepth.get(depth - 1).flatten.map(_.name)
         }
         branchesForDepth.foreach((branch) => {
-          val lastUpdatedVal = Bridge.lastUpdated(branch.name)
+          val lastUpdatedVal = bridge.lastUpdated(branch.name)
           log(lastUpdatedVal)
           val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
 //          log(commits);
@@ -54,9 +56,9 @@ object CVSImport extends CommandParser{
             val graftLocation = getGraftLocation(branch, possibleParentBranches)
             //graft it
             log("graft:" + graftLocation)
-            graftLocation.foreach((location) => Bridge.updateHeadRef(branch.name, location))
+            graftLocation.foreach((location) => bridge.updateHeadRef(branch.name, location))
           }
-          Bridge.appendCommits(commits, branch.name, cvsrepo)
+          bridge.appendCommits(commits, branch.name, cvsrepo)
         })
       })
 
@@ -64,9 +66,9 @@ object CVSImport extends CommandParser{
       val tags = cvsrepo.getTagNameSet.map(cvsrepo.resolveTag(_))
       tags.foreach((tag) => {
         val branchNames = branches.map(_.name)
-        val objectId = Bridge.lookupTag(tag, branchNames)
+        val objectId = bridge.lookupTag(tag, branchNames)
         if (objectId.isDefined) {
-          Bridge.addTag(objectId.get, tag)
+          bridge.addTag(objectId.get, tag)
         }
       })
       0
