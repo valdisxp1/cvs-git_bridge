@@ -43,6 +43,11 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
    * Only use for direct resolving. To avoid concurrency problems, do not use for actual revision walking.
    */
   protected lazy val revWalk = new RevWalk(repo)
+  
+  def close = {
+    revWalk.release()
+    repo.close()
+  } 
 
   def getNoteMessage(objectId: String): String = getNoteMessage(ObjectId.fromString(objectId))
 
@@ -65,8 +70,6 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   }
 
   def updateHeadRef(branch: String, id: ObjectId) = updateRef(headRefPrefix + branch, id)
-  
-  def updateRef(ref: String, address: String): Unit  = updateRef(ref, ObjectId.fromString(address))
   
   def updateRef(ref: String, id: ObjectId): Unit = {
     log("update ref:" + ref + "->" + id.name)

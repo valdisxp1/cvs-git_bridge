@@ -13,10 +13,16 @@ import com.valdis.adamsons.commands.Init.InitCommand
 import org.eclipse.jgit.api.Git
 import scala.collection.JavaConversions._
 import org.eclipse.jgit.treewalk.TreeWalk
+import com.valdis.adamsons.bridge.GitBridge
+import com.valdis.adamsons.bridge.GitBridge
+import com.valdis.adamsons.utils.GitUtilsImpl
 
 class CVSImportTest {
   val gitDir = new File(GitUtils.gitDir)
   val cacheDir = new File("cache/")
+  var bridge: GitBridge = null
+
+  private class TestableCVSImportCommand(override val bridge: GitBridge, cvsRoot: String, module: String) extends CVSImportCommand(cvsRoot, module)
 
   def commitCount(branch:String) = {
     val logs = git.log().add(repo.resolve(branch)).call();
@@ -45,11 +51,14 @@ class CVSImportTest {
   @Before
   def before {
     clearDirs
-    InitCommand().apply
+    new InitCommand(){
+      override val repo = new GitUtilsImpl(GitUtils.gitDir).repo
+    }.apply
+    bridge = new GitBridge(GitUtils.gitDir)
   }
   @Test
   def testSubdirs {
-    CVSImportCommand("test/cvsroot", "cvstest5").apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvstest5").apply
     assertEquals(6, commitCount("master"))
     assertEquals(List(Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt", "dir/3.txt"),
     				  Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt"),
@@ -61,8 +70,8 @@ class CVSImportTest {
 
   @Test
   def testIncremental {
-    CVSImportCommand("test/cvsroot", "cvstest5").apply
-    CVSImportCommand("test/cvsroot", "cvstest5").apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvstest5").apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvstest5").apply
     assertEquals(6, commitCount("master"))
     assertEquals(List(Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt", "dir/3.txt"),
     				  Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt"),
@@ -74,14 +83,14 @@ class CVSImportTest {
 
   @Test
   def testImages {
-    CVSImportCommand("test/cvsroot", "cvsimagetest2").apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvsimagetest2").apply
     assertEquals(2, commitCount("master"))
     assertEquals(List(Set("image.png"), Set("image.png")), getFileNames("master"))
   }
 
   @Test
   def testRemove {
-    CVSImportCommand("test/cvsroot", "cvsdeltetest2").apply
+    new TestableCVSImportCommand(bridge ,"test/cvsroot", "cvsdeltetest2").apply
     assertEquals(4, commitCount("master"))
     assertEquals(List(Set("file.txt"),
     				  Set("file.txt", "evil.txt"),
@@ -91,7 +100,7 @@ class CVSImportTest {
   
   @Test
   def testRemoveSubdirs {
-    CVSImportCommand("test/cvsroot", "subdirdeletetest").apply
+   new TestableCVSImportCommand(bridge, "test/cvsroot", "subdirdeletetest").apply
     assertEquals(6, commitCount("master"))
     assertEquals(List(Set("good.txt", "really/good.txt"),
     				  Set("good.txt", "really/good.txt", "really/evil.txt"),
@@ -103,7 +112,7 @@ class CVSImportTest {
 
   @Test
   def testReAdd {
-    CVSImportCommand("test/cvsroot", "cvsreaddtest").apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvsreaddtest").apply
     assertEquals(4, commitCount("master"))
     assertEquals(List(Set("good.txt", "evil.txt"),
     				  Set("good.txt"),
@@ -113,7 +122,7 @@ class CVSImportTest {
   
   @Test
   def testBranchAndTag{
-    CVSImportCommand("test/cvsroot", "branchtest").apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "branchtest").apply
     assertEquals(2, commitCount("master"))
     assertEquals(List(Set("main.cpp"),Set("main.cpp")), getFileNames("master"))
     // includes "master" commits
@@ -130,6 +139,7 @@ class CVSImportTest {
 
   @After
   def after {
+    bridge.close
     clearDirs
   }
 }

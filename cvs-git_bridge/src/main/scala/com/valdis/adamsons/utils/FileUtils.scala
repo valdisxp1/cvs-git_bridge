@@ -6,6 +6,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
+import scala.util.Random
 
 object FileUtils extends SweetLogger{
   protected val logger = Logger
@@ -36,5 +37,19 @@ object FileUtils extends SweetLogger{
       }
     }
     copyRec(src,dest)
+  }
+  
+  lazy val random = new Random
+  val tempDir = "temp"
+
+  def createTempFile(prefix: String, sufix: String): File = {
+    val file = new File(tempDir, prefix + System.currentTimeMillis() + "_" + random.nextInt(10000) + sufix)
+    if (file.exists()) {
+      createTempFile(prefix, sufix)
+    } else {
+      log("creating a temporary file " + file.getAbsolutePath())
+      file.createNewFile()
+      file
+    }
   }
 }
