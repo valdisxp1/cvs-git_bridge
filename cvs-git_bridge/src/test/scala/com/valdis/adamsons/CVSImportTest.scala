@@ -19,7 +19,6 @@ import com.valdis.adamsons.utils.GitUtilsImpl
 
 class CVSImportTest {
   val gitDir = new File(GitUtils.gitDir)
-  val cacheDir = new File("cache/")
   var bridge: GitBridge = null
 
   private class TestableCVSImportCommand(override val bridge: GitBridge, cvsRoot: String, module: String) extends CVSImportCommand(cvsRoot, module)
@@ -46,7 +45,6 @@ class CVSImportTest {
 
   def clearDirs {
     FileUtils.deleteDir(gitDir)
-    FileUtils.deleteDir(cacheDir)
   }
   @Before
   def before {

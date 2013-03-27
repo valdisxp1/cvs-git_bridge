@@ -241,7 +241,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     }
   }
   private def streamCVSDiffImpl(out:OutputStream)(parent:RevCommit,changed:RevCommit,fileNames:Seq[String]): Unit = {
-    val formatter = new DiffFormatter(out)
+    val formatter = new CVSDiffFormatter(out)
+    formatter.setRepository(repo)
     val treeWalk = new TreeWalk(repo)
     treeWalk.addTree(parent.getTree())
     treeWalk.addTree(changed.getTree())
