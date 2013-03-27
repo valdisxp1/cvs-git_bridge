@@ -38,6 +38,11 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
 
   lazy val git = new Git(repo)
   lazy val revWalk = new RevWalk(repo)
+  
+  def close = {
+    revWalk.release()
+    repo.close()
+  } 
 
   def getNoteMessage(objectId: String): String = getNoteMessage(ObjectId.fromString(objectId))
 

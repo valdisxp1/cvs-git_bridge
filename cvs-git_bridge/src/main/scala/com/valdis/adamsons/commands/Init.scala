@@ -12,8 +12,9 @@ import com.valdis.adamsons.utils.FileUtils
 object Init extends CommandParser{
   case class InitCommand extends Command with SweetLogger{
     def logger = Logger
+    def repo = GitUtils.repo;
+    
     def apply = {
-    	val repo = GitUtils.repo;
     	log("Creating repository")
     	repo.create(true);
     	log("Creating temp folder")

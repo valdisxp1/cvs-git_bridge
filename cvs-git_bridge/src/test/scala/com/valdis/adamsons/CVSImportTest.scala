@@ -15,6 +15,7 @@ import scala.collection.JavaConversions._
 import org.eclipse.jgit.treewalk.TreeWalk
 import com.valdis.adamsons.bridge.GitBridge
 import com.valdis.adamsons.bridge.GitBridge
+import com.valdis.adamsons.utils.GitUtilsImpl
 
 class CVSImportTest {
   val gitDir = new File(GitUtils.gitDir)
@@ -50,7 +51,9 @@ class CVSImportTest {
   @Before
   def before {
     clearDirs
-    InitCommand().apply
+    new InitCommand(){
+      override val repo = new GitUtilsImpl(GitUtils.gitDir).repo
+    }.apply
     bridge = new GitBridge(GitUtils.gitDir)
   }
   @Test
@@ -136,6 +139,7 @@ class CVSImportTest {
 
   @After
   def after {
+    bridge.close
     clearDirs
   }
 }
