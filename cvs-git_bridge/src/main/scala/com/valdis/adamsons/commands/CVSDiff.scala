@@ -19,15 +19,10 @@ object CVSDiff extends CommandParser{
       0
     }
   }
-  override def parse(args: List[String]) = super.parse(args) match {
-    case None =>
-      args match {
-        case parent::branch::tail => Some(CVSDiffCommand(parent,branch,tail))
-        case _ => Some(HelpCommand(usage))
-      }
-
-    case x: Some[Command] => x
-  } 
+  def parseCommand(args: List[String]) = args match {
+    case parent :: branch :: tail => Some(CVSDiffCommand(parent, branch, tail))
+    case _ => None
+  }
   val aliases = List("cvsdiff")
   
   val help = "creates a unified CVS style diff for given two branches"

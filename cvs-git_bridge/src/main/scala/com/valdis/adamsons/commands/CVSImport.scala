@@ -79,16 +79,12 @@ object CVSImport extends CommandParser{
       def apply()= new CVSImportCommand()
       def apply(cvsroot: String, module: String) = new CVSImportCommand(cvsroot, module);
   }
-  override def parse(args: List[String]) = super.parse(args) match {
-    case None =>
-      args match {
-        case List("-d",root,mod) => Some(CVSImportCommand(root,mod))
-        case Nil => Some(CVSImportCommand())
-        case _ => Some(HelpCommand(usage))
-      }
-
-    case x: Some[Command] => x
-  } 
+  def parseCommand(args: List[String]) = args match {
+    case List("-d", root, mod) => Some(CVSImportCommand(root, mod))
+    case Nil => Some(CVSImportCommand())
+    case _ => None
+  }
+  
   val aliases = List("cvsimport","import")
 
   val help = "imports all branches of the given CVS repository"

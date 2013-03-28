@@ -29,15 +29,12 @@ object Init extends CommandParser{
   }
   val help = "creates directory structure and initialzes git repository"
   val usage = "init \n (no arguments)"
-  override def parse(args: List[String]) = super.parse(args) match {
-    case None =>
-      args match {
-        case Nil => Some(InitCommand())
-        case _ => Some(HelpCommand(""))
-      }
+  def parseCommand(args: List[String]) =
+    args match {
+      case Nil => Some(InitCommand())
+      case _ => None
+    }
 
-    case x: Some[Command] => x
-  } 
   val aliases = List("init","initialize")
 
 

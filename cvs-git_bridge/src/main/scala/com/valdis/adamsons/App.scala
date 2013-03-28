@@ -15,14 +15,7 @@ object App extends CommandParser{
   override val subcommads = List(Init,CVSImport,CVSDiff)
   val usage = "no usage yet"
   val help = "ask Valdis"
-  override def parse(args: List[String]) = super.parse(args) match {
-    case None =>
-      args match {
-        case _ => Some(HelpCommand(usage))
-      }
-
-    case x: Some[Command] => x
-  } 
+ def parseCommand(args: List[String]) = None
   
   val apply = 0
 }

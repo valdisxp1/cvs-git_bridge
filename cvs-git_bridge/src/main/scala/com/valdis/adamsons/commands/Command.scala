@@ -9,18 +9,33 @@ trait CommandParser{
   def usage: String
   val aliases: List[String]
   val subcommads: List[CommandParser] = Nil
-  def parse(args: List[String]): Option[Command] = {
+  def parse(args: List[String]): Command = {
+    parseSubcommands(args)
+      .getOrElse(parseCommand(args)
+        .getOrElse(parseHelp(args)
+        .getOrElse(generateUsage)))
+  }
+  
+  private def generateUsage = HelpCommand(usage)
+  
+  private def parseHelp(args: List[String]): Option[Command] = args match{
+    case "--help ":: tail => Some(HelpCommand(help))
+    case _ => None
+  }
+  private def parseSubcommands(args: List[String]): Option[Command] = {
     if (args.isEmpty) {
       None
     } else {
       subcommads.toStream.find(_.aliases.contains(args.head)) match{
-        case Some(x) => x.parse(args.tail)
+        case Some(x) => Some(x.parse(args.tail))
         case None => None
       }
     }
   }
+  protected def parseCommand(args: List[String]): Option[Command]
+  
   def main(args: Array[String]): Unit = {
-    println(parse(args.toList).get.apply)
+    parse(args.toList).apply
   }
   
 }
