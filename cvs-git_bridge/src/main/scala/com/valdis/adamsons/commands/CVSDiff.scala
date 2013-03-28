@@ -11,6 +11,7 @@ object CVSDiff extends CommandParser{
       val parentId = Bridge.getRef(parentBranch).getOrElse(throw new IllegalAccessException("parent branch not found"))
       val branchId = Bridge.getRef(branch).getOrElse(throw new IllegalAccessException("child branch not found"))
         val commonId = Bridge.getMergeBase(parentId, branchId)
+        log("common commit:"+commonId)
         commonId.foreach(
           Bridge.streamCVSDiff(System.out)(parentId, _, fileNames)
           )

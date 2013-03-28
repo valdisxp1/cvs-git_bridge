@@ -94,7 +94,9 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     	myRevWalk.setRevFilter(RevFilter.MERGE_BASE)
     	myRevWalk.markStart(commit1);
     	myRevWalk.markStart(commit2);
-    	Option(myRevWalk.next())
+    	val base = Option(myRevWalk.next())
+    	log("merge base for "+commit1.name+" "+commit2.name+" is "+base)
+    	base
     } finally {
     	myRevWalk.dispose()
     }
