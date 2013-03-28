@@ -26,9 +26,9 @@ object Init extends CommandParser{
     	log("Initialize done")
     0
   }
-  def help = ""
-  def usage = ""
   }
+  val help = "creates directory structure and initialzes git repository"
+  val usage = "init \n (no arguments)"
   override def parse(args: List[String]) = super.parse(args) match {
     case None =>
       args match {

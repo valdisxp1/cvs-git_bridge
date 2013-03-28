@@ -73,10 +73,8 @@ object CVSImport extends CommandParser{
       })
       0
     }
-    
-  def help = ""
-  def usage = ""
   }
+  
   object CVSImportCommand{
       def apply()= new CVSImportCommand()
       def apply(cvsroot: String, module: String) = new CVSImportCommand(cvsroot, module);
@@ -86,11 +84,13 @@ object CVSImport extends CommandParser{
       args match {
         case List("-d",root,mod) => Some(CVSImportCommand(root,mod))
         case Nil => Some(CVSImportCommand())
-        case _ => Some(HelpCommand(""))
+        case _ => Some(HelpCommand(usage))
       }
 
     case x: Some[Command] => x
   } 
   val aliases = List("cvsimport","import")
 
+  val help = "imports all branches of the given CVS repository"
+  val usage = "cvsimport -d <repository path> <module name>\n Note: <repository path> supports relative path\n cvsimport <module name>"
 }

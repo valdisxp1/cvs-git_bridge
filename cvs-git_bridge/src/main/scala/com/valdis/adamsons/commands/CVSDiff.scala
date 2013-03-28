@@ -18,17 +18,18 @@ object CVSDiff extends CommandParser{
       }
       0
     }
-    def help = ""
-    def usage = ""
   }
   override def parse(args: List[String]) = super.parse(args) match {
     case None =>
       args match {
         case parent::branch::tail => Some(CVSDiffCommand(parent,branch,tail))
-        case _ => Some(HelpCommand(""))
+        case _ => Some(HelpCommand(usage))
       }
 
     case x: Some[Command] => x
   } 
   val aliases = List("cvsdiff")
+  
+  val help = "creates a unified CVS style diff for given two branches"
+  val usage = "cvsdiff <parent branch> <branch>\n Note this should have ability to only generate diff for specificed file, but curently it does not. Any other parameters are ignored."
 }

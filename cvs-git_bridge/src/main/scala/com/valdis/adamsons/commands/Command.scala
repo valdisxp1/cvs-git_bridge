@@ -2,11 +2,11 @@ package com.valdis.adamsons.commands
 
 trait Command {
   def apply: Int
-  def help: String
-  def usage: String
 }
 
 trait CommandParser{
+  def help: String
+  def usage: String
   val aliases: List[String]
   val subcommads: List[CommandParser] = Nil
   def parse(args: List[String]): Option[Command] = {
@@ -27,8 +27,6 @@ trait CommandParser{
 
 case class HelpCommand(val text: String) extends Command {
   val aliases = Nil
-  val help = ""
-  val usage = ""
   def apply = {
     println(text)
     0
