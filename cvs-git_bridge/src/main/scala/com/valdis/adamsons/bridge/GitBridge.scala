@@ -239,6 +239,10 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     log("Diffing " + commit1 + "[" + parent.name + "]" + " vs " + commit2 + "[" + changed.name + "]")
     if (commit1.isDefined && commit2.isDefined) {
       streamCVSDiffImpl(out)(commit1.get,commit2.get,fileNames)
+    } else {
+      def reportMissing(id:ObjectId) = log("Could not find commit with id: "+id)
+      if (!commit1.isDefined) reportMissing(parent)
+      if (!commit2.isDefined) reportMissing(changed)
     }
   }
   private def streamCVSDiffImpl(out:OutputStream)(parent:RevCommit,changed:RevCommit,fileNames:Seq[String]): Unit = {

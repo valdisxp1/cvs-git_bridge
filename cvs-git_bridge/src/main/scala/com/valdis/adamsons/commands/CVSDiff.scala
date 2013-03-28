@@ -8,14 +8,12 @@ object CVSDiff extends CommandParser{
   case class CVSDiffCommand(val parentBranch: String, val branch: String,val fileNames: Seq[String]) extends Command with SweetLogger {
     protected def logger = Logger
     def apply = {
-      val parentId = Bridge.getRef(parentBranch)
-      val branchId = Bridge.getRef(branch)
-      if (parentId.isDefined && branchId.isDefined) {
-        val commonId = Bridge.getMergeBase(parentId.get, branchId.get)
+      val parentId = Bridge.getRef(parentBranch).getOrElse(throw new IllegalAccessException("parent branch not found"))
+      val branchId = Bridge.getRef(branch).getOrElse(throw new IllegalAccessException("child branch not found"))
+        val commonId = Bridge.getMergeBase(parentId, branchId)
         commonId.foreach(
-          Bridge.streamCVSDiff(System.out)(parentId.get, _, fileNames)
+          Bridge.streamCVSDiff(System.out)(parentId, _, fileNames)
           )
-      }
       0
     }
   }
