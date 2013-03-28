@@ -236,6 +236,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   def streamCVSDiff(out:OutputStream)(parent:ObjectId,changed:ObjectId,fileNames:Seq[String]): Unit ={
     val commit1 = Option(revWalk.parseCommit(parent))
     val commit2 = Option(revWalk.parseCommit(changed))
+    log("Diffing " + commit1 + "[" + parent.name + "]" + " vs " + commit2 + "[" + changed.name + "]")
     if (commit1.isDefined && commit2.isDefined) {
       streamCVSDiffImpl(out)(commit1.get,commit2.get,fileNames)
     }
