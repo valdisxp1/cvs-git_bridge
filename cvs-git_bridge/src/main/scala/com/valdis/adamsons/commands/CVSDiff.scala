@@ -3,18 +3,27 @@ package com.valdis.adamsons.commands
 import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.bridge.Bridge
+import java.io.File
+import java.io.FileOutputStream
 
 object CVSDiff extends CommandParser{
   case class CVSDiffCommand(val parentBranch: String, val branch: String,val fileNames: Seq[String]) extends Command with SweetLogger {
     protected def logger = Logger
+    
     def apply = {
       val parentId = Bridge.getRef(parentBranch).getOrElse(throw new IllegalAccessException("parent branch not found"))
       val branchId = Bridge.getRef(branch).getOrElse(throw new IllegalAccessException("child branch not found"))
         val commonId = Bridge.getMergeBase(parentId, branchId)
         log("common commit:"+commonId)
-        commonId.foreach(
-          Bridge.streamCVSDiff(System.out)(_, branchId, fileNames)
-          )
+        commonId.foreach(common=>{
+          Bridge.streamCVSDiff(System.out)(common, branchId, fileNames)
+          val patchesDir = new File("patches/"+parentBranch+"/")
+          if(!patchesDir.exists()){
+            patchesDir.mkdirs();
+          }
+          val patchFile = new File(patchesDir,branch+"__"+branchId.name+".diff")
+          Bridge.streamCVSDiff(new FileOutputStream(patchFile))(common, branchId, fileNames)
+        })
       0
     }
   }
@@ -24,6 +33,6 @@ object CVSDiff extends CommandParser{
   }
   val aliases = List("cvsdiff")
   
-  val help = "creates a unified CVS style diff for given two branches"
+  val help = "creates a unified CVS style diff for given two branches. The file is saved in patches/<parent branch>/ folder"
   val usage = "cvsdiff <parent branch> <branch>\n Note this should have ability to only generate diff for specificed file, but curently it does not. Any other parameters are ignored."
 }
