@@ -1,2 +1,2 @@
-java -jar target/cvs-git_bridge-1.0-SNAPSHOT.jar cvsdiff master changes
+java -jar target/cvs-git_bridge-0.1.jar cvsdiff master changes
 pause
