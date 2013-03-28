@@ -11,15 +11,18 @@ import com.valdis.adamsons.utils.GitUtils
 import com.valdis.adamsons.utils.FileUtils
 import java.io.File
 import com.valdis.adamsons.commands.CVSDiff.CVSDiffCommand
+import org.junit.After
 
 class CVSDiffTest {
   val gitDir = new File(GitUtils.gitDir)
   var bridge: GitBridge = null
 
   private class TestableCVSImportCommand(override val bridge: GitBridge, cvsRoot: String, module: String) extends CVSImportCommand(cvsRoot, module)
-
+  private class TestableCVSDiffCommand(override val bridge: GitBridge, parentBranch: String, branch: String, fileNames: Seq[String]) extends CVSDiffCommand(parentBranch, branch, fileNames)
+  
   @Before
-  def before {clearDirs
+  def before {
+    clearDirs
     new InitCommand(){
       override val repo = new GitUtilsImpl(GitUtils.gitDir).repo
     }.apply
@@ -33,6 +36,12 @@ class CVSDiffTest {
   
   @Test
   def CVSvCVS {
-    CVSDiffCommand("master","directx",Nil).apply
+    new TestableCVSDiffCommand(bridge,"master","directx",Nil).apply
+  }
+  
+  @After
+  def after{
+    bridge.close
+    clearDirs
   }
 }

@@ -5,14 +5,17 @@ import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.bridge.Bridge
 import java.io.File
 import java.io.FileOutputStream
+import com.valdis.adamsons.bridge.GitBridge
 
 object CVSDiff extends CommandParser{
   case class CVSDiffCommand(val parentBranch: String, val branch: String,val fileNames: Seq[String]) extends Command with SweetLogger {
     protected def logger = Logger
     
+    val bridge: GitBridge = Bridge
+    
     def apply = {
-      val parentId = Bridge.getRef(parentBranch).getOrElse(throw new IllegalAccessException("parent branch not found"))
-      val branchId = Bridge.getRef(branch).getOrElse(throw new IllegalAccessException("child branch not found"))
+      val parentId = bridge.getRef(parentBranch).getOrElse(throw new IllegalAccessException("parent branch not found"))
+      val branchId = bridge.getRef(branch).getOrElse(throw new IllegalAccessException("child branch not found"))
         val commonId = Bridge.getMergeBase(parentId, branchId)
         log("common commit:"+commonId)
         commonId.foreach(common=>{
