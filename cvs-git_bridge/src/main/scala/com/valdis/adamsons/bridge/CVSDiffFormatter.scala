@@ -10,6 +10,7 @@ import org.eclipse.jgit.lib.Constants.encodeASCII
 class CVSDiffFormatter(out: OutputStream) extends DiffFormatter(out){
   setOldPrefix("")
   setNewPrefix("")
+  setDetectRenames(false)
   
   override protected def formatGitDiffFirstHeaderLine(o: ByteArrayOutputStream,
     changeType: ChangeType, oldPath: String, newPath: String) = {
