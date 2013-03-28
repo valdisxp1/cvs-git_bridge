@@ -13,7 +13,7 @@ object CVSDiff extends CommandParser{
         val commonId = Bridge.getMergeBase(parentId, branchId)
         log("common commit:"+commonId)
         commonId.foreach(
-          Bridge.streamCVSDiff(System.out)(parentId, _, fileNames)
+          Bridge.streamCVSDiff(System.out)(_, branchId, fileNames)
           )
       0
     }
