@@ -77,27 +77,10 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       }
     }
 
-    def withLine(line: String): RlogTagParseState = {
-      line match {
-        case CVSRepository.FILES_SPLITTER => {
-          val isInHeader = true;
-          if (this.isInHeader == isInHeader) {
-            this
-          } else {
-            new RlogTagParseState(isInHeader, this.fileName, tag)
-          }
-        }
-        case CVSRepository.COMMITS_SPLITTER => {
-          val isInHeader = false;
-          if (this.isInHeader == isInHeader) {
-            this
-          } else {
-            new RlogTagParseState(isInHeader, fileName, tag)
-          }
-        }
-        case _ => {
-          if (isInHeader) {
-            val fileNameUpdated = extractFileName(line).map(new RlogTagParseState(isInHeader, _, tag))
+    protected def create(isInHeader: Boolean, fileName: String, tag: CVSTag) = new RlogTagParseState(isInHeader, fileName, tag)
+    
+    protected def withHeaderLine(line: String): RlogTagParseState={
+      val fileNameUpdated = extractFileName(line).map(create(isInHeader, _, tag))
             fileNameUpdated.getOrElse({
               lazy val pair = {
                 val arr = line.split(':')
@@ -106,11 +89,30 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
               def isTagLine = line.size > 1 && line(0) == '\t'
               def isTheRightTag = tag.name == pair._1
               if (isTagLine && isTheRightTag) {
-                new RlogTagParseState(isInHeader, this.fileName, tag.withFile(this.fileName, pair._2))
+                create(isInHeader, this.fileName, tag.withFile(this.fileName, pair._2))
               } else {
                 this
               }
             })
+    }
+
+    def setIsInHeader(isInHeader: Boolean) = if (this.isInHeader == isInHeader) {
+      this
+    } else {
+      create(isInHeader, fileName, tag)
+    }
+
+    def withLine(line: String): RlogTagParseState = {
+      line match {
+        case CVSRepository.FILES_SPLITTER => {
+          setIsInHeader(true)
+        }
+        case CVSRepository.COMMITS_SPLITTER => {
+          setIsInHeader(false)
+        }
+        case _ => {
+          if (isInHeader) {
+            withHeaderLine(line)
           } else {
             this
           }
