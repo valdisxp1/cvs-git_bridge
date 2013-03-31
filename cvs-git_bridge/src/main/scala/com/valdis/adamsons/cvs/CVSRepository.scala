@@ -51,8 +51,37 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   private def getTagLines = {
     val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
     log("running command:\n" + command)
-    val lines = stringToProcess(command).lines;
-    lines.filter((str) => str.size > 0 && str(0) == '\t').map(_.trim)
+    val process = stringToProcess(command);
+    process.lines.filter((str) => str.size > 0 && str(0) == '\t').map(_.trim)
+  }
+  
+  private case class RlogTagNameLookupState(override val isInHeader: Boolean,
+		  							  val check: (=>String, =>CVSFileVersion)=> Boolean,
+		  							  val nameSet: Set[String]) extends RlogParseState[RlogTagNameLookupState]{
+    def this(check: (=> String, => CVSFileVersion) => Boolean, set: Set[String]) = this(true, check, set)
+    def this(check: (=> String, => CVSFileVersion) => Boolean) = this(check, Set())
+    
+    override protected def create = this
+    override protected def create(isInHeader: Boolean) = new RlogTagNameLookupState(isInHeader, check, nameSet)
+
+    override protected def withHeaderLine(line: String) = {
+      val isTagLine = line.size > 0 && line(0) == '\n'
+      if (isTagLine) {
+        val split = line.trim.split(':')
+        if (split.length != 2) {
+          throw new IllegalStateException("cvs rlog malformed, tag line contains none or more than one colom: \n" + line)
+        }
+        val name = split(0)
+        lazy val version = CVSFileVersion(split(1))
+        if (check(name, version)) {
+          new RlogTagNameLookupState(isInHeader, check, nameSet + name)
+        } else {
+          create
+        }
+      } else {
+        create
+      }
+    }
   }
 
   def getBranchNameSet: Set[String] = {
@@ -145,8 +174,8 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def resolveTag(tagName: String): CVSTag = {
     val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
     log("running command:\n" + command)
-    val lines = stringToProcess(command).lines;
-    lines.foldLeft(new RlogSingleTagParseState(tagName))(_ withLine _).tag
+    val process = stringToProcess(command);
+    processFold(new RlogSingleTagParseState(tagName),process)(_ withLine _).tag
   }
 
   def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
