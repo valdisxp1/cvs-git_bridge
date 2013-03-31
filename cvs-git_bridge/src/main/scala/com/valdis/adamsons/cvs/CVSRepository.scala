@@ -65,8 +65,8 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     pairs.filter(!_._2.isBranch).map(_._1).toSet
   }
 
-  private abstract class RlogParseState(val isInHeader: Boolean) {
-
+  private trait RlogParseState[This]{
+    	val isInHeader: Boolean
     def extractFileName(line: String): Option[String] = {
       val arr = line.split(':')
       if (arr.length == 2 && arr(0).trim == "RCS file") {
@@ -75,19 +75,20 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         None
       }
     }
+    
+    protected def create(isInHeader: Boolean): This
+    protected def create: This
 
-    protected def create(isInHeader: Boolean): RlogParseState
+    protected def withHeaderLine(line: String): This = create
+    protected def withCommitLine(line: String): This = create
 
-    protected def withHeaderLine(line: String): RlogParseState = this
-    protected def withCommitLine(line: String): RlogParseState = this
-
-    def setIsInHeader(isInHeader: Boolean) = if (this.isInHeader == isInHeader) {
-      this
+    def setIsInHeader(isInHeader: Boolean): This = if (this.isInHeader == isInHeader) {
+      create
     } else {
       create(isInHeader)
     }
 
-    def withLine[A >: RlogParseState](line: String): RlogParseState = {
+    def withLine(line: String): This = {
       line match {
         case CVSRepository.FILES_SPLITTER => {
           setIsInHeader(true)
@@ -105,11 +106,14 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       }
     }
   }
-  
-  private case class RlogSingleTagParseState(override val isInHeader: Boolean,val fileName: String, val tag: CVSTag) extends RlogParseState(isInHeader){
+
+  private case class RlogSingleTagParseState(override val isInHeader: Boolean, val fileName: String, val tag: CVSTag) extends RlogParseState[RlogSingleTagParseState] {
     def this(name: String) = this(true, "", CVSTag(name, Map()))
     
+    type This = RlogSingleTagParseState
+    
     override protected def create(isInHeader: Boolean): RlogSingleTagParseState = new RlogSingleTagParseState(isInHeader, fileName, tag)
+    override protected def create = this
     private def create(isInHeader: Boolean,fileName: String, tag: CVSTag) = new RlogSingleTagParseState(isInHeader, fileName, tag)
     
     override protected def withHeaderLine(line: String): RlogSingleTagParseState={
