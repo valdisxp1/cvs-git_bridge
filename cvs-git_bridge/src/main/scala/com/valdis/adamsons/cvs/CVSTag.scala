@@ -18,6 +18,8 @@ case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion
   
   def ignoreFile(file:String) = CVSTag(name,fileVersions - file)
   def ignoreFiles(files:Iterable[String]) = CVSTag(name,fileVersions -- files) 
+  
+  def isBranch = fileVersions.headOption.map(_._2.isBranch).getOrElse(false)
 }
 
 object CVSTag {
