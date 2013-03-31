@@ -57,7 +57,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   private case class RlogTagNameLookupState(override val isInHeader: Boolean,
 		  							  val check: (=>String, =>CVSFileVersion)=> Boolean,
 		  							  val nameSet: Set[String]) extends RlogParseState[RlogTagNameLookupState]{
-    def this(check: (=> String, => CVSFileVersion) => Boolean, set: Set[String]) = this(true, check, set)
+    def this(check: (=> String, => CVSFileVersion) => Boolean, set: Set[String]) = this(RlogParseState.isFirstLineHeader, check, set)
     def this(check: (=> String, => CVSFileVersion) => Boolean) = this(check, Set())
     
     override protected def self = this
@@ -141,9 +141,13 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       }
     }
   }
+  
+  object RlogParseState{
+    val isFirstLineHeader = true
+  }
 
   private case class RlogSingleTagParseState(override val isInHeader: Boolean, val fileName: String, val tag: CVSTag) extends RlogParseState[RlogSingleTagParseState] {
-    def this(name: String) = this(true, "", CVSTag(name, Map()))
+    def this(name: String) = this(RlogParseState.isFirstLineHeader, "", CVSTag(name, Map()))
     
     type This = RlogSingleTagParseState
     
@@ -199,8 +203,8 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 		  							val commits: Seq[CVSCommit],
 		  							val headerBuffer: Vector[String],
 		  							val commitBuffer: Vector[String]) extends RlogParseState[RlogCommitParseState]{
-    def this() = this(true, Vector(), Vector(), Vector())
-    def this(emptyCollection: Seq[CVSCommit]) = this(true, emptyCollection, Vector(), Vector())
+    def this() = this(RlogParseState.isFirstLineHeader, Vector(), Vector(), Vector())
+    def this(emptyCollection: Seq[CVSCommit]) = this(RlogParseState.isFirstLineHeader, emptyCollection, Vector(), Vector())
 
     private def updatedCommits = if (isInHeader) {
       commits
