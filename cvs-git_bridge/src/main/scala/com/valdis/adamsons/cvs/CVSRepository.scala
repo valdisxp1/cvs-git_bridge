@@ -64,14 +64,14 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     override protected def create(isInHeader: Boolean) = new RlogTagNameLookupState(isInHeader, check, nameSet)
 
     override protected def withHeaderLine(line: String) = {
-      val isTagLine = line.size > 0 && line(0) == '\n'
+      val isTagLine = line.size > 0 && line(0) == '\t'
       if (isTagLine) {
         val split = line.trim.split(':')
         if (split.length != 2) {
           throw new IllegalStateException("cvs rlog malformed, tag line contains none or more than one colom: \n" + line)
         }
-        val name = split(0)
-        lazy val version = CVSFileVersion(split(1))
+        val name = split(0).trim
+        lazy val version = CVSFileVersion(split(1).trim)
         if (check(name, version)) {
           new RlogTagNameLookupState(isInHeader, check, nameSet + name)
         } else {
