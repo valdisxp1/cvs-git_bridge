@@ -65,8 +65,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     pairs.filter(!_._2.isBranch).map(_._1).toSet
   }
 
-  private case class RlogTagParseState(val isInHeader: Boolean, val fileName: String, val tag: CVSTag) {
-    def this(name: String) = this(true, "", CVSTag(name, Map()))
+  private abstract class RlogParseState(val isInHeader: Boolean) {
 
     def extractFileName(line: String): Option[String] = {
       val arr = line.split(':')
@@ -77,9 +76,43 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       }
     }
 
-    protected def create(isInHeader: Boolean, fileName: String, tag: CVSTag) = new RlogTagParseState(isInHeader, fileName, tag)
+    protected def create(isInHeader: Boolean): RlogParseState
+
+    protected def withHeaderLine(line: String): RlogParseState = this
+    protected def withCommitLine(line: String): RlogParseState = this
+
+    def setIsInHeader(isInHeader: Boolean) = if (this.isInHeader == isInHeader) {
+      this
+    } else {
+      create(isInHeader)
+    }
+
+    def withLine[A >: RlogParseState](line: String): RlogParseState = {
+      line match {
+        case CVSRepository.FILES_SPLITTER => {
+          setIsInHeader(true)
+        }
+        case CVSRepository.COMMITS_SPLITTER => {
+          setIsInHeader(false)
+        }
+        case _ => {
+          if (isInHeader) {
+            withHeaderLine(line)
+          } else {
+            withCommitLine(line)
+          }
+        }
+      }
+    }
+  }
+  
+  private case class RlogSingleTagParseState(override val isInHeader: Boolean,val fileName: String, val tag: CVSTag) extends RlogParseState(isInHeader){
+    def this(name: String) = this(true, "", CVSTag(name, Map()))
     
-    protected def withHeaderLine(line: String): RlogTagParseState={
+    override protected def create(isInHeader: Boolean): RlogSingleTagParseState = new RlogSingleTagParseState(isInHeader, fileName, tag)
+    private def create(isInHeader: Boolean,fileName: String, tag: CVSTag) = new RlogSingleTagParseState(isInHeader, fileName, tag)
+    
+    override protected def withHeaderLine(line: String): RlogSingleTagParseState={
       val fileNameUpdated = extractFileName(line).map(create(isInHeader, _, tag))
             fileNameUpdated.getOrElse({
               lazy val pair = {
@@ -95,37 +128,14 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
               }
             })
     }
-
-    def setIsInHeader(isInHeader: Boolean) = if (this.isInHeader == isInHeader) {
-      this
-    } else {
-      create(isInHeader, fileName, tag)
-    }
-
-    def withLine(line: String): RlogTagParseState = {
-      line match {
-        case CVSRepository.FILES_SPLITTER => {
-          setIsInHeader(true)
-        }
-        case CVSRepository.COMMITS_SPLITTER => {
-          setIsInHeader(false)
-        }
-        case _ => {
-          if (isInHeader) {
-            withHeaderLine(line)
-          } else {
-            this
-          }
-        }
-      }
-    }
+    
   }
 
   def resolveTag(tagName: String): CVSTag = {
     val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
     log("running command:\n" + command)
     val lines = stringToProcess(command).lines;
-    lines.foldLeft(new RlogTagParseState(tagName))(_ withLine _).tag
+    lines.foldLeft(new RlogSingleTagParseState(tagName))(_ withLine _).tag
   }
 
   def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
