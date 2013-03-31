@@ -14,6 +14,9 @@ import com.valdis.adamsons.utils.SerialFileSeq
 import com.valdis.adamsons.utils.EmptyFileSeq
 import com.valdis.adamsons.utils.SerialFileSeqLike
 import com.valdis.adamsons.utils.FileUtils
+import com.valdis.adamsons.utils.ProcessAsTraversable
+import com.valdis.adamsons.utils.ProcessAsTraversable
+import com.valdis.adamsons.utils.ProcessAsTraversable
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger {
   def logger = Logger
@@ -84,13 +87,13 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
 
   def getBranchNameSet: Set[String] = {
-    val process = getTagProcess
-    processFold(new RlogTagNameLookupState((name, version) => version.isBranch), process)(_ withLine _).nameSet
+    new ProcessAsTraversable(getTagProcess, line => log(line))
+    	.foldLeft(new RlogTagNameLookupState((name, version) => version.isBranch))(_ withLine _).nameSet
   }
 
   def getTagNameSet: Set[String] = {
-    val process = getTagProcess
-    processFold(new RlogTagNameLookupState((name, version) => !version.isBranch), process)(_ withLine _).nameSet
+    new ProcessAsTraversable(getTagProcess, line => log(line))
+    	.foldLeft(new RlogTagNameLookupState((name, version) => !version.isBranch))(_ withLine _).nameSet
   }
 
   private trait RlogParseState[This]{
@@ -178,7 +181,8 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
     log("running command:\n" + command)
     val process = stringToProcess(command);
-    processFold(new RlogSingleTagParseState(tagName),process)(_ withLine _).tag
+    new ProcessAsTraversable(process, line => log(line))
+    	.foldLeft(new RlogSingleTagParseState(tagName))(_ withLine _).tag
   }
 
   def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
@@ -243,18 +247,9 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
 
   def parseRlogLines(process: ProcessBuilder): Seq[CVSCommit] = {
-    val state = processFold(new RlogCommitParseState(Vector[CVSCommit]()), process)(_ withLine _)
+    val state = new ProcessAsTraversable(process,line=>log(line))
+    	.foldLeft(new RlogCommitParseState(Vector[CVSCommit]()))(_ withLine _)
     state.commits
-  }
-  /**
-   * This method does folds over all lines without generating permanent data structure.
-   * @see ProcessBuilder.lines generates a immutable Stream
-   */
-  private def processFold[A](initial: A, process: ProcessBuilder)(f: (A, String) => A): A = {
-    var state = initial
-    val processLogger = ProcessLogger(line => state = f(state, line), line => log(line))
-    process.run(processLogger).exitValue
-    state
   }
 }
 
