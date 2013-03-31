@@ -35,9 +35,8 @@ object CVSImport extends CommandParser{
       Bridge.appendCommits(commits, "master", cvsrepo)
       }
       log("looking up all other branches and tags")
-      val tagsAndBanches = cvsrepo.resolveAllTagsAndBranches
       //other branches follow
-      val branches = tagsAndBanches.filter(_.isBranch)
+      val branches = cvsrepo.resolveAllBranches
       val branchesByDepth = branches.groupBy(_.depth)
       branchesByDepth.toSeq.sortBy(_._1).foreach((pair) => {
         val depth = pair._1
@@ -64,7 +63,7 @@ object CVSImport extends CommandParser{
 
       //tags
       log("resolving tags")
-      val tags = tagsAndBanches.filter(!_.isBranch)
+      val tags = cvsrepo.resolveAllTagsAndBranches.filter(!_.isBranch)
       tags.foreach((tag) => {
         val branchNames = branches.map(_.name)
         val objectId = bridge.lookupTag(tag, branchNames)

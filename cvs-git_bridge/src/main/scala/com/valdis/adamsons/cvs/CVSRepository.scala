@@ -76,15 +76,20 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       }
     }
   
-  private case class RlogAllTagParseState(override val isInHeader: Boolean, val fileName: String, val tags: Map[String,CVSTag]) extends RlogParseState[RlogAllTagParseState] {
-    def this() = this(RlogParseState.isFirstLineHeader, "", Map())
+  private trait RlogAllTagParseStateLike[This] extends RlogParseState[This] {
     
-    override protected def create(isInHeader: Boolean): RlogAllTagParseState = new RlogAllTagParseState(isInHeader, fileName, tags)
-    override protected def self = this
-    private def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]) = new RlogAllTagParseState(isInHeader, fileName, tags)
-
+    val tags: Map[String,CVSTag]
+    val fileName: String
     
-    override protected def withHeaderLine(line: String): RlogAllTagParseState = {
+    protected def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]): This
+    
+    protected def withTagEntry(tagName: String, version: CVSFileVersion): This = {
+      val previousTag = tags.getOrElse(tagName, CVSTag(tagName))
+      val updatedTags = tags + (tagName -> previousTag.withFile(this.fileName, version))
+      create(isInHeader, this.fileName, updatedTags)
+    }
+    
+    override protected def withHeaderLine(line: String): This = {
       val fileNameUpdated = extractFileName(line).map(create(isInHeader, _, tags))
       fileNameUpdated.getOrElse({
         lazy val pair = {
@@ -93,16 +98,34 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         }
         def isTagLine = line.size > 1 && line(0) == '\t'
         if (isTagLine) {
-          val tagName = pair._1
-          val previousTag = tags.getOrElse(tagName, CVSTag(tagName))
-          val updatedTags = tags + (tagName -> previousTag.withFile(this.fileName, pair._2))
-          create(isInHeader, this.fileName, updatedTags)
+        	withTagEntry(pair._1, pair._2)
         } else {
-          this
+          self
         }
       })
     }
+  }
+  
+   private case class RlogAllTagParseState(override val isInHeader: Boolean,
+		  									 override val fileName: String,
+		  									 override val tags: Map[String,CVSTag]) extends RlogAllTagParseStateLike[RlogAllTagParseState]{
+    def this() = this(RlogParseState.isFirstLineHeader, "", Map())
     
+    override protected def create(isInHeader: Boolean): RlogAllTagParseState = new RlogAllTagParseState(isInHeader, fileName, tags)
+    override protected def self = this
+    protected def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]) = new RlogAllTagParseState(isInHeader, fileName, tags)
+  }
+  
+  private case class RlogAllBranchParseState(override val isInHeader: Boolean,
+		  									 override val fileName: String,
+		  									 override val tags: Map[String,CVSTag]) extends RlogAllTagParseStateLike[RlogAllBranchParseState]{
+    def this() = this(RlogParseState.isFirstLineHeader, "", Map())
+    
+    override protected def create(isInHeader: Boolean): RlogAllBranchParseState = new RlogAllBranchParseState(isInHeader, fileName, tags)
+    override protected def self = this
+    protected def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]) = new RlogAllBranchParseState(isInHeader, fileName, tags)
+    
+    override protected def withTagEntry(tagName: String, version: CVSFileVersion) = if(version.isBranch) super.withTagEntry(tagName, version) else self
   }
 
   private case class RlogSingleTagParseState(override val isInHeader: Boolean, val fileName: String, val tag: CVSTag) extends RlogParseState[RlogSingleTagParseState] {
@@ -145,6 +168,14 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     val process = stringToProcess(command);
     new ProcessAsTraversable(process, line => log(line))
     	.foldLeft(new RlogAllTagParseState())(_ withLine _).tags.values.toSet
+  }
+  
+  def resolveAllBranches: Set[CVSTag] = {
+    val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    log("running command:\n" + command)
+    val process = stringToProcess(command);
+    new ProcessAsTraversable(process, line => log(line))
+    	.foldLeft(new RlogAllBranchParseState())(_ withLine _).tags.values.toSet
   }
 
   def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
