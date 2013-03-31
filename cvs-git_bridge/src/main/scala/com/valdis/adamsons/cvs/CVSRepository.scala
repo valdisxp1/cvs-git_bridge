@@ -66,7 +66,11 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
 
   private trait RlogParseState[This]{
-    	val isInHeader: Boolean
+    val isInHeader: Boolean
+
+    private val FILES_SPLITTER = "=============================================================================";
+    private val COMMITS_SPLITTER = "----------------------------";
+    
     def extractFileName(line: String): Option[String] = {
       val arr = line.split(':')
       if (arr.length == 2 && arr(0).trim == "RCS file") {
@@ -87,14 +91,17 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     } else {
       create(isInHeader)
     }
+    
+    protected def withFileSpliter = setIsInHeader(true)
+    protected def withCommitSpliter = setIsInHeader(false)
 
     def withLine(line: String): This = {
       line match {
-        case CVSRepository.FILES_SPLITTER => {
-          setIsInHeader(true)
+        case FILES_SPLITTER => {
+          withFileSpliter
         }
-        case CVSRepository.COMMITS_SPLITTER => {
-          setIsInHeader(false)
+        case COMMITS_SPLITTER => {
+          withCommitSpliter
         }
         case _ => {
           if (isInHeader) {
@@ -115,22 +122,22 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     override protected def create(isInHeader: Boolean): RlogSingleTagParseState = new RlogSingleTagParseState(isInHeader, fileName, tag)
     override protected def create = this
     private def create(isInHeader: Boolean,fileName: String, tag: CVSTag) = new RlogSingleTagParseState(isInHeader, fileName, tag)
-    
-    override protected def withHeaderLine(line: String): RlogSingleTagParseState={
+
+    override protected def withHeaderLine(line: String): RlogSingleTagParseState = {
       val fileNameUpdated = extractFileName(line).map(create(isInHeader, _, tag))
-            fileNameUpdated.getOrElse({
-              lazy val pair = {
-                val arr = line.split(':')
-                (arr(0).trim(), CVSFileVersion(arr(1).trim))
-              }
-              def isTagLine = line.size > 1 && line(0) == '\t'
-              def isTheRightTag = tag.name == pair._1
-              if (isTagLine && isTheRightTag) {
-                create(isInHeader, this.fileName, tag.withFile(this.fileName, pair._2))
-              } else {
-                this
-              }
-            })
+      fileNameUpdated.getOrElse({
+        lazy val pair = {
+          val arr = line.split(':')
+          (arr(0).trim(), CVSFileVersion(arr(1).trim))
+        }
+        def isTagLine = line.size > 1 && line(0) == '\t'
+        def isTheRightTag = tag.name == pair._1
+        if (isTagLine && isTheRightTag) {
+          create(isInHeader, this.fileName, tag.withFile(this.fileName, pair._2))
+        } else {
+          this
+        }
+      })
     }
     
   }
@@ -165,7 +172,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   private case class RlogCommitParseState(val isInHeader: Boolean,
 		  							val commits: Seq[CVSCommit],
 		  							val headerBuffer: Vector[String],
-		  							val commitBuffer: Vector[String]) {
+		  							val commitBuffer: Vector[String]) extends RlogParseState[RlogCommitParseState]{
     def this() = this(true, new EmptyFileSeq(), Vector(), Vector())
     def this(emptyCollection:Seq[CVSCommit]) = this(true, emptyCollection, Vector(), Vector())
 
@@ -174,24 +181,15 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     } else {
       commits :+ commitFromRLog(headerBuffer, commitBuffer)
     }
-
-    def withLine(line: String): RlogCommitParseState = {
-      line match {
-        case CVSRepository.FILES_SPLITTER => {
-          val isInHeader = true;
-          new RlogCommitParseState(isInHeader, updatedCommits, Vector(), Vector())
-        }
-        case CVSRepository.COMMITS_SPLITTER => {
-          val isInHeader = false;
-          new RlogCommitParseState(isInHeader, updatedCommits, headerBuffer, Vector())
-        }
-        case _ => {
-          val headerBuffer =  (if (isInHeader) {this.headerBuffer :+ line } else { this.headerBuffer})
-          val commitBuffer =  (if (!isInHeader) {this.commitBuffer :+ line } else { this.commitBuffer })
-          new RlogCommitParseState(isInHeader, commits, headerBuffer, commitBuffer)
-        }
-      }
-    }
+    
+    override protected def create = this
+    override protected def create(isInHeader: Boolean) = new RlogCommitParseState(isInHeader, commits, headerBuffer, commitBuffer)
+    
+    override protected def withHeaderLine(line:String) = new RlogCommitParseState(isInHeader, commits, headerBuffer :+ line, commitBuffer)
+    override protected def withCommitLine(line:String) = new RlogCommitParseState(isInHeader, commits, headerBuffer, commitBuffer:+ line)
+    
+    override protected def withFileSpliter = new RlogCommitParseState(true, updatedCommits, Vector(), Vector())
+    override protected def withCommitSpliter = new RlogCommitParseState(false, updatedCommits, headerBuffer, Vector())
   }
 
   private def commitFromRLog(header: IndexedSeq[String], commit: IndexedSeq[String]): CVSCommit = {
@@ -214,9 +212,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     cvsCommit
   }
 
-  def parseRlogLines(lines: Iterable[String]): Seq[CVSCommit] = {
-	lines.foldLeft(new RlogCommitParseState())(_.withLine(_)).commits
-  }
   def parseRlogLines(process: ProcessBuilder): Seq[CVSCommit] = {
     var state = new RlogCommitParseState(Vector[CVSCommit]())
     val processLogger = ProcessLogger(line => state = state.withLine(line),line=> log(line))
@@ -228,8 +223,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 object CVSRepository {
   def apply() = new CVSRepository();
   def apply(cvsroot: String, module: String) = new CVSRepository(cvsroot, module);
-  private val FILES_SPLITTER="=============================================================================";
-  private val COMMITS_SPLITTER="----------------------------";
   private val CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-MM-dd kk:mm:ss Z",Locale.UK)
   private val CVS_SHORT_DATE_FORMAT= new SimpleDateFormat("yyyy/MM/dd",Locale.UK)
 }
