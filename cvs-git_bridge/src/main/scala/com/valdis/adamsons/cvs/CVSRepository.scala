@@ -162,8 +162,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
      }
     val command = cvsString+ "rlog "+branch.map(" -r"+_+" ").getOrElse(" -b ") + dateString + module.getOrElse("")
     log("running command:\n" + command)
-//    val responseLines = stringToProcess(command).lines;
-    // TODO do not convert
     parseRlogLines(stringToProcess(command))
   }
   
@@ -213,18 +211,18 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
 
   def parseRlogLines(process: ProcessBuilder): Seq[CVSCommit] = {
-    val state = processFold(new RlogCommitParseState(Vector[CVSCommit]()))(process)
+    val state = processFold(new RlogCommitParseState(Vector[CVSCommit]()), process)(_ withLine _)
     state.commits
   }
   /**
    * This method does folds over all lines without generating permanent data structure.
-   * @see ProcessBuilder.lines generates A Stream
+   * @see ProcessBuilder.lines generates a immutable Stream
    */
-  private def processFold[A](initial: RlogParseState[A])(process: ProcessBuilder): A = {
+  private def processFold[A](initial: A, process: ProcessBuilder)(f: (A, String) => A): A = {
     var state = initial
-    val processLogger = ProcessLogger(line => state = state.withLine(line).asInstanceOf,line=> log(line))
+    val processLogger = ProcessLogger(line => state = f(state, line), line => log(line))
     process.run(processLogger).exitValue
-    state.asInstanceOf
+    state
   }
 }
 
