@@ -48,11 +48,10 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     responseLines.toList.map(cleanRCSpath)
   }
 
-  private def getTagLines = {
+  private def getTagProcess = {
     val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
     log("running command:\n" + command)
-    val process = stringToProcess(command);
-    process.lines.filter((str) => str.size > 0 && str(0) == '\t').map(_.trim)
+    stringToProcess(command);
   }
   
   private case class RlogTagNameLookupState(override val isInHeader: Boolean,
@@ -61,7 +60,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     def this(check: (=> String, => CVSFileVersion) => Boolean, set: Set[String]) = this(true, check, set)
     def this(check: (=> String, => CVSFileVersion) => Boolean) = this(check, Set())
     
-    override protected def create = this
+    override protected def self = this
     override protected def create(isInHeader: Boolean) = new RlogTagNameLookupState(isInHeader, check, nameSet)
 
     override protected def withHeaderLine(line: String) = {
@@ -76,22 +75,22 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         if (check(name, version)) {
           new RlogTagNameLookupState(isInHeader, check, nameSet + name)
         } else {
-          create
+          self
         }
       } else {
-        create
+        self
       }
     }
   }
 
   def getBranchNameSet: Set[String] = {
-    val pairs = getTagLines.map(_.split(':')).map((pair) => (pair(0), CVSFileVersion(pair(1).trim)))
-    pairs.filter(_._2.isBranch).map(_._1).toSet
+    val process = getTagProcess
+    processFold(new RlogTagNameLookupState((name, version) => version.isBranch), process)(_ withLine _).nameSet
   }
 
   def getTagNameSet: Set[String] = {
-    val pairs = getTagLines.map(_.split(':')).map((pair) => (pair(0), CVSFileVersion(pair(1).trim)))
-    pairs.filter(!_._2.isBranch).map(_._1).toSet
+    val process = getTagProcess
+    processFold(new RlogTagNameLookupState((name, version) => !version.isBranch), process)(_ withLine _).nameSet
   }
 
   private trait RlogParseState[This]{
@@ -110,13 +109,13 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     }
     
     protected def create(isInHeader: Boolean): This
-    protected def create: This
+    protected def self: This
 
-    protected def withHeaderLine(line: String): This = create
-    protected def withCommitLine(line: String): This = create
+    protected def withHeaderLine(line: String): This = self
+    protected def withCommitLine(line: String): This = self
 
     def setIsInHeader(isInHeader: Boolean): This = if (this.isInHeader == isInHeader) {
-      create
+      self
     } else {
       create(isInHeader)
     }
@@ -149,7 +148,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     type This = RlogSingleTagParseState
     
     override protected def create(isInHeader: Boolean): RlogSingleTagParseState = new RlogSingleTagParseState(isInHeader, fileName, tag)
-    override protected def create = this
+    override protected def self = this
     private def create(isInHeader: Boolean,fileName: String, tag: CVSTag) = new RlogSingleTagParseState(isInHeader, fileName, tag)
 
     override protected def withHeaderLine(line: String): RlogSingleTagParseState = {
@@ -209,7 +208,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
       commits :+ commitFromRLog(headerBuffer, commitBuffer)
     }
     
-    override protected def create = this
+    override protected def self = this
     override protected def create(isInHeader: Boolean) = new RlogCommitParseState(isInHeader, commits, headerBuffer, commitBuffer)
 
     override protected def withHeaderLine(line: String) = new RlogCommitParseState(isInHeader, commits, headerBuffer :+ line, commitBuffer)
