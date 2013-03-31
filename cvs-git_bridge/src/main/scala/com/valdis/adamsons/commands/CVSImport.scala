@@ -64,14 +64,20 @@ object CVSImport extends CommandParser{
 
       //tags
       log("resolving tags")
-      val tags = cvsrepo.resolveAllTagsAndBranches.filter(!_.isBranch)
-      log("processiong "+tags.size+" tags")
-      tags.foreach((tag) => {
-        val branchNames = branches.map(_.name)
-        val objectId = bridge.lookupTag(tag, branchNames)
-        if (objectId.isDefined) {
-          bridge.addTag(objectId.get, tag)
-        }
+      val tagNames = cvsrepo.getTagNameSet
+      log("processiong " + tagNames.size + " tags in total")
+      val tagGroupSize = 2000
+      val tagGroups = tagNames.zipWithIndex.groupBy(_._2 / tagGroupSize).values
+      tagGroups.foreach(tags => {
+        log("processiong " + tags.size + " tags")
+        val resolvedTags = cvsrepo.resolveTags(tags.map(_._1))
+        resolvedTags.foreach((tag) => {
+          val branchNames = branches.map(_.name)
+          val objectId = bridge.lookupTag(tag, branchNames)
+          if (objectId.isDefined) {
+            bridge.addTag(objectId.get, tag)
+          }
+        })
       })
       0
     }
