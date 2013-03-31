@@ -134,24 +134,33 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     //tags
      def lookupTag(tag: CVSTag,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, branch)).headOption
 
-    private abstract class TagSeachState() {
-      def tag:CVSTag
-      def isFound: Boolean
-      def objectId: Option[ObjectId]
-      def withCommit(objectId: ObjectId,commit: CVSCommit): TagSeachState
-      override def toString = this.getClass().getSimpleName + "("+objectId+")"
+  private abstract class TagSeachState {
+    def tag: CVSTag
+    def isFound: Boolean
+    def objectId: Option[ObjectId]
+    def withTag(tag: CVSTag): TagSeachState
+    def withCommit(objectId: ObjectId, commit: CVSCommit) = if (commit.isPointless && tag.includesFile(commit.filename)) {
+      val newTag = tag.ignoreFile(commit.filename)
+      withTag(newTag)
+    } else {
+      withGoodCommit(objectId, commit)
     }
+    def withGoodCommit(objectId: ObjectId, commit: CVSCommit): TagSeachState
+    override def toString = this.getClass().getSimpleName + "(" + objectId + ")"
+  }
     
     private case class Found(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState{
       val isFound = true
       val objectId = Some(objectId2)
-      def withCommit(objectId: ObjectId, commit: CVSCommit) = this
+      def withGoodCommit(objectId: ObjectId, commit: CVSCommit) = this
+      def withTag(tag: CVSTag) = this
     }
 
     private case class NotFound(val tag: CVSTag) extends TagSeachState {
       val isFound = false
       val objectId = None
-      def withCommit(objectId: ObjectId, commit: CVSCommit) = {
+      def withTag(tag: CVSTag) = NotFound(tag)
+      def withGoodCommit(objectId: ObjectId, commit: CVSCommit) = {
         if (tag.includesCommit(commit)) {
           val newFound = Set(commit.filename)
           if (newFound == tag.fileVersions.keys) {
@@ -168,13 +177,14 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     private case class OutOfSync(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState {
       val isFound = false
       val objectId = Some(objectId2)
-      def withCommit(objectId: ObjectId,commit: CVSCommit) = this
+      def withGoodCommit(objectId: ObjectId,commit: CVSCommit) = this
+      def withTag(tag: CVSTag) = this
     }
 
     private case class PartialFound(val tag: CVSTag, objectId2: ObjectId, val found: Set[String]) extends TagSeachState {
       val objectId = Some(objectId2)
       val isFound = false
-      def withCommit(objectId: ObjectId, commit: CVSCommit) = {
+      def withGoodCommit(objectId: ObjectId, commit: CVSCommit) = {
         val filename = commit.filename
         if (tag.includesCommit(commit)) {
           val newFound = found + filename
@@ -193,39 +203,29 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
 
         }
       }
+    def withTag(tag: CVSTag) = if (found == tag.fileVersions.keys) Found(tag, objectId2) else PartialFound(tag, objectId2, found)
     }
-    
-    def getPointlessCVSCommits: Iterable[CVSCommit]= {
-      val objectId = Option(repo.resolve("master"))
-      objectId.map((id) => {
-        val logs = git.log().add(id).call()
-        logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)))).filter(_.isPointless)
-      }).flatten
-    }
-      
-    def lookupTag(tag: CVSTag, branch: String): Option[ObjectId] = {
-      val objectId = Option(repo.resolve(cvsRefPrefix + branch))
-      objectId.flatMap((id) => {
-        val logs = git.log().add(id).call()
-        val trunkCommits = logs.iterator().map(
-          (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId))//.toStream
-        
-        val pointlessCommits = getPointlessCVSCommits.toSeq
-        val pointlessTagFiles = pointlessCommits.map((pointlessCommit)=>(pointlessCommit.filename,pointlessCommit.revision)).intersect(tag.fileVersions.toSeq).map(_._1)
-        val cleanedTag = tag.ignoreFiles(pointlessTagFiles)
-        val result = trunkCommits.foldLeft[TagSeachState](new NotFound(cleanedTag))((oldstate,pair)=>{
-          log(oldstate+" with "+pair._1)
-          oldstate.withCommit(pair._2, pair._1)
-          })
-        
-        log(result)
-        if(result.isFound){
-          result.objectId
-        }else{
-          None
-        }
+
+  def lookupTag(tag: CVSTag, branch: String): Option[ObjectId] = {
+    val objectId = Option(repo.resolve(cvsRefPrefix + branch))
+    objectId.flatMap((id) => {
+      val logs = git.log().add(id).call()
+      val trunkCommits = logs.iterator().map(
+        (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId)) 
+
+      val result = trunkCommits.foldLeft[TagSeachState](new NotFound(tag))((oldstate, pair) => {
+        log(oldstate + " with " + pair._1)
+        oldstate.withCommit(pair._2, pair._1)
       })
-    }
+
+      log(result)
+      if (result.isFound) {
+        result.objectId
+      } else {
+        None
+      }
+    })
+  }
     
   
   def addBranch(branch: String, id: ObjectId) = updateRef(cvsRefPrefix+branch, id)
