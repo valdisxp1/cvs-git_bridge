@@ -93,8 +93,9 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         }
         def isTagLine = line.size > 1 && line(0) == '\t'
         if (isTagLine) {
-          val previousTag = tags.getOrElse(fileName, CVSTag(fileName))
-          val updatedTags = tags + (fileName -> previousTag.withFile(this.fileName, pair._2))
+          val tagName = pair._1
+          val previousTag = tags.getOrElse(tagName, CVSTag(tagName))
+          val updatedTags = tags + (tagName -> previousTag.withFile(this.fileName, pair._2))
           create(isInHeader, this.fileName, updatedTags)
         } else {
           this
