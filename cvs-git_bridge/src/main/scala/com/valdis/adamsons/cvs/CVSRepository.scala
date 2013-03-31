@@ -15,8 +15,7 @@ import com.valdis.adamsons.utils.EmptyFileSeq
 import com.valdis.adamsons.utils.SerialFileSeqLike
 import com.valdis.adamsons.utils.FileUtils
 import com.valdis.adamsons.utils.ProcessAsTraversable
-import com.valdis.adamsons.utils.ProcessAsTraversable
-import com.valdis.adamsons.utils.ProcessAsTraversable
+import com.valdis.adamsons.cvs.rlog.parse.{RlogParseState, RlogTagNameLookupState}
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger {
   def logger = Logger
@@ -57,34 +56,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     stringToProcess(command);
   }
   
-  private case class RlogTagNameLookupState(override val isInHeader: Boolean,
-		  							  val check: (=>String, =>CVSFileVersion)=> Boolean,
-		  							  val nameSet: Set[String]) extends RlogParseState[RlogTagNameLookupState]{
-    def this(check: (=> String, => CVSFileVersion) => Boolean, set: Set[String]) = this(RlogParseState.isFirstLineHeader, check, set)
-    def this(check: (=> String, => CVSFileVersion) => Boolean) = this(check, Set())
-    
-    override protected def self = this
-    override protected def create(isInHeader: Boolean) = new RlogTagNameLookupState(isInHeader, check, nameSet)
-
-    override protected def withHeaderLine(line: String) = {
-      val isTagLine = line.size > 0 && line(0) == '\t'
-      if (isTagLine) {
-        val split = line.trim.split(':')
-        if (split.length != 2) {
-          throw new IllegalStateException("cvs rlog malformed, tag line contains none or more than one colom: \n" + line)
-        }
-        val name = split(0).trim
-        lazy val version = CVSFileVersion(split(1).trim)
-        if (check(name, version)) {
-          new RlogTagNameLookupState(isInHeader, check, nameSet + name)
-        } else {
-          self
-        }
-      } else {
-        self
-      }
-    }
-  }
 
   def getBranchNameSet: Set[String] = {
     new ProcessAsTraversable(getTagProcess, line => log(line))
@@ -96,13 +67,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     	.foldLeft(new RlogTagNameLookupState((name, version) => !version.isBranch))(_ withLine _).nameSet
   }
 
-  private trait RlogParseState[This]{
-    val isInHeader: Boolean
-
-    private val FILES_SPLITTER = "=============================================================================";
-    private val COMMITS_SPLITTER = "----------------------------";
-    
-    def extractFileName(line: String): Option[String] = {
+  def extractFileName(line: String): Option[String] = {
       val arr = line.split(':')
       if (arr.length == 2 && arr(0).trim == "RCS file") {
         Some(cleanRCSpath(arr(1).trim))
@@ -110,44 +75,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
         None
       }
     }
-    
-    protected def create(isInHeader: Boolean): This
-    protected def self: This
-
-    protected def withHeaderLine(line: String): This = self
-    protected def withCommitLine(line: String): This = self
-
-    def setIsInHeader(isInHeader: Boolean): This = if (this.isInHeader == isInHeader) {
-      self
-    } else {
-      create(isInHeader)
-    }
-    
-    protected def withFileSpliter = setIsInHeader(true)
-    protected def withCommitSpliter = setIsInHeader(false)
-
-    def withLine(line: String): This = {
-      line match {
-        case FILES_SPLITTER => {
-          withFileSpliter
-        }
-        case COMMITS_SPLITTER => {
-          withCommitSpliter
-        }
-        case _ => {
-          if (isInHeader) {
-            withHeaderLine(line)
-          } else {
-            withCommitLine(line)
-          }
-        }
-      }
-    }
-  }
-  
-  object RlogParseState{
-    val isFirstLineHeader = true
-  }
 
   private case class RlogSingleTagParseState(override val isInHeader: Boolean, val fileName: String, val tag: CVSTag) extends RlogParseState[RlogSingleTagParseState] {
     def this(name: String) = this(RlogParseState.isFirstLineHeader, "", CVSTag(name, Map()))
@@ -203,7 +130,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
 
-  private case class RlogCommitParseState(val isInHeader: Boolean,
+  case class RlogCommitParseState(val isInHeader: Boolean,
 		  							val commits: Seq[CVSCommit],
 		  							val headerBuffer: Vector[String],
 		  							val commitBuffer: Vector[String]) extends RlogParseState[RlogCommitParseState]{
