@@ -32,11 +32,11 @@ object CVSImport extends CommandParser{
       val lastUpdatedVal = bridge.lastUpdated("master")
       log(lastUpdatedVal)
       val commits = cvsrepo.getCommitList(lastUpdatedVal,None)
-//      log(commits);
       Bridge.appendCommits(commits, "master", cvsrepo)
       }
-      //other branches follow
+      log("looking up all other branches and tags")
       val tagsAndBanches = cvsrepo.resolveAllTagsAndBranches
+      //other branches follow
       val branches = tagsAndBanches.filter(_.isBranch)
       val branchesByDepth = branches.groupBy(_.depth)
       branchesByDepth.toSeq.sortBy(_._1).foreach((pair) => {
@@ -51,7 +51,6 @@ object CVSImport extends CommandParser{
           val lastUpdatedVal = bridge.lastUpdated(branch.name)
           log(lastUpdatedVal)
           val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
-//          log(commits);
           if (lastUpdatedVal.isEmpty) {
             log("possibleParentBranches:" + possibleParentBranches)
             val graftLocation = getGraftLocation(branch, possibleParentBranches)
@@ -64,6 +63,7 @@ object CVSImport extends CommandParser{
       })
 
       //tags
+      log("resolving tags")
       val tags = tagsAndBanches.filter(!_.isBranch)
       tags.foreach((tag) => {
         val branchNames = branches.map(_.name)
