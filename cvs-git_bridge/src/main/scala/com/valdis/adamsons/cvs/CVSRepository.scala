@@ -134,7 +134,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     //initializes all interesting tags
     def this(names: Iterable[String]) = this(RlogParseState.isFirstLineHeader, "", names.map(name => name -> CVSTag(name)).toMap)
     
-    override protected def create(isInHeader: Boolean): RlogAllBranchParseState = new RlogAllBranchParseState(isInHeader, fileName, tags)
+    override protected def create(isInHeader: Boolean): RlogMultiTagParseState = new RlogMultiTagParseState(isInHeader, fileName, tags)
     override protected def self = this
     protected def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]) = new RlogMultiTagParseState(isInHeader, fileName, tags)
     
