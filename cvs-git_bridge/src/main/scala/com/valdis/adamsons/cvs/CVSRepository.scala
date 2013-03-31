@@ -15,7 +15,7 @@ import com.valdis.adamsons.utils.EmptyFileSeq
 import com.valdis.adamsons.utils.SerialFileSeqLike
 import com.valdis.adamsons.utils.FileUtils
 
-case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger{
+case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger {
   def logger = Logger
   def this(cvsroot: Option[String]) = this(cvsroot, None)
   def this() = this(None, None)
@@ -173,8 +173,8 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 		  							val commits: Seq[CVSCommit],
 		  							val headerBuffer: Vector[String],
 		  							val commitBuffer: Vector[String]) extends RlogParseState[RlogCommitParseState]{
-    def this() = this(true, new EmptyFileSeq(), Vector(), Vector())
-    def this(emptyCollection:Seq[CVSCommit]) = this(true, emptyCollection, Vector(), Vector())
+    def this() = this(true, Vector(), Vector(), Vector())
+    def this(emptyCollection: Seq[CVSCommit]) = this(true, emptyCollection, Vector(), Vector())
 
     private def updatedCommits = if (isInHeader) {
       commits
@@ -184,9 +184,9 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     
     override protected def create = this
     override protected def create(isInHeader: Boolean) = new RlogCommitParseState(isInHeader, commits, headerBuffer, commitBuffer)
-    
-    override protected def withHeaderLine(line:String) = new RlogCommitParseState(isInHeader, commits, headerBuffer :+ line, commitBuffer)
-    override protected def withCommitLine(line:String) = new RlogCommitParseState(isInHeader, commits, headerBuffer, commitBuffer:+ line)
+
+    override protected def withHeaderLine(line: String) = new RlogCommitParseState(isInHeader, commits, headerBuffer :+ line, commitBuffer)
+    override protected def withCommitLine(line: String) = new RlogCommitParseState(isInHeader, commits, headerBuffer, commitBuffer :+ line)
     
     override protected def withFileSpliter = new RlogCommitParseState(true, updatedCommits, Vector(), Vector())
     override protected def withCommitSpliter = new RlogCommitParseState(false, updatedCommits, headerBuffer, Vector())
@@ -213,10 +213,18 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
 
   def parseRlogLines(process: ProcessBuilder): Seq[CVSCommit] = {
-    var state = new RlogCommitParseState(Vector[CVSCommit]())
-    val processLogger = ProcessLogger(line => state = state.withLine(line),line=> log(line))
-    process.run(processLogger).exitValue
+    val state = processFold(new RlogCommitParseState(Vector[CVSCommit]()))(process)
     state.commits
+  }
+  /**
+   * This method does folds over all lines without generating permanent data structure.
+   * @see ProcessBuilder.lines generates A Stream
+   */
+  private def processFold[A](initial: RlogParseState[A])(process: ProcessBuilder): A = {
+    var state = initial
+    val processLogger = ProcessLogger(line => state = state.withLine(line).asInstanceOf,line=> log(line))
+    process.run(processLogger).exitValue
+    state.asInstanceOf
   }
 }
 
