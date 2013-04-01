@@ -146,11 +146,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       withGoodCommit(objectId, commit)
     }
     def withGoodCommit(objectId: ObjectId, commit: CVSCommit): TagSeachState
-    override def toString = this.getClass().getSimpleName + "(" + objectId + ")"
+    override def toString = this.getClass().getSimpleName + "(" + objectId.map(_.name) + ")"
     /**
      * for debugging
      */
-    def dumpState: String
+    def dumpState: String = "\t" + tag
   }
     
     private case class Found(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState{
@@ -158,7 +158,6 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       val objectId = Some(objectId2)
       def withGoodCommit(objectId: ObjectId, commit: CVSCommit) = this
       def withTag(tag: CVSTag) = this
-      def dumpState = this.getClass().getSimpleName + "(" +objectId2.name+","+tag+")"
     }
 
     private case class NotFound(val tag: CVSTag) extends TagSeachState {
@@ -177,7 +176,6 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           this
         }
       }
-      def dumpState = this.getClass().getSimpleName + "("+tag+")"
     }
     
     private case class OutOfSync(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState {
@@ -185,7 +183,6 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       val objectId = Some(objectId2)
       def withGoodCommit(objectId: ObjectId,commit: CVSCommit) = this
       def withTag(tag: CVSTag) = this
-      def dumpState = this.getClass().getSimpleName + "(" + objectId2.name + "," + tag + ")"
     }
 
   private case class PartialFound(val tag: CVSTag, objectId2: ObjectId, val found: Set[String]) extends TagSeachState {
@@ -209,7 +206,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         }
       }
     }
-    def dumpState = this.getClass().getSimpleName + "(" + objectId2.name + "," + tag + ") \n found: " + found
+    override def dumpState = super.dumpState + "\n\t found: " + found
     def withTag(tag: CVSTag) = if (found == tag.fileVersions.keys) Found(tag, objectId2) else PartialFound(tag, objectId2, found)
   }
 
