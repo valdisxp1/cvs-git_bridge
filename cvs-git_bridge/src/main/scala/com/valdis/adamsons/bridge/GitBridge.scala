@@ -147,6 +147,10 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     }
     def withGoodCommit(objectId: ObjectId, commit: CVSCommit): TagSeachState
     override def toString = this.getClass().getSimpleName + "(" + objectId + ")"
+    /**
+     * for debugging
+     */
+    def dumpState: String
   }
     
     private case class Found(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState{
@@ -154,6 +158,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       val objectId = Some(objectId2)
       def withGoodCommit(objectId: ObjectId, commit: CVSCommit) = this
       def withTag(tag: CVSTag) = this
+      def dumpState = this.getClass().getSimpleName + "(" +objectId2.name+","+tag+")"
     }
 
     private case class NotFound(val tag: CVSTag) extends TagSeachState {
@@ -172,6 +177,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           this
         }
       }
+      def dumpState = this.getClass().getSimpleName + "("+tag+")"
     }
     
     private case class OutOfSync(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState {
@@ -179,32 +185,33 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       val objectId = Some(objectId2)
       def withGoodCommit(objectId: ObjectId,commit: CVSCommit) = this
       def withTag(tag: CVSTag) = this
+      def dumpState = this.getClass().getSimpleName + "(" + objectId2.name + "," + tag + ")"
     }
 
-    private case class PartialFound(val tag: CVSTag, objectId2: ObjectId, val found: Set[String]) extends TagSeachState {
-      val objectId = Some(objectId2)
-      val isFound = false
-      def withGoodCommit(objectId: ObjectId, commit: CVSCommit) = {
-        val filename = commit.filename
-        if (tag.includesCommit(commit)) {
-          val newFound = found + filename
-          if (newFound == tag.fileVersions.keys) {
-            new Found(tag, objectId2)
-          } else {
-            new PartialFound(tag, objectId2, newFound)
-          }
+  private case class PartialFound(val tag: CVSTag, objectId2: ObjectId, val found: Set[String]) extends TagSeachState {
+    val objectId = Some(objectId2)
+    val isFound = false
+    def withGoodCommit(objectId: ObjectId, commit: CVSCommit) = {
+      val filename = commit.filename
+      if (tag.includesCommit(commit)) {
+        val newFound = found + filename
+        if (newFound == tag.fileVersions.keys) {
+          new Found(tag, objectId2)
         } else {
-          // right file but wrong version
-          if (!found.contains(filename) && tag.includesFile(filename)) {
-            new OutOfSync(tag, objectId2)
-          } else {
-            this
-          }
-
+          new PartialFound(tag, objectId2, newFound)
+        }
+      } else {
+        // right file but wrong version
+        if (!found.contains(filename) && tag.includesFile(filename)) {
+          new OutOfSync(tag, objectId2)
+        } else {
+          this
         }
       }
-    def withTag(tag: CVSTag) = if (found == tag.fileVersions.keys) Found(tag, objectId2) else PartialFound(tag, objectId2, found)
     }
+    def dumpState = this.getClass().getSimpleName + "(" + objectId2.name + "," + tag + ") \n found: " + found
+    def withTag(tag: CVSTag) = if (found == tag.fileVersions.keys) Found(tag, objectId2) else PartialFound(tag, objectId2, found)
+  }
 
   def lookupTag(tag: CVSTag, branch: String): Option[ObjectId] = {
     val objectId = Option(repo.resolve(cvsRefPrefix + branch))
@@ -215,6 +222,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
 
       val result = trunkCommits.foldLeft[TagSeachState](new NotFound(tag))((oldstate, pair) => {
         log(oldstate + " with " + pair._1)
+        dump(oldstate.dumpState)
         oldstate.withCommit(pair._2, pair._1)
       })
 
