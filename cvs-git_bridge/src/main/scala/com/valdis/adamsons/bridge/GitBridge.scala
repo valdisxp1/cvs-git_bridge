@@ -224,6 +224,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       })
 
       log(result)
+      dump(result.dumpState)
       if (result.isFound) {
         result.objectId
       } else {
