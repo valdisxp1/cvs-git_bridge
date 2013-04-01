@@ -3,7 +3,6 @@ package com.valdis.adamsons
 import org.junit.Test
 import org.junit.Assert._
 import com.valdis.adamsons.utils.GitUtils
-import com.valdis.adamsons.utils.GitUtils._
 import org.junit.After
 import org.junit.Before
 import java.io.File
@@ -26,41 +25,51 @@ class CVSImportTest {
   
   def gitDirString = "git"+num+"/"
   def gitDir = new File(gitDirString)
+  def tempDir = new File("temp/")
+  def patchesDir = new File("patches/")
   var bridge: GitBridge = null
+  var gitUtils: GitUtilsImpl = null
 
   private class TestableCVSImportCommand(override val bridge: GitBridge, cvsRoot: String, module: String) extends CVSImportCommand(cvsRoot, module)
 
   def commitCount(branch: String) = {
-    val logs = git.log().add(repo.resolve(branch)).call();
+    val logs = gitUtils.git.log().add(gitUtils.repo.resolve(branch)).call();
     logs.count(a => true)
   }
 
   def getFileNames(branch:String) = {
-    val logs = git.log().add(repo.resolve(branch)).call()
+    val logs = gitUtils.git.log().add(gitUtils.repo.resolve(branch)).call()
     logs.map(_.getTree()).map((tree) => {
-      val treewalk = new TreeWalk(repo)
-      treewalk.addTree(tree)
-      treewalk.setRecursive(true)
-      //TODO make this variable a value
-      var fileNames: Set[String] = Set()
-      while (treewalk.next()) {
-        fileNames = fileNames + treewalk.getPathString()
+      val treewalk = new TreeWalk(gitUtils.repo)
+      try {
+        treewalk.addTree(tree)
+        treewalk.setRecursive(true)
+        //TODO make this variable a value
+        var fileNames: Set[String] = Set()
+        while (treewalk.next()) {
+          fileNames = fileNames + treewalk.getPathString()
+        }
+        fileNames
+      } finally {
+        treewalk.release()
       }
-      fileNames
     }).toList
   }
 
   def clearDirs {
     FileUtils.deleteDir(gitDir)
+    FileUtils.deleteDir(tempDir)
+    FileUtils.deleteDir(patchesDir)
   }
   @Before
   def before {
-    clearDirs
     num += 1
+    clearDirs
     println("using git dir:" + gitDirString)
     println("num:" + num)
-    new InitCommand(){
-      override val repo = new GitUtilsImpl(gitDirString).repo
+    gitUtils = new GitUtilsImpl(gitDirString)
+    new InitCommand() {
+      override val repo = gitUtils.repo
     }.apply
     bridge = new GitBridge(gitDirString)
   }
@@ -151,6 +160,7 @@ class CVSImportTest {
   @After
   def after {
     bridge.close
+    gitUtils.close
     clearDirs
   }
 }
