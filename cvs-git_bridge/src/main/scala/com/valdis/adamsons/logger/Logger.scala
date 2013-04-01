@@ -5,7 +5,8 @@ import java.io.PrintWriter
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 
-class LoggerImpl(logPath: String) {
+class LoggerImpl(logPath: String, val shouldMakeDataDumps: Boolean) {
+  def this(logPath: String) = this(logPath, false)
   val logFile = new File(logPath)
 
   private lazy val outputStream = new PrintWriter(logFile)
@@ -15,6 +16,11 @@ class LoggerImpl(logPath: String) {
     case obj: AnyRef => logImpl(obj.toString())
     case value: Any => logImpl(value.toString())
   }
+  
+  /**
+   * Used to print out large data structures during debug
+   */
+  def dump(any: => Any) = if (shouldMakeDataDumps) log(any)
 
   private def logImpl(message: => String) {
     // Message is call by name but still should be evaluated not more than once.

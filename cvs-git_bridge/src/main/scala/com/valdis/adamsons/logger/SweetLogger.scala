@@ -7,4 +7,8 @@ package com.valdis.adamsons.logger
 trait SweetLogger {
   protected def logger: LoggerImpl
   protected def log(any: => Any) = logger.log(any)
+   /**
+   * Used to print out large data structures during debug
+   */
+  protected def dump(any: => Any) = logger.dump(any)
 }
