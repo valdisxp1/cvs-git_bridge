@@ -210,14 +210,38 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     def withTag(tag: CVSTag) = if (found == tag.fileVersions.keys) Found(tag, objectId2) else PartialFound(tag, objectId2, found)
   }
 
+  def getPointlessCVSCommits: Iterable[CVSCommit]= {
+      val objectId = Option(repo.resolve("master"))
+      objectId.map((id) => {
+        val logs = git.log().add(id).call()
+        logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)))).filter(_.isPointless)
+      }).flatten
+    }
+  
+  // Cleaning the tag with this method ignores all dead heads. 
+  // XXX WARNING: might prevent detecting out of sync tags when the tag roll-backs the first version of a new file
+  def cleanTag(tag: CVSTag): CVSTag = getPointlessCVSCommits.foldLeft(tag)((tag, commit) => {
+    if (commit.isPointless && tag.includesCommit(commit)) {
+      tag.ignoreFile(commit.filename)
+    } else {
+      tag
+    }
+  })
+  
   def lookupTag(tag: CVSTag, branch: String): Option[ObjectId] = {
     val objectId = Option(repo.resolve(cvsRefPrefix + branch))
     objectId.flatMap((id) => {
       val logs = git.log().add(id).call()
       val trunkCommits = logs.iterator().map(
-        (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId)) 
-
-      val result = trunkCommits.foldLeft[TagSeachState](new NotFound(tag))((oldstate, pair) => {
+        (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId))
+      val cleanedTag = if (branch == "master"){
+        // we will be looking at the trunk anyway, no need to clean the tag
+        tag
+        } else {
+        //clean the tag
+        cleanTag(tag)
+      }
+      val result = trunkCommits.foldLeft[TagSeachState](new NotFound(cleanedTag))((oldstate, pair) => {
         log(oldstate + " with " + pair._1)
         dump(oldstate.dumpState)
         oldstate.withCommit(pair._2, pair._1)
