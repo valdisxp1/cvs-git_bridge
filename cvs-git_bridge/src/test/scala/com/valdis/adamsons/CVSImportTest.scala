@@ -23,9 +23,9 @@ class CVSImportTest {
 
   private class TestableCVSImportCommand(override val bridge: GitBridge, cvsRoot: String, module: String) extends CVSImportCommand(cvsRoot, module)
 
-  def commitCount(branch:String) = {
+  def commitCount(branch: String) = {
     val logs = git.log().add(repo.resolve(branch)).call();
-    logs.count((a) => true)
+    logs.count(a => true)
   }
 
   def getFileNames(branch:String) = {
@@ -131,7 +131,10 @@ class CVSImportTest {
   @Test
   def testMultiBranch{
     CVSImportCommand("test/cvsroot", "multibranchtest").apply
-    
+    assertEquals(2, commitCount("directx"))
+    assertEquals(7, commitCount("master"))//including pointless commits
+    assertEquals(3, commitCount("opengl"))
+    assertEquals(6, commitCount("experiment"))
   }
   
 
