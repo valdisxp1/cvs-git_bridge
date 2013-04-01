@@ -17,8 +17,15 @@ import com.valdis.adamsons.bridge.GitBridge
 import com.valdis.adamsons.bridge.GitBridge
 import com.valdis.adamsons.utils.GitUtilsImpl
 
+object CVSImportTest{
+  var num = 0
+}
+
 class CVSImportTest {
-  val gitDir = new File(GitUtils.gitDir)
+  import CVSImportTest._
+  
+  def gitDirString = "git"+num+"/"
+  def gitDir = new File(gitDirString)
   var bridge: GitBridge = null
 
   private class TestableCVSImportCommand(override val bridge: GitBridge, cvsRoot: String, module: String) extends CVSImportCommand(cvsRoot, module)
@@ -49,10 +56,13 @@ class CVSImportTest {
   @Before
   def before {
     clearDirs
+    num += 1
+    println("using git dir:" + gitDirString)
+    println("num:" + num)
     new InitCommand(){
-      override val repo = new GitUtilsImpl(GitUtils.gitDir).repo
+      override val repo = new GitUtilsImpl(gitDirString).repo
     }.apply
-    bridge = new GitBridge(GitUtils.gitDir)
+    bridge = new GitBridge(gitDirString)
   }
   @Test
   def testSubdirs {
@@ -132,7 +142,7 @@ class CVSImportTest {
   def testMultiBranch{
     CVSImportCommand("test/cvsroot", "multibranchtest").apply
     assertEquals(2, commitCount("directx"))
-    assertEquals(7, commitCount("master"))//including pointless commits
+    assertEquals(7, commitCount("master"))//includes pointless commits
     assertEquals(3, commitCount("opengl"))
     assertEquals(6, commitCount("experiment"))
   }
