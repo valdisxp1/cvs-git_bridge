@@ -149,7 +149,7 @@ class CVSImportTest {
   
   @Test
   def testMultiBranch{
-    CVSImportCommand("test/cvsroot", "multibranchtest").apply
+    new TestableCVSImportCommand(bridge,"test/cvsroot", "multibranchtest").apply
     assertEquals(2, commitCount("directx"))
     assertEquals(7, commitCount("master"))//includes pointless commits
     assertEquals(3, commitCount("opengl"))
