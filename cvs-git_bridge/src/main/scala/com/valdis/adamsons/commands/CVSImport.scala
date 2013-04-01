@@ -32,7 +32,7 @@ object CVSImport extends CommandParser{
       val lastUpdatedVal = bridge.lastUpdated("master")
       log(lastUpdatedVal)
       val commits = cvsrepo.getCommitList(lastUpdatedVal,None)
-      Bridge.appendCommits(commits, "master", cvsrepo)
+      bridge.appendCommits(commits, "master", cvsrepo)
       }
       log("looking up all other branches and tags")
       //other branches follow
