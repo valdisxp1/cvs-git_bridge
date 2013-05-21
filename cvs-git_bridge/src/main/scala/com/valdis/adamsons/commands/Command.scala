@@ -8,7 +8,7 @@ trait CommandParser{
   def help: String
   def usage: String
   val aliases: List[String]
-  val subcommads: List[CommandParser] = Nil
+  val subcommands: List[CommandParser] = Nil
   def parse(args: List[String]): Command = {
     parseSubcommands(args)
       .getOrElse(parseCommand(args)
@@ -26,7 +26,7 @@ trait CommandParser{
     if (args.isEmpty) {
       None
     } else {
-      subcommads.toStream.find(_.aliases.contains(args.head)) match{
+      subcommands.toStream.find(_.aliases.contains(args.head)) match{
         case Some(x) => Some(x.parse(args.tail))
         case None => None
       }
