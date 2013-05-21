@@ -22,6 +22,9 @@ import java.io.OutputStream
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.DiffEntry
+/**
+ * rakstu komentārus latviski, ļoti ceru, ka četri zaļi rūķi smaida ābelei. Un Žogi.
+ */
 
 class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   override protected val logger = Logger
