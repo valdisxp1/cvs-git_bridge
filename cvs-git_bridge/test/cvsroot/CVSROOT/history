@@ -55,3 +55,10 @@ A512baf20|Valdis|~/cvsworkdir/*0|multibranchtest|1.1.2.1|opengl.cpp
 A512bb056|Valdis|~/cvsworkdir/*0|multibranchtest|1.1.2.1|awesome.txt
 A512bb056|Valdis|~/cvsworkdir/*0|multibranchtest|1.1.2.1|cool.cpp
 R512bb056|Valdis|~/cvsworkdir/*0|multibranchtest|1.1|main.cpp
+O518e77e4|Valdis|<remote>/*0|multibranchtest|1.1|multibranchtest
+O518e77e5|Valdis|<remote>/*0|multibranchtest|1.1.2.1|multibranchtest
+O518e77e5|Valdis|<remote>/*0|multibranchtest|1.1.2.1|multibranchtest
+O518e77e5|Valdis|<remote>/*0|multibranchtest|1.1|multibranchtest
+O518e77e5|Valdis|<remote>/*0|multibranchtest|1.1.2.1|multibranchtest
+O518e77e6|Valdis|<remote>/*0|multibranchtest|1.1.2.1|multibranchtest
+O518e77e6|Valdis|<remote>/*0|multibranchtest|1.1.2.1|multibranchtest

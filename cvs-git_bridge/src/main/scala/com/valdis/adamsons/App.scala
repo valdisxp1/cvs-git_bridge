@@ -12,7 +12,7 @@ import com.valdis.adamsons.commands.CVSDiff
  */
 object App extends CommandParser{
   val aliases = List("")
-  override val subcommads = List(Init,CVSImport,CVSDiff)
+  override val subcommands = List(Init,CVSImport,CVSDiff)
   val usage = "no usage yet"
   val help = "ask Valdis"
  def parseCommand(args: List[String]) = None
