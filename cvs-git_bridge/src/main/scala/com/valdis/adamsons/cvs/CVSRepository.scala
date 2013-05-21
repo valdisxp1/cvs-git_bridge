@@ -16,7 +16,7 @@ import com.valdis.adamsons.utils.SerialFileSeqLike
 import com.valdis.adamsons.utils.FileUtils
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger{
-  def logger = Logger
+  protected def logger = Logger
   def this(cvsroot: Option[String]) = this(cvsroot, None)
   def this() = this(None, None)
   def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
@@ -198,10 +198,10 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     cvsCommit
   }
 
-  def parseRlogLines(lines: Iterable[String]): Seq[CVSCommit] = {
+  private def parseRlogLines(lines: Iterable[String]): Seq[CVSCommit] = {
 	lines.foldLeft(new RlogCommitParseState())(_.withLine(_)).commits
   }
-  def parseRlogLines(process: ProcessBuilder): Seq[CVSCommit] = {
+  private def parseRlogLines(process: ProcessBuilder): Seq[CVSCommit] = {
     var state = new RlogCommitParseState(Vector[CVSCommit]())
     val processLogger = ProcessLogger(line => state = state.withLine(line),line=> log(line))
     process.run(processLogger).exitValue

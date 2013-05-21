@@ -23,7 +23,7 @@ object CVSImport extends CommandParser{
     val bridge: GitBridge = Bridge
     val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
     
-    def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = bridge.lookupTag(branch.getBranchParent, trunk)
+    private def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = bridge.lookupTag(branch.getBranchParent, trunk)
     
     def apply = {
       //main branch at master
@@ -79,7 +79,7 @@ object CVSImport extends CommandParser{
       def apply()= new CVSImportCommand()
       def apply(cvsroot: String, module: String) = new CVSImportCommand(cvsroot, module);
   }
-  def parseCommand(args: List[String]) = args match {
+  protected def parseCommand(args: List[String]) = args match {
     case List("-d", root, mod) => Some(CVSImportCommand(root, mod))
     case Nil => Some(CVSImportCommand())
     case _ => None
