@@ -41,7 +41,6 @@ trait CommandParser{
 }
 
 case class HelpCommand(val text: String) extends Command {
-  val aliases = Nil
   def apply = {
     println(text)
     0

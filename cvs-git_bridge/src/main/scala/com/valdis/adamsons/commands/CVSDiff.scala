@@ -30,7 +30,7 @@ object CVSDiff extends CommandParser{
       0
     }
   }
-  def parseCommand(args: List[String]) = args match {
+  protected def parseCommand(args: List[String]) = args match {
     case parent :: branch :: tail => Some(CVSDiffCommand(parent, branch, tail))
     case _ => None
   }

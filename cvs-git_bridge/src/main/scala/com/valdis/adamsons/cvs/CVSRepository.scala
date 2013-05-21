@@ -18,7 +18,7 @@ import com.valdis.adamsons.utils.ProcessAsTraversable
 import com.valdis.adamsons.cvs.rlog.parse.{RlogParseState, RlogTagNameLookupState}
 
 case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger {
-  def logger = Logger
+  protected def logger = Logger
   def this(cvsroot: Option[String]) = this(cvsroot, None)
   def this() = this(None, None)
   def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
@@ -267,7 +267,10 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     cvsCommit
   }
 
-  def parseRlogLines(process: ProcessBuilder): Seq[CVSCommit] = {
+  private def parseRlogLines(lines: Iterable[String]): Seq[CVSCommit] = {
+	lines.foldLeft(new RlogCommitParseState())(_.withLine(_)).commits
+  }
+  private def parseRlogLines(process: ProcessBuilder): Seq[CVSCommit] = {
     val state = new ProcessAsTraversable(process,line=>log(line))
     	.foldLeft(new RlogCommitParseState(Vector[CVSCommit]()))(_ withLine _)
     state.commits

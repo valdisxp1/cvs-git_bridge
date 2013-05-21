@@ -11,8 +11,8 @@ import com.valdis.adamsons.utils.FileUtils
 
 object Init extends CommandParser{
   case class InitCommand extends Command with SweetLogger{
-    def logger = Logger
-    def repo = GitUtils.repo;
+    protected def logger = Logger
+    val repo = GitUtils.repo;
     
     def apply = {
     	log("Creating repository")
@@ -29,7 +29,7 @@ object Init extends CommandParser{
   }
   val help = "creates directory structure and initialzes git repository"
   val usage = "init \n (no arguments)"
-  def parseCommand(args: List[String]) =
+  protected def parseCommand(args: List[String]) =
     args match {
       case Nil => Some(InitCommand())
       case _ => None
