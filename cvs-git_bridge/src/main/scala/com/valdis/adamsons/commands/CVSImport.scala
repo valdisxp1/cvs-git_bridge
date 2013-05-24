@@ -24,6 +24,9 @@ object CVSImport extends CommandParser{
     val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
     
     private def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = bridge.lookupTag(branch.getBranchParent, trunk)
+
+    private def getCommitsForTag(tag: CVSTag): Iterable[CVSCommit] = tag.fileVersions.flatMap(version => cvsrepo.getCommit(version._1, version._2))
+   
     
     def apply = {
       //main branch at master
@@ -56,7 +59,9 @@ object CVSImport extends CommandParser{
             val graftLocation = getGraftLocation(branch, possibleParentBranches)
             //graft it
             log("graft:" + graftLocation)
-            graftLocation.foreach((location) => bridge.addBranch(branch.name, location))
+            graftLocation.map((location) => bridge.addBranch(branch.name, location))
+            //if no graft found at least add the missing commits from the branch parent
+            .getOrElse(bridge.appendCommits(getCommitsForTag(branch.getBranchParent).toSeq, branch.name, cvsrepo))
           }
           bridge.appendCommits(commits, branch.name, cvsrepo)
         })

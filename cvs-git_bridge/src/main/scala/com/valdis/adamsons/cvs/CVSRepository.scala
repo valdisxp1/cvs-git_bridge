@@ -206,6 +206,12 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     	.foldLeft(new RlogAllBranchParseState())(_ withLine _).tags.values.toSet
   }
 
+  def getCommit(filename: String, version: CVSFileVersion): Option[CVSCommit] = {
+    val command = cvsString + "rlog " + " -r" + version.toString +" "+ module.map( _ + "/").getOrElse("") + filename
+    log("running command:\n" + command)
+    parseRlogLines(stringToProcess(command)).headOption
+  }
+  
   def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
   def getCommitList(start: Option[Date], end: Option[Date]): Seq[CVSCommit] = getCommitList(None, start, end)
   def getCommitList(branch:String, start:Option[Date], end:Option[Date]):Seq[CVSCommit] = getCommitList(Some(branch),start, end)
