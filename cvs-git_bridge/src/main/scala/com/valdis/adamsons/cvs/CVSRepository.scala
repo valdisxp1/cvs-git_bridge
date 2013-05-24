@@ -224,7 +224,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
 
-  case class RlogCommitParseState(val isInHeader: Boolean,
+  private case class RlogCommitParseState(val isInHeader: Boolean,
 		  							val commits: Seq[CVSCommit],
 		  							val headerBuffer: Vector[String],
 		  							val commitBuffer: Vector[String]) extends RlogParseState[RlogCommitParseState]{

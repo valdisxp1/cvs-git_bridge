@@ -39,7 +39,7 @@ object FileUtils extends SweetLogger{
     copyRec(src,dest)
   }
   
-  lazy val random = new Random
+  private lazy val random = new Random
   val tempDir = "temp"
 
   def createTempFile(prefix: String, sufix: String): File = {

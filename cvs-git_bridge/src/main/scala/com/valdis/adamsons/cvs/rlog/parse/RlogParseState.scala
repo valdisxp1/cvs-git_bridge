@@ -12,7 +12,7 @@ trait RlogParseState[This]{
     protected def withHeaderLine(line: String): This = self
     protected def withCommitLine(line: String): This = self
 
-    def setIsInHeader(isInHeader: Boolean): This = if (this.isInHeader == isInHeader) {
+    protected def setIsInHeader(isInHeader: Boolean): This = if (this.isInHeader == isInHeader) {
       self
     } else {
       create(isInHeader)
