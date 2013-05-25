@@ -67,7 +67,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     	.foldLeft(new RlogTagNameLookupState((name, version) => !version.isBranch))(_ withLine _).nameSet
   }
 
-  def extractFileName(line: String): Option[String] = {
+  private def extractFileName(line: String): Option[String] = {
       val arr = line.split(':')
       if (arr.length == 2 && arr(0).trim == "RCS file") {
         Some(cleanRCSpath(arr(1).trim))

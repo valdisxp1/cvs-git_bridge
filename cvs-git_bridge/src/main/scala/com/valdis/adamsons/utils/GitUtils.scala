@@ -31,7 +31,6 @@ import org.eclipse.jgit.revwalk.filter.RevFilter
 
 class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   protected val logger = Logger
-  val gitDateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.UK)
   lazy val repo = {
     val builder = new RepositoryBuilder();
     builder.setGitDir(new File(gitDir)).
