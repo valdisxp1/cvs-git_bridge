@@ -263,19 +263,19 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   def isCVSBranch(branch: String) = hasRef(cvsRefPrefix + branch)
   def isLocalBranch(branch: String) = !hasRef(cvsRefPrefix + branch) && hasRef(headRefPrefix + branch)
   
-  def streamCVSDiff(out:OutputStream)(parent:ObjectId,changed:ObjectId,fileNames:Seq[String]): Unit ={
+  def streamCVSDiff(out:OutputStream)(parent:ObjectId,changed:ObjectId): Unit ={
     val commit1 = Option(revWalk.parseCommit(parent))
     val commit2 = Option(revWalk.parseCommit(changed))
     log("Diffing " + commit1 + "[" + parent.name + "]" + " vs " + commit2 + "[" + changed.name + "]")
     if (commit1.isDefined && commit2.isDefined) {
-      streamCVSDiffImpl(out)(commit1.get,commit2.get,fileNames)
+      streamCVSDiffImpl(out)(commit1.get,commit2.get)
     } else {
       def reportMissing(id:ObjectId) = log("Could not find commit with id: "+id)
       if (!commit1.isDefined) reportMissing(parent)
       if (!commit2.isDefined) reportMissing(changed)
     }
   }
-  private def streamCVSDiffImpl(out:OutputStream)(parent:RevCommit,changed:RevCommit,fileNames:Seq[String]): Unit = {
+  private def streamCVSDiffImpl(out:OutputStream)(parent:RevCommit,changed:RevCommit): Unit = {
     val formatter = new CVSDiffFormatter(out)
     formatter.setRepository(repo)
     val treeWalk = new TreeWalk(repo)

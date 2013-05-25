@@ -18,7 +18,7 @@ class CVSDiffTest {
   var bridge: GitBridge = null
 
   private class TestableCVSImportCommand(override val bridge: GitBridge, cvsRoot: String, module: String) extends CVSImportCommand(cvsRoot, module)
-  private class TestableCVSDiffCommand(override val bridge: GitBridge, parentBranch: String, branch: String, fileNames: Seq[String]) extends CVSDiffCommand(parentBranch, branch, fileNames)
+  private class TestableCVSDiffCommand(override val bridge: GitBridge, parentBranch: String, branch: String) extends CVSDiffCommand(parentBranch, branch)
   
   @Before
   def before {
@@ -27,7 +27,7 @@ class CVSDiffTest {
       override val repo = new GitUtilsImpl(GitUtils.gitDir).repo
     }.apply
     bridge=new GitBridge(GitUtils.gitDir)
-    (new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest")).apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
   }
   
   def clearDirs {
@@ -36,7 +36,7 @@ class CVSDiffTest {
   
   @Test
   def CVSvCVS {
-    new TestableCVSDiffCommand(bridge,"master","directx",Nil).apply
+    new TestableCVSDiffCommand(bridge,"master","directx").apply
   }
   
   @After

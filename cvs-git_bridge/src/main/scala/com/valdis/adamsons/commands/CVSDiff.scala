@@ -8,7 +8,7 @@ import java.io.FileOutputStream
 import com.valdis.adamsons.bridge.GitBridge
 
 object CVSDiff extends CommandParser{
-  case class CVSDiffCommand(val parentBranch: String, val branch: String,val fileNames: Seq[String]) extends Command with SweetLogger {
+  case class CVSDiffCommand(val parentBranch: String, val branch: String) extends Command with SweetLogger {
     protected def logger = Logger
     
     val bridge: GitBridge = Bridge
@@ -19,19 +19,19 @@ object CVSDiff extends CommandParser{
         val commonId = Bridge.getMergeBase(parentId, branchId)
         log("common commit:"+commonId)
         commonId.foreach(common=>{
-          Bridge.streamCVSDiff(System.out)(common, branchId, fileNames)
+          Bridge.streamCVSDiff(System.out)(common, branchId)
           val patchesDir = new File("patches/"+parentBranch+"/")
           if(!patchesDir.exists()){
             patchesDir.mkdirs();
           }
           val patchFile = new File(patchesDir,branch+"__"+branchId.name+".diff")
-          Bridge.streamCVSDiff(new FileOutputStream(patchFile))(common, branchId, fileNames)
+          Bridge.streamCVSDiff(new FileOutputStream(patchFile))(common, branchId)
         })
       0
     }
   }
   protected def parseCommand(args: List[String]) = args match {
-    case parent :: branch :: tail => Some(CVSDiffCommand(parent, branch, tail))
+    case List(parent,branch)=> Some(CVSDiffCommand(parent, branch))
     case _ => None
   }
   val aliases = List("cvsdiff")
