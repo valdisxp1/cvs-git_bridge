@@ -13,6 +13,9 @@ import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.bridge.GitBridge
 
+/**
+ * Parser for CVS repository importing command.
+ */
 object CVSImport extends CommandParser{
   case class CVSImportCommand(val cvsRoot: Option[String], val module: Option[String]) extends Command with SweetLogger{
     protected val logger = Logger

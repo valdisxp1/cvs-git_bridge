@@ -20,12 +20,21 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def this() = this(None, None)
   def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
   
+  /**
+   * The path to repository root.
+   */
   def root = cvsroot.getOrElse("echo $CVSROOT"!!)
   
+  /**
+   * Creates a new repository object with the given module.
+   */
   def module(module: String) = CVSRepository(this.cvsroot, Some(module))
 
   private def cvsString = "cvs " + cvsroot.map("-d " + _ + " ").getOrElse("");
   
+  /**
+   * @return relative path against chosen module.
+   */
   def cleanRCSpath(absolutePath:String)= absolutePath.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2).replace("Attic/", "")
   /**
    * Should only be used for text files.
@@ -212,6 +221,9 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
   def getCommitList(start: Option[Date], end: Option[Date]): Seq[CVSCommit] = getCommitList(None, start, end)
   def getCommitList(branch:String, start:Option[Date], end:Option[Date]):Seq[CVSCommit] = getCommitList(Some(branch),start, end)
+  /**
+   * A branch of None means trunk. A empty (None) date means the search is not limited in that direction.
+   */
   def getCommitList(branch:Option[String], start:Option[Date], end:Option[Date]):Seq[CVSCommit]={
     val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))

@@ -1,12 +1,28 @@
 package com.valdis.adamsons.commands
 
 trait Command {
+  /**
+   * @return a similar value to a command line application. 
+   * A zero value means everything is ok, a non-zero value means there is an error.
+   */
   def apply: Int
 }
 
+/**
+ * 
+ */
 trait CommandParser{
+  /**
+   * General information about the command.
+   */
   def help: String
+  /**
+   * Information about different argument combinations and the meaning of the parameters.
+   */
   def usage: String
+  /**
+   * A list with unique identifiers for this command.
+   */
   val aliases: List[String]
   val subcommands: List[CommandParser] = Nil
   def parse(args: List[String]): Command = {
@@ -17,9 +33,17 @@ trait CommandParser{
   }
   
   private def generateUsage = HelpCommand(usage)
-  
+  private def generateHelp = {
+    val helpString = aliases.headOption.getOrElse("") + "\n---\n" + help + "\n\naliases: " + aliases.tail.mkString(",") +
+      (if (subcommands.isEmpty) { "" } else {
+        "\nSubcommands:\n" + subcommands.map(
+          command => command.aliases.headOption.getOrElse("") + " : " + command.help).mkString("\n")
+      })
+    HelpCommand(helpString)
+  }
+   
   private def parseHelp(args: List[String]): Option[Command] = args match{
-    case "--help ":: tail => Some(HelpCommand(help))
+    case "--help" :: tail => Some(generateHelp)
     case _ => None
   }
   private def parseSubcommands(args: List[String]): Option[Command] = {
@@ -37,9 +61,11 @@ trait CommandParser{
   def main(args: Array[String]): Unit = {
     parse(args.toList).apply
   }
-  
 }
 
+/**
+ * A simple command that only prints text and exits 
+ */
 case class HelpCommand(val text: String) extends Command {
   def apply = {
     println(text)

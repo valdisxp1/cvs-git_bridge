@@ -7,6 +7,9 @@ import java.io.File
 import java.io.FileOutputStream
 import com.valdis.adamsons.bridge.GitBridge
 
+/**
+ * Parser for patch creating command. 
+ */
 object CVSDiff extends CommandParser{
   case class CVSDiffCommand(val parentBranch: String, val branch: String) extends Command with SweetLogger {
     protected def logger = Logger

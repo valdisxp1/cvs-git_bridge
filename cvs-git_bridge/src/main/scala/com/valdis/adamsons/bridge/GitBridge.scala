@@ -28,6 +28,9 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   
   val cvsRefPrefix = "refs/remotes/cvs/"
   
+   /**
+    * @return the time last commit was made
+    */
    def lastUpdated( branch: String): Option[Date] = {
       val ref = Option(repo.resolve(cvsRefPrefix + branch))
       ref.flatMap((ref) => {
@@ -218,8 +221,10 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       }).flatten
     }
   
-  // Cleaning the tag with this method ignores all dead heads. 
-  // XXX WARNING: might prevent detecting out of sync tags when the tag roll-backs the first version of a new file
+  /** 
+   * Cleaning the tag with this method ignores all dead heads. 
+   * XXX WARNING: might prevent detecting out of sync tags when the tag roll-backs the first version of a new file
+   */
   def cleanTag(tag: CVSTag): CVSTag = getPointlessCVSCommits.foldLeft(tag)((tag, commit) => {
     if (commit.isPointless && tag.includesCommit(commit)) {
       tag.ignoreFile(commit.filename)
@@ -260,9 +265,18 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   
   def addBranch(branch: String, id: ObjectId) = updateRef(cvsRefPrefix+branch, id)
 
+  /**
+   * @return true if a CVS branch with the given was imported into the repository.
+   */
   def isCVSBranch(branch: String) = hasRef(cvsRefPrefix + branch)
+  /**
+   * @return true if there is a branch with the given name with no matching CVS branch
+   */
   def isLocalBranch(branch: String) = !hasRef(cvsRefPrefix + branch) && hasRef(headRefPrefix + branch)
   
+  /**
+   * Streams differences between the two commits as unified type patch, that can be applied to a CVS repository. 
+   */
   def streamCVSDiff(out:OutputStream)(parent:ObjectId,changed:ObjectId): Unit ={
     val commit1 = Option(revWalk.parseCommit(parent))
     val commit2 = Option(revWalk.parseCommit(changed))
@@ -294,5 +308,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       		 .setMessage(tag.generateMessage).call()
   }
 }
-
+/**
+ * A GitBridge with default parameters.
+ */
 object Bridge extends GitBridge("git/")

@@ -5,7 +5,9 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.notes.Note
 import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
-
+/**
+ * commitId may not be None when dealing with older CVS versions.
+ */
 case class CVSCommit(val filename: String,
 					 val revision: CVSFileVersion,
 					 val isDead: Boolean,
@@ -13,6 +15,10 @@ case class CVSCommit(val filename: String,
 					 val author: String,
 					 val comment: String,
 					 val commitId: Option[String]) extends Ordered[CVSCommit]{
+  /**
+   * @return text for a git note where CVS meta data, that do not have git equivalent, are stored.
+   *  And also file path so not to look at the tree for that.
+   */
   def generateNote: String = (CVSCommit.CVS_PATH_KEY + filename + "\n" +
 		  				      CVSCommit.CVS_REV_KEY + revision + "\n" +
 		  				      (if (isDead) { CVSCommit.CVS_DEAD + "\n" } else { CVSCommit.CVS_ALIVE+"\n" }) +

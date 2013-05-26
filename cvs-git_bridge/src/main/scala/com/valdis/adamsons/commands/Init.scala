@@ -8,7 +8,9 @@ import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.utils.FileUtils
 
-
+/**
+ * Parser for directory creation and git repository initialization command. 
+ */
 object Init extends CommandParser{
   case class InitCommand extends Command with SweetLogger{
     protected def logger = Logger

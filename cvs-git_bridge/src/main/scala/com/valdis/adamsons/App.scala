@@ -8,12 +8,12 @@ import com.valdis.adamsons.commands.CVSImport
 import com.valdis.adamsons.commands.CVSDiff
 
 /**
- *
+ * This is the default CommandParser called, when the application launched from *.jar file.
  */
 object App extends CommandParser{
   val aliases = List("")
   override val subcommands = List(Init,CVSImport,CVSDiff)
   val usage = "use a subcommand"
-  val help = ""
+  val help = "use a subcommand"
  def parseCommand(args: List[String]) = None
 }

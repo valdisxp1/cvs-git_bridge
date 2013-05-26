@@ -4,8 +4,11 @@ case class CVSFileVersion(val list:List[Int]) {
   def this(s: String) {
     this(s.split('.').toList.map(_.toInt));
   }
-  //TODO proper implementation
+  
   def isBranch = list.dropRight(1).last == 0
+  /**
+   * The depth of a version in trunk is 1. Each time a branch is created this goes up by one.
+   */
   def branchParent: Option[CVSFileVersion] = if (list.length >= 4) {
     Some(CVSFileVersion(list.dropRight(2)))
   } else {
