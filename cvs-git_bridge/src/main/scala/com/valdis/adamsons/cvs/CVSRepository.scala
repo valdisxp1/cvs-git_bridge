@@ -10,9 +10,6 @@ import java.io.File
 import scala.collection.immutable.SortedSet
 import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
-import com.valdis.adamsons.utils.SerialFileSeq
-import com.valdis.adamsons.utils.EmptyFileSeq
-import com.valdis.adamsons.utils.SerialFileSeqLike
 import com.valdis.adamsons.utils.FileUtils
 import com.valdis.adamsons.utils.ProcessAsTraversable
 import com.valdis.adamsons.cvs.rlog.parse.{RlogParseState, RlogTagNameLookupState}
