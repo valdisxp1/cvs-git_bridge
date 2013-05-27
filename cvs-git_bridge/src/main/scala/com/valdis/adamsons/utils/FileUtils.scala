@@ -10,6 +10,7 @@ import scala.util.Random
 
 object FileUtils extends SweetLogger{
   protected val logger = Logger
+  
   def deleteDir(file: File) {
     def deleteRec(file: File): Unit = {
       if (file.isDirectory) {
@@ -19,16 +20,17 @@ object FileUtils extends SweetLogger{
     }
     deleteRec(file)
   }
-  def copyDir(src: File,dest:File) {
-    def copyRec(src: File,dest:File): Unit = {
-      log(src.getAbsolutePath()+"->"+dest.getAbsolutePath())
+  
+  def copyDir(src: File, dest: File) {
+    def copyRec(src: File, dest: File): Unit = {
+      log(src.getAbsolutePath() + "->" + dest.getAbsolutePath())
       if (src.isDirectory) {
-        if(!dest.exists()){
+        if (!dest.exists()) {
           dest.mkdir()
         }
-        src.listFiles().foreach((file)=>copyRec(file,new File(dest,file.getName())))
-      }else{
-        if(!dest.exists()){
+        src.listFiles().foreach((file) => copyRec(file, new File(dest, file.getName())))
+      } else {
+        if (!dest.exists()) {
           dest.createNewFile();
         }
         val in = new FileInputStream(src).getChannel()
@@ -36,16 +38,20 @@ object FileUtils extends SweetLogger{
         out.transferFrom(in, 0, in.size())
       }
     }
-    copyRec(src,dest)
+    copyRec(src, dest)
   }
   
   private lazy val random = new Random
   val tempDir = "temp"
 
-  def createTempFile(prefix: String, sufix: String): File = {
-    val file = new File(tempDir, prefix + System.currentTimeMillis() + "_" + random.nextInt(10000) + sufix)
+  /**
+   * Creates a file with the given suffix and prefix, but randomness in between.
+   * This file will NOT be deleted automatically.
+   */
+  def createTempFile(prefix: String, suffix: String): File = {
+    val file = new File(tempDir, prefix + System.currentTimeMillis() + "_" + random.nextInt(10000) + suffix)
     if (file.exists()) {
-      createTempFile(prefix, sufix)
+      createTempFile(prefix, suffix)
     } else {
       log("creating a temporary file " + file.getAbsolutePath())
       file.createNewFile()

@@ -1,7 +1,8 @@
 package com.valdis.adamsons.logger
 
 /**
- * Allows using Logger methods directly and force to choose what logger to use.
+ * Allows using Logger methods directly and force to choose what logger to use. 
+ * For example, log("abc") can be used instead of logger.log("abc")
  * Adds functional sugar. (hence the name)
  */
 trait SweetLogger {

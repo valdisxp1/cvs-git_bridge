@@ -1,5 +1,9 @@
 package com.valdis.adamsons.cvs.rlog.parse
 
+/**
+ * Describes automaton states that are used to process CVS rlog command's output.
+ * Generic parameter "This" is included to avoid using type casting, when inheriting this trait.
+ */
 trait RlogParseState[This]{
     val isInHeader: Boolean
 
@@ -41,5 +45,8 @@ trait RlogParseState[This]{
   }
   
   object RlogParseState{
+    /**
+     * This constant is included to improve readability.
+     */
     val isFirstLineHeader = true
   }

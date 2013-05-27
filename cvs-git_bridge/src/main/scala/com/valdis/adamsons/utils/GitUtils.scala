@@ -28,7 +28,10 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.lib.ObjectInserter
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.filter.RevFilter
-
+/**
+ * Adds useful methods to jGit Repository object, 
+ * also creates other jGit objects (like walker) as needed (lazy evaluation).
+ */
 class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   protected val logger = Logger
   lazy val repo = {
@@ -43,6 +46,9 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
    */
   protected lazy val revWalk = new RevWalk(repo)
   
+  /**
+   * Releases allocated resources.
+   */
   def close = {
     revWalk.release()
     repo.close()
@@ -57,6 +63,9 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     new String(noteData)
   }
 
+  /**
+   * Place where local branches are stored in a git repository.
+   */
   val headRefPrefix = "refs/heads/"
   
   def hasRef(ref: String): Boolean = {
@@ -139,7 +148,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       val traversable = new SingleTreeWalkTraversable(treeWalk)
       //stores in memory
       val entries = traversable.toSeq
-      //TODO can be optimized, simple,algorithm
+      //TODO can be optimized, simple algorithm
       //TODO handle revWalkParse fail
       val newTree = entries.find(_.pathString == folder)
       	.map(oldentry => putFile(revWalk.parseTree(oldentry.objectId), tail, filename, fileId, inserter))
@@ -163,7 +172,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       val traversable = new SingleTreeWalkTraversable(treeWalk)
       //stores in memory
       val entries = traversable.toSeq
-      //TODO can be optimized, simple,algorithm
+      //TODO can be optimized, simple algorithm
       val toBeAdded = entries.filter(_.pathString != filename) ++ fileId.map(TreeEntry(filename,FileMode.REGULAR_FILE,_))
       toBeAdded.sortBy(_.pathString).foreach(entry=> treeFormatter.append(entry.pathString, entry.fileMode, entry.objectId))
       inserter.insert(treeFormatter)

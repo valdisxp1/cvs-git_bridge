@@ -2,6 +2,9 @@ package com.valdis.adamsons.cvs.rlog.parse
 
 import com.valdis.adamsons.cvs.CVSFileVersion
 
+/**
+ * Describes automaton states that are used to find the names of all the tags matching the given criteria(check).
+ */
 case class RlogTagNameLookupState(override val isInHeader: Boolean,
 		  							  val check: (=>String, =>CVSFileVersion)=> Boolean,
 		  							  val nameSet: Set[String]) extends RlogParseState[RlogTagNameLookupState]{

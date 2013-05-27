@@ -5,6 +5,10 @@ import java.io.PrintWriter
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 
+/**
+ * A simple logger implementation that writes to logs on screen as well to the given file.
+ * Optional debug logging can be turned on by setting shouldMakeDataDumps to true.
+ */
 class LoggerImpl(logPath: String, val shouldMakeDataDumps: Boolean) {
   def this(logPath: String) = this(logPath, false)
   val logFile = new File(logPath)
