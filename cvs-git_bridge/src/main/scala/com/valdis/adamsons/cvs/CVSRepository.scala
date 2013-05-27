@@ -47,7 +47,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
     val exitvalue=process.#>(file).run.exitValue;
-    //TODO handle errors
     file.deleteOnExit()
     file
   }

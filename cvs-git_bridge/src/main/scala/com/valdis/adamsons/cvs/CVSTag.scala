@@ -8,7 +8,9 @@ case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion
   /**
    * @return a new tag object with the given file version changed.
    */
-  def withFile(fileName: String, version: CVSFileVersion): CVSTag = CVSTag(name, fileVersions + (fileName -> version))
+  def withFile(fileName: String, version: CVSFileVersion): CVSTag ={
+    	CVSTag(name, fileVersions + (fileName -> version))
+  }
 
   /**
    * Important: when used for a tag (not a branch) 
@@ -16,18 +18,23 @@ case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion
    * @return a new tag object describing this branches parent (branch point).
    */
   def getBranchParent = {
-    val files = fileVersions.map((pair) => (pair._1, pair._2.branchParent)).withFilter(_._2.isDefined).map((pair) => (pair._1, pair._2.get))
+    val files = fileVersions.map((pair) => (pair._1, pair._2.branchParent))
+    		.withFilter(_._2.isDefined).map((pair) => (pair._1, pair._2.get))
     CVSTag(name, files)
   }
   /**
    * @return a nice and long human-readable string describing this object
    */
-  def generateMessage = name + "\n" + fileVersions.map((pair)=>pair._1+" : "+pair._2).mkString("\n")
+  def generateMessage ={ 
+    name + "\n" + fileVersions.map((pair)=>pair._1+" : "+pair._2).mkString("\n")
+  }
 
   /**
    * @return if the file version resulted from the commit is included in this tag.
    */
-  def includesCommit(commit: CVSCommit) = fileVersions.get(commit.filename).map(_ == commit.revision).getOrElse(false)
+  def includesCommit(commit: CVSCommit) ={ 
+    fileVersions.get(commit.filename).map(_ == commit.revision).getOrElse(false)
+  }
   def includesFile(path: String) = fileVersions.keys.exists(_ == path)
   
   def depth = fileVersions.values.map(_.depth).max
