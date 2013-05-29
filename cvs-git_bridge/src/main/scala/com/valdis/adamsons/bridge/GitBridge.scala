@@ -27,6 +27,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   override protected val logger = Logger
   
   val cvsRefPrefix = "refs/remotes/cvs/"
+    /*
+     * Dot (.) is allowed in git branch names, but not it CVS ones.
+     * @see git-check-ref-format manual page
+     */
+  val branchPointNameSuffix = ".branch_point"
   
    /**
     * @return the time last commit was made
