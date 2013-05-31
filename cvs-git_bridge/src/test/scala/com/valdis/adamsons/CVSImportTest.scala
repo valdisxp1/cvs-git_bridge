@@ -159,7 +159,9 @@ class CVSImportTest {
   @Test
   def testBadBranch{
     new TestableCVSImportCommand(bridge,"test/cvsroot", "outofsynctest").apply
-    
+    assertEquals(4, commitCount("bad_branch"))//includes branchpoint
+    assertEquals(2, commitCount("bad_branch.branch_point"))
+    assertEquals(4, commitCount("master"))
   }
   
 

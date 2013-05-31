@@ -65,10 +65,10 @@ object CVSImport extends CommandParser{
             graftLocation.map((location) => bridge.addBranch(branch.name, location))
             //if no graft found at least add the missing commits from the branch parent
             .getOrElse({
-              val branchPointName = branch.name + bridge.branchPointNameSuffix
-              bridge.appendCommits(getCommitsForTag(branch.getBranchParent).toSeq, branchPointName, cvsrepo)
-              val ref = bridge.getRef(branchPointName)
-              ref.foreach(bridge.updateRef(branch.name, _))
+                val branchPointName = branch.name + bridge.branchPointNameSuffix
+                bridge.appendCommits(getCommitsForTag(branch.getBranchParent).toSeq, branchPointName, cvsrepo)
+                val ref = bridge.getRef(bridge.headRefPrefix + branchPointName)
+                ref.foreach(bridge.updateRef(bridge.cvsRefPrefix + branch.name, _))
               })
           }
           bridge.appendCommits(commits, branch.name, cvsrepo)

@@ -123,7 +123,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
          
           val commitId = inserter.insert(commitBuilder)
           inserter.flush();
-                    
+                  
+          log("parentID:" + parentId.map(_.name));
           log("treeID:" + treeId.name);
           log("commitID:" + commitId.name);
           
