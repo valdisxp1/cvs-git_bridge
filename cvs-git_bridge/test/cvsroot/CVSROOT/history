@@ -62,3 +62,16 @@ O518e77e5|Valdis|<remote>/*0|multibranchtest|1.1|multibranchtest
 O518e77e5|Valdis|<remote>/*0|multibranchtest|1.1.2.1|multibranchtest
 O518e77e6|Valdis|<remote>/*0|multibranchtest|1.1.2.1|multibranchtest
 O518e77e6|Valdis|<remote>/*0|multibranchtest|1.1.2.1|multibranchtest
+O51a8d4a8|Valdis|~/cvsworkdir/*0|outofsynctest||outofsynctest
+A51a8d500|Valdis|~/cvsworkdir/*0|outofsynctest|1.1|A
+A51a8d500|Valdis|~/cvsworkdir/*0|outofsynctest|1.1|B
+M51a8d537|Valdis|~/cvsworkdir/*0|outofsynctest|1.2|A
+M51a8d56a|Valdis|~/cvsworkdir/*0|outofsynctest|1.2|B
+T51a8d649|Valdis|~/cvsworkdir/outofsynctest|1.1|A|BPT
+T51a8d661|Valdis|~/cvsworkdir/outofsynctest|1.1|BPT|outofsynctest/A
+T51a8d66b|Valdis|~/cvsworkdir/outofsynctest|1.2|BPT|outofsynctest/B
+T51a8d6e9|Valdis|~/cvsworkdir/outofsynctest|BPT|bad_branch|outofsynctest
+O51a8d781|Valdis|~/cvsworkdir/outofsynctest/*0|outofsynctest|bad_branch|outofsynctest
+O51a8d79a|Valdis|~/cvsworkdir/*0|outofsynctest|bad_branch|outofsynctest
+M51a8d7ce|Valdis|~/cvsworkdir/*0|outofsynctest|1.1.2.1|A
+M51a8d7ce|Valdis|~/cvsworkdir/*0|outofsynctest|1.2.2.1|B

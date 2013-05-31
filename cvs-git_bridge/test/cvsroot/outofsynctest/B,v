@@ -1,0 +1,61 @@
+head	1.2;
+access;
+symbols
+	bad_branch:1.2.0.2
+	BPT:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2013.05.31.16.52.58;	author Valdis;	state Exp;
+branches
+	1.2.2.1;
+next	1.1;
+commitid	Y10sDuZO74V5WNRw;
+
+1.1
+date	2013.05.31.16.51.12;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	Ej0uNtPEjYVtVNRw;
+
+1.2.2.1
+date	2013.05.31.17.03.10;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	4IdaS9vaM4JAZNRw;
+
+
+desc
+@@
+
+
+1.2
+log
+@later B CHANGE
+@
+text
+@later B CHANGE
+@
+
+
+1.2.2.1
+log
+@commits in bad branch
+@
+text
+@d1 1
+a1 1
+newStuff
+@
+
+
+1.1
+log
+@innital
+@
+text
+@d1 1
+@
+
