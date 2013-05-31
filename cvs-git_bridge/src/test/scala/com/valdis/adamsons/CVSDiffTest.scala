@@ -28,7 +28,6 @@ class CVSDiffTest {
     }.apply
     bridge=new GitBridge(GitUtils.gitDir)
     new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
-    new TestableCVSDiffCommand(bridge,"master","directx");
   }
   
   def clearDirs {
@@ -37,7 +36,7 @@ class CVSDiffTest {
   
   @Test
   def CVSvCVS {
-    new TestableCVSDiffCommand(bridge,"master","directx").apply
+    new TestableCVSDiffCommand(bridge,"opengl","experiment").apply
   }
   
   @After
