@@ -15,6 +15,7 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import com.valdis.adamsons.bridge.GitBridge
 import com.valdis.adamsons.bridge.GitBridge
 import com.valdis.adamsons.utils.GitUtilsImpl
+import org.eclipse.jgit.lib.ObjectId
 
 object CVSImportTest{
   var num = 0
@@ -22,15 +23,17 @@ object CVSImportTest{
 
 class CVSImportTest {
   import CVSImportTest._
-  
-  def gitDirString = "git"+num+"/"
+
+  def gitDirString = "git" + num + "/"
   def gitDir = new File(gitDirString)
   def tempDir = new File("temp/")
   def patchesDir = new File("patches/")
   var bridge: GitBridge = null
   var gitUtils: GitUtilsImpl = null
 
-  private class TestableCVSImportCommand(override val bridge: GitBridge, cvsRoot: String, module: String) extends CVSImportCommand(cvsRoot, module)
+  private class TestableCVSImportCommand(override val bridge: GitBridge,
+		  											  cvsRoot: String,
+		  											  module: String) extends CVSImportCommand(cvsRoot, module)
 
   def commitCount(branch: String) = {
     val logs = gitUtils.git.log().add(gitUtils.repo.resolve(branch)).call();
@@ -44,12 +47,29 @@ class CVSImportTest {
       try {
         treewalk.addTree(tree)
         treewalk.setRecursive(true)
-        //TODO make this variable a value
         var fileNames: Set[String] = Set()
         while (treewalk.next()) {
           fileNames = fileNames + treewalk.getPathString()
         }
         fileNames
+      } finally {
+        treewalk.release()
+      }
+    }).toList
+  }
+  
+   def getObjectIds(branch:String) = {
+    val logs = gitUtils.git.log().add(gitUtils.repo.resolve(branch)).call()
+    logs.map(_.getTree()).map((tree) => {
+      val treewalk = new TreeWalk(gitUtils.repo)
+      try {
+        treewalk.addTree(tree)
+        treewalk.setRecursive(true)
+        var objectIds: Set[String] = Set()
+        while (treewalk.next()) {
+          objectIds = objectIds + treewalk.getObjectId(0).name
+        }
+        objectIds
       } finally {
         treewalk.release()
       }
@@ -103,6 +123,9 @@ class CVSImportTest {
     new TestableCVSImportCommand(bridge, "test/cvsroot", "cvsimagetest2").apply
     assertEquals(2, commitCount("master"))
     assertEquals(List(Set("image.png"), Set("image.png")), getFileNames("master"))
+    //checking file integrity
+    assertEquals(List(Set("3a2df92d6587ccdcaa9d0186b6babc1952405b14"),
+    				  Set("81c52c132ab2f1df1334b119cf619ff8a5d57d1c")), getObjectIds("master"))
   }
 
   @Test
