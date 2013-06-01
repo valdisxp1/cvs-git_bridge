@@ -85,7 +85,7 @@ class CVSImportTest {
   def before {
     num += 1
     clearDirs
-    println("using git dir:" + gitDirString)
+    println("using git directory:" + gitDirString)
     println("num:" + num)
     gitUtils = new GitUtilsImpl(gitDirString)
     new InitCommand() {
