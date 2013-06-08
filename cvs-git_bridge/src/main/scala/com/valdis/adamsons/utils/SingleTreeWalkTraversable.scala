@@ -4,7 +4,9 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
 
-case class TreeEntry(val pathString: String,val fileMode: FileMode, val objectId: ObjectId)
+case class TreeEntry(val pathString: String, val fileMode: FileMode, val objectId: ObjectId)
+
+
 /**
  * Enables Scala methods for use on tree walk.
  * Only looks at the first tree (element 0), other trees are ignored.
