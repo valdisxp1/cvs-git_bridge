@@ -4,6 +4,7 @@ import java.io.File
 import java.io.PrintWriter
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
+import java.io.FileWriter
 
 /**
  * A simple logger implementation that writes to logs on screen as well to the given file.
@@ -13,7 +14,7 @@ class LoggerImpl(logPath: String, val shouldMakeDataDumps: Boolean) {
   def this(logPath: String) = this(logPath, false)
   val logFile = new File(logPath)
 
-  private lazy val outputStream = new PrintWriter(logFile)
+  private lazy val outputStream = new PrintWriter(new FileWriter(logFile,true))
   
   def log(any: => Any) = any match {
     case s: String => logImpl(s)
