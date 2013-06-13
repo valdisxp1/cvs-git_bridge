@@ -71,6 +71,4 @@ public class JavaTreeEntry {
 		return "JavaTreeEntry(" + pathString + ", " + fileMode + ", "
 				+ objectId + ")";
 	}
-	
-	
 }
