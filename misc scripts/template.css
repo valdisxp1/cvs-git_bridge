@@ -1,0 +1,8 @@
+div.members > ol {
+  background-color: white;
+  list-style: none
+}
+a{
+text-decoration:none;
+color: black;
+}
