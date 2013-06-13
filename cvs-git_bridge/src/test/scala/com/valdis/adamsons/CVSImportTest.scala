@@ -116,6 +116,9 @@ class CVSImportTest {
     				  Set("1.txt", "2.txt", "3.txt"),
     				  Set("1.txt", "2.txt"),
     				  Set("1.txt")), getFileNames("master"))
+    				 
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
   }
 
   @Test
