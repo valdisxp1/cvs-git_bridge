@@ -311,7 +311,9 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     val revobj = revWalk.parseAny(place)
     git.tag().setObjectId(revobj)
       		 .setName(tag.name)
-      		 .setMessage(tag.generateMessage).call()
+      		 .setMessage(tag.generateMessage)
+      		 //forcing the update to always use the latest tag version
+      		 .setForceUpdate(true).call()
   }
 }
 /**
