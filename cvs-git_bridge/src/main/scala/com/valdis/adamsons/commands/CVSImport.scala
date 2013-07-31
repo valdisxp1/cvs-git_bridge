@@ -34,18 +34,33 @@ object CVSImport extends CommandParser{
     val autoGraft = true
     
     def apply = {
-      //main branch at master
-      {
-      //get last the last updated date
-      val lastUpdatedVal = bridge.lastUpdated("master")
-      log("last updated:" + lastUpdatedVal)
-      val commits = cvsrepo.getCommitList(lastUpdatedVal,None)
-      bridge.appendCommits(commits, "master", cvsrepo)
-      }
+      importTrunk      
       log("looking up all other branches and tags")
       //other branches follow
       val branches = cvsrepo.resolveAllBranches
       log("processing " + branches.size + " branches")
+      if (autoGraft) {
+        importBranchesAndGraft(branches)
+      } else {
+        importBranches(branches)
+      }
+      if (resolveTags) {
+        resolveTags(branches)
+      }
+      0
+    }
+
+    private def importBranches(branches: Set[CVSTag]) = {
+      branches.foreach(branch => {
+        val lastUpdatedVal = bridge.lastUpdated(branch.name)
+        log("last updated:" + lastUpdatedVal)
+        val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
+        createBranchPoint(branch)
+        bridge.appendCommits(commits, branch.name, cvsrepo)
+      })
+    }
+    
+    private def importBranchesAndGraft(branches: Set[CVSTag]) ={
       val branchesByDepth = branches.groupBy(_.depth)
       branchesByDepth.toSeq.sortBy(_._1).foreach(pair => {
         val depth = pair._1
@@ -71,12 +86,17 @@ object CVSImport extends CommandParser{
           bridge.appendCommits(commits, branch.name, cvsrepo)
         })
       })
-      if (resolveTags) {
-        resolveTags(branches)
-      }
-      0
     }
-
+    
+    private def importTrunk = {
+      //main branch at master
+      //get last the last updated date
+      val lastUpdatedVal = bridge.lastUpdated("master")
+      log("last updated:" + lastUpdatedVal)
+      val commits = cvsrepo.getCommitList(lastUpdatedVal,None)
+      bridge.appendCommits(commits, "master", cvsrepo)
+      }
+    
     private def createBranchPoint(branch: CVSTag) = {
       val branchPointName = branch.name + bridge.branchPointNameSuffix
       bridge.appendCommits(getCommitsForTag(branch.getBranchParent).toSeq, branchPointName, cvsrepo)
