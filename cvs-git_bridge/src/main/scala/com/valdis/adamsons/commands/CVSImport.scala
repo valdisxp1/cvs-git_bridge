@@ -31,6 +31,7 @@ object CVSImport extends CommandParser{
     private def getCommitsForTag(tag: CVSTag): Iterable[CVSCommit] = tag.fileVersions.flatMap(version => cvsrepo.getCommit(version._1, version._2))
    
     val resolveTags = true
+    val autoGraft = true
     
     def apply = {
       //main branch at master
@@ -44,9 +45,9 @@ object CVSImport extends CommandParser{
       log("looking up all other branches and tags")
       //other branches follow
       val branches = cvsrepo.resolveAllBranches
-      log("processing "+branches.size+" branches")
+      log("processing " + branches.size + " branches")
       val branchesByDepth = branches.groupBy(_.depth)
-      branchesByDepth.toSeq.sortBy(_._1).foreach((pair) => {
+      branchesByDepth.toSeq.sortBy(_._1).foreach(pair => {
         val depth = pair._1
         val branchesForDepth = pair._2
         val possibleParentBranches = if (depth == 2) {
@@ -54,7 +55,7 @@ object CVSImport extends CommandParser{
         } else {
           branchesByDepth.get(depth - 1).toSet.flatten.map(_.name)
         }
-        branchesForDepth.foreach((branch) => {
+        branchesForDepth.foreach(branch => {
           val lastUpdatedVal = bridge.lastUpdated(branch.name)
           log("last updated:" + lastUpdatedVal)
           val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
@@ -63,14 +64,9 @@ object CVSImport extends CommandParser{
             val graftLocation = getGraftLocation(branch, possibleParentBranches)
             //graft it
             log("graft:" + graftLocation)
-            graftLocation.map((location) => bridge.addBranch(branch.name, location))
+            graftLocation.map(location => bridge.addBranch(branch.name, location))
             //if no graft found at least add the missing commits from the branch parent
-            .getOrElse({
-                val branchPointName = branch.name + bridge.branchPointNameSuffix
-                bridge.appendCommits(getCommitsForTag(branch.getBranchParent).toSeq, branchPointName, cvsrepo)
-                val ref = bridge.getRef(bridge.headRefPrefix + branchPointName)
-                ref.foreach(bridge.updateRef(bridge.cvsRefPrefix + branch.name, _))
-              })
+            .getOrElse(createBranchPoint(branch))
           }
           bridge.appendCommits(commits, branch.name, cvsrepo)
         })
@@ -80,8 +76,15 @@ object CVSImport extends CommandParser{
       }
       0
     }
-    
-    def resolveTags(branches:Set[CVSTag])={
+
+    private def createBranchPoint(branch: CVSTag) = {
+      val branchPointName = branch.name + bridge.branchPointNameSuffix
+      bridge.appendCommits(getCommitsForTag(branch.getBranchParent).toSeq, branchPointName, cvsrepo)
+      val ref = bridge.getRef(bridge.headRefPrefix + branchPointName)
+      ref.foreach(bridge.updateRef(bridge.cvsRefPrefix + branch.name, _))
+    }
+
+    private def resolveTags(branches: Set[CVSTag]) = {
       //tags
       log("resolving tags")
       val tagNames = cvsrepo.getTagNameSet
