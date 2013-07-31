@@ -30,6 +30,7 @@ object CVSImport extends CommandParser{
 
     private def getCommitsForTag(tag: CVSTag): Iterable[CVSCommit] = tag.fileVersions.flatMap(version => cvsrepo.getCommit(version._1, version._2))
    
+    val resolveTags = true
     
     def apply = {
       //main branch at master
@@ -74,7 +75,13 @@ object CVSImport extends CommandParser{
           bridge.appendCommits(commits, branch.name, cvsrepo)
         })
       })
-
+      if (resolveTags) {
+        resolveTags(branches)
+      }
+      0
+    }
+    
+    def resolveTags(branches:Set[CVSTag])={
       //tags
       log("resolving tags")
       val tagNames = cvsrepo.getTagNameSet
@@ -92,7 +99,6 @@ object CVSImport extends CommandParser{
           }
         })
       })
-      0
     }
   }
   
