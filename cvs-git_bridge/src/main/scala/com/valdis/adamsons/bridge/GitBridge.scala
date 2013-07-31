@@ -224,7 +224,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       objectId.map((id) => {
         val logs = git.log().add(id).call()
         logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)))).filter(_.isPointless)
-      }).flatten
+      }).getOrElse(None)
     }
   
   /** 

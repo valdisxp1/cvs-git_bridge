@@ -51,7 +51,7 @@ object CVSImport extends CommandParser{
         val possibleParentBranches = if (depth == 2) {
           List("master")
         } else {
-          branchesByDepth.get(depth - 1).flatten.map(_.name)
+          branchesByDepth.get(depth - 1).toSet.flatten.map(_.name)
         }
         branchesForDepth.foreach((branch) => {
           val lastUpdatedVal = bridge.lastUpdated(branch.name)
