@@ -43,9 +43,11 @@ class CVSImportTest {
     logs.count(a => true)
   }
   
-  def tags={
+  def tags = {
     gitUtils.git.tagList().call().toList.map(tag => tag.getName() -> tag.getObjectId()).toMap
   }
+
+  def tagNames = tags.keys.toSet.map((s: String) => s.drop("refs/tags/".length))
 
   def getFileNames(branch:String) = {
     val logs = gitUtils.git.log().add(gitUtils.repo.resolve(branch)).call()
@@ -231,5 +233,14 @@ class CVSImportTest {
     assertEquals(2, commitCount("master"))
     assertEquals(3, commitCount("opengl"))
     assertEquals(6, commitCount("experiment"))
+
+    def hasBranchPoint(branch: String) = bridge.hasRef(bridge.cvsRefPrefix + branch + bridge.branchPointNameSuffix)
+    //all grafted
+    assertFalse(hasBranchPoint("directx"))
+    assertFalse(hasBranchPoint("opengl"))
+    assertFalse(hasBranchPoint("experiment"))
+
+    //tags
+    assertEquals(Set("libs_start", "experiment_start"), tagNames)
   }
 }
