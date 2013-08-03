@@ -178,8 +178,8 @@ class CVSImportTest {
   @Test
   def testBranchAndTag {
     new TestableCVSImportCommand(bridge, "test/cvsroot", "branchtest").apply
-    assertEquals(2, commitCount("master"))
-    assertEquals(List(Set("main.cpp"),Set("main.cpp")), getFileNames("master"))
+    assertEquals(1, commitCount("master"))
+    assertEquals(List(Set("main.cpp")), getFileNames("master"))
     // includes "master" commits
     assertEquals(3, commitCount("branch"))
     assertEquals(List(Set("main.cpp","README.txt"),Set("main.cpp","README.txt"),Set("main.cpp")), getFileNames("branch"))
@@ -187,13 +187,13 @@ class CVSImportTest {
   
   @Test
   def testMultiBranch {
-    new TestableCVSImportCommand(bridge,"test/cvsroot", "multibranchtest").apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
     checkMultibranch
   }
   
   @Test
   def testBadBranch {
-    new TestableCVSImportCommand(bridge,"test/cvsroot", "outofsynctest").apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "outofsynctest").apply
     assertEquals(4, commitCount("bad_branch"))//includes branchpoint
     assertEquals(2, commitCount("bad_branch.branch_point"))
     assertEquals(4, commitCount("master"))
@@ -208,15 +208,14 @@ class CVSImportTest {
   @Test
   def testNoGraft {
     new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, false).apply
-    //includes pointless commits
-    assertEquals(3, commitCount("directx"))
-    assertEquals(7, commitCount("master"))
-    assertEquals(5, commitCount("opengl"))
-    assertEquals(8, commitCount("experiment"))
+    assertEquals(2, commitCount("directx"))
+    assertEquals(2, commitCount("master"))
+    assertEquals(3, commitCount("opengl"))
+    assertEquals(6, commitCount("experiment"))
 
-    assertEquals(2, commitCount("directx" + bridge.branchPointNameSuffix))
-    assertEquals(3, commitCount("opengl" + bridge.branchPointNameSuffix))
-    assertEquals(5, commitCount("experiment" + bridge.branchPointNameSuffix))
+    assertEquals(1, commitCount("directx" + bridge.branchPointNameSuffix))
+    assertEquals(1, commitCount("opengl" + bridge.branchPointNameSuffix))
+    assertEquals(3, commitCount("experiment" + bridge.branchPointNameSuffix))
     
   }
 
@@ -224,12 +223,12 @@ class CVSImportTest {
   def after {
     bridge.close
     gitUtils.close
-//    clearDirs
+    clearDirs
   }
   
   private def checkMultibranch = {
     assertEquals(2, commitCount("directx"))
-    assertEquals(7, commitCount("master"))//includes pointless commits
+    assertEquals(2, commitCount("master"))
     assertEquals(3, commitCount("opengl"))
     assertEquals(6, commitCount("experiment"))
   }

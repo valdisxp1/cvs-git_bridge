@@ -64,11 +64,12 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         }).getOrElse(false)
       })
       log("last position: " + lastImportPosition)
-      if (lastImportPosition < 0) {
+      val notImportedCommits = if (lastImportPosition < 0) {
         sortedCommits
       } else {
         sortedCommits.drop(lastImportPosition + 1)
       }
+      notImportedCommits.filter(!_.isPointless)
     }
 
   def appendCommits(commits: Seq[CVSCommit], branch: String, cvsrepo: CVSRepository) {
@@ -77,6 +78,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       log("Sorting done")
 	  log("Adding " + sortedCommits.length + " commits to branch " + branch)
       val relevantCommits =  getRelevantCommits(sortedCommits, branch)
+      log("Filtered, adding " + sortedCommits.length + " useful commits to branch " + branch)
       relevantCommits.foreach((commit)=>{
         log(commit.filename);
         log(commit.author);
