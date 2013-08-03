@@ -27,7 +27,7 @@ trait CommandParser{
   val subcommands: List[CommandParser] = Nil
   def parse(args: List[String]): Command = {
     parseSubcommands(args)
-      .getOrElse(parseCommand(args)
+      .getOrElse(parseCommand(args).map(applyFlags)
         .getOrElse(parseHelp(args)
         .getOrElse(generateUsage)))
   }
@@ -57,6 +57,9 @@ trait CommandParser{
     }
   }
   protected def parseCommand(args: List[String]): Option[Command]
+
+  protected def hasFlag(flag:String) = System.getProperty(flag, null) != null  
+  protected def applyFlags(command: Command): Command = command
   
   def main(args: Array[String]): Unit = {
     parse(args.toList).apply

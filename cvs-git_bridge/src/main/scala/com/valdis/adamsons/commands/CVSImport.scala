@@ -17,7 +17,10 @@ import com.valdis.adamsons.bridge.GitBridge
  * Parser for CVS repository importing command.
  */
 object CVSImport extends CommandParser{
-  case class CVSImportCommand(val cvsRoot: Option[String], val module: Option[String]) extends Command with SweetLogger{
+  case class CVSImportCommand(val cvsRoot: Option[String],
+		  					  val module: Option[String],
+		  					  val resolveTags: Boolean = true,
+		  					  val autoGraft: Boolean = true) extends Command with SweetLogger{
     protected val logger = Logger
     
     def this() = this(None,None)
@@ -29,9 +32,6 @@ object CVSImport extends CommandParser{
     private def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = bridge.lookupTag(branch.getBranchParent, trunk)
 
     private def getCommitsForTag(tag: CVSTag): Iterable[CVSCommit] = tag.fileVersions.flatMap(version => cvsrepo.getCommit(version._1, version._2))
-   
-    val resolveTags = true
-    val autoGraft = true
     
     def apply = {
       importTrunk      
@@ -133,6 +133,16 @@ object CVSImport extends CommandParser{
     case List("-d", root, mod) => Some(CVSImportCommand(root, mod))
     case Nil => Some(CVSImportCommand())
     case _ => None
+  }
+
+  override protected def applyFlags(command: Command) = {
+    command match {
+      case cmd: CVSImportCommand =>
+        val resolveTags = !hasFlag("skipTags") || hasFlag("resolveTags")
+        val autoGraft = !hasFlag("noGraft") || hasFlag("graft")
+        cmd.copy(resolveTags = resolveTags, autoGraft = autoGraft)
+      case _ => super.applyFlags(command)
+    }
   }
   
   val aliases = List("cvsimport","import")
