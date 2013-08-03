@@ -33,11 +33,18 @@ class CVSImportTest {
 
   private class TestableCVSImportCommand(override val bridge: GitBridge,
 		  											  cvsRoot: String,
-		  											  module: String) extends CVSImportCommand(cvsRoot, module)
+		  											  module: String,
+		  											  resolveTags: Boolean = true,
+		  											  autoGraft: Boolean = true
+		  											  ) extends CVSImportCommand(Some(cvsRoot), Some(module),resolveTags,autoGraft)
 
   def commitCount(branch: String) = {
     val logs = gitUtils.git.log().add(gitUtils.repo.resolve(branch)).call();
     logs.count(a => true)
+  }
+  
+  def tags={
+    gitUtils.git.tagList().call().toList.map(tag => tag.getName() -> tag.getObjectId()).toMap
   }
 
   def getFileNames(branch:String) = {
@@ -116,9 +123,14 @@ class CVSImportTest {
     				  Set("1.txt", "2.txt", "3.txt"),
     				  Set("1.txt", "2.txt"),
     				  Set("1.txt")), getFileNames("master"))
-    				 
+  }
+  
+  @Test
+  def testIncremental2 {
     new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
+    checkMultibranch
     new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
+    checkMultibranch
   }
 
   @Test
@@ -164,7 +176,7 @@ class CVSImportTest {
   }
   
   @Test
-  def testBranchAndTag{
+  def testBranchAndTag {
     new TestableCVSImportCommand(bridge, "test/cvsroot", "branchtest").apply
     assertEquals(2, commitCount("master"))
     assertEquals(List(Set("main.cpp"),Set("main.cpp")), getFileNames("master"))
@@ -174,27 +186,51 @@ class CVSImportTest {
   }
   
   @Test
-  def testMultiBranch{
+  def testMultiBranch {
     new TestableCVSImportCommand(bridge,"test/cvsroot", "multibranchtest").apply
-    assertEquals(2, commitCount("directx"))
-    assertEquals(7, commitCount("master"))//includes pointless commits
-    assertEquals(3, commitCount("opengl"))
-    assertEquals(6, commitCount("experiment"))
+    checkMultibranch
   }
   
   @Test
-  def testBadBranch{
+  def testBadBranch {
     new TestableCVSImportCommand(bridge,"test/cvsroot", "outofsynctest").apply
     assertEquals(4, commitCount("bad_branch"))//includes branchpoint
     assertEquals(2, commitCount("bad_branch.branch_point"))
     assertEquals(4, commitCount("master"))
   }
   
+  @Test
+  def testNoTags {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", false).apply
+    assertEquals(Map(), tags)
+  }
+  
+  @Test
+  def testNoGraft {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, false).apply
+    //includes pointless commits
+    assertEquals(3, commitCount("directx"))
+    assertEquals(7, commitCount("master"))
+    assertEquals(5, commitCount("opengl"))
+    assertEquals(8, commitCount("experiment"))
+
+    assertEquals(2, commitCount("directx" + bridge.branchPointNameSuffix))
+    assertEquals(3, commitCount("opengl" + bridge.branchPointNameSuffix))
+    assertEquals(5, commitCount("experiment" + bridge.branchPointNameSuffix))
+    
+  }
 
   @After
   def after {
     bridge.close
     gitUtils.close
-    clearDirs
+//    clearDirs
+  }
+  
+  private def checkMultibranch = {
+    assertEquals(2, commitCount("directx"))
+    assertEquals(7, commitCount("master"))//includes pointless commits
+    assertEquals(3, commitCount("opengl"))
+    assertEquals(6, commitCount("experiment"))
   }
 }
