@@ -238,7 +238,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   }
 
   def getPointlessCVSCommits: Iterable[CVSCommit]= {
-      val objectId = Option(repo.resolve(pointlessCommitsBranch))
+      val objectId = Option(repo.resolve(cvsRefPrefix + pointlessCommitsBranch))
       objectId.map((id) => {
         val logs = git.log().add(id).call()
         logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId))))
