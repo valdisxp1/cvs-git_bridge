@@ -33,7 +33,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
      */
   val branchPointNameSuffix = ".branch_point"
   
-  val trunckBranch = "master"
+  val trunkBranch = "master"
+  
+  // needed to know if a tag is referencing a missing file, because CVS is "special"
+  val pointlessCommitsBranch = "pointless.commits.branch"
+    
    /**
     * @return the time last commit was made
     */
@@ -80,69 +84,79 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
 	  log("Adding " + sortedCommits.length + " commits to branch " + branch)
       val relevantCommits =  getRelevantCommits(sortedCommits, branch)
       log("Filtered, adding " + relevantCommits.length + " useful commits to branch " + branch)
-      relevantCommits.foreach((commit)=>{
-        log(commit.filename);
-        log(commit.author);
-        log(commit.revision);
-        log(commit.date);
-        log("\n")
-        log(commit.comment)
-        log("\n")
-        val inserter = repo.newObjectInserter()
-        //stage
-        try {
-          val treeWalk = new TreeWalk(repo)
-          
-          val parentId = getRef(cvsRefPrefix + branch)
-          
-          
-          val fileId = if(commit.isDead){None}else{
-            val file = cvsrepo.getFile(commit.filename, commit.revision)
-            log("tmp file:" + file.getAbsolutePath())
-            val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
-            log("len:"+file.length)
-            log("fileID:" + fileId.name);
-            Some(fileId)
-          } 
-          
-          val treeId = parentId.map(revWalk.parseTree(_)).map(putFile(_, commit.filename, fileId,inserter))
-        		  .getOrElse(
-        			fileId.map(createTree(commit.filename, _,inserter))
-        			 .getOrElse(createEmptyTree(inserter))
-        			)
-          
-          
-          //commit
-          val author = new PersonIdent(commit.author,commit.author+"@nowhere.com",commit.date,TimeZone.getDefault())
-          val commitBuilder = new CommitBuilder
-          commitBuilder.setTreeId(treeId)
-          commitBuilder.setAuthor(author)
-          commitBuilder.setCommitter(author)
-          commitBuilder.setMessage(commit.comment)
-          
-          parentId.foreach({
-             commitBuilder.setParentId(_)
-          })
-         
-          val commitId = inserter.insert(commitBuilder)
-          inserter.flush();
-                  
-          log("parentID:" + parentId.map(_.name));
-          log("treeID:" + treeId.name);
-          log("commitID:" + commitId.name);
-          
-          updateRef(cvsRefPrefix + branch, commitId)
-          //here can all tranformations take place
-          updateHeadRef(branch, commitId)
-          
-          val note = git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
-          log("noteId: " + note.getName());
-        } finally {
-        	inserter.release()
-        }
-      })
+      appendRawCommits(relevantCommits, branch, cvsrepo, true)
       
+      // record any pointless commits gotten from trunk
+      if (branch == trunkBranch) {
+        appendRawCommits(commits.filter(_.isPointless), pointlessCommitsBranch, cvsrepo, false)
+      }
     }
+
+  /**
+   * Simply append the commits without any checks sorting as then are given. Use with care.
+   */
+  private def appendRawCommits(commits: Seq[CVSCommit], branch: String, cvsrepo: CVSRepository, headRef:Boolean) = {
+    commits.foreach((commit) => {
+      log(commit.filename);
+      log(commit.author);
+      log(commit.revision);
+      log(commit.date);
+      log("\n")
+      log(commit.comment)
+      log("\n")
+      val inserter = repo.newObjectInserter()
+      //stage
+      try {
+        val treeWalk = new TreeWalk(repo)
+
+        val parentId = getRef(cvsRefPrefix + branch)
+
+        val fileId = if (commit.isDead) { None } else {
+          val file = cvsrepo.getFile(commit.filename, commit.revision)
+          log("tmp file:" + file.getAbsolutePath())
+          val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
+          log("len:" + file.length)
+          log("fileID:" + fileId.name);
+          Some(fileId)
+        }
+
+        val treeId = parentId.map(revWalk.parseTree(_)).map(putFile(_, commit.filename, fileId, inserter))
+          .getOrElse(
+            fileId.map(createTree(commit.filename, _, inserter))
+              .getOrElse(createEmptyTree(inserter)))
+
+        //commit
+        val author = new PersonIdent(commit.author, commit.author + "@nowhere.com", commit.date, TimeZone.getDefault())
+        val commitBuilder = new CommitBuilder
+        commitBuilder.setTreeId(treeId)
+        commitBuilder.setAuthor(author)
+        commitBuilder.setCommitter(author)
+        commitBuilder.setMessage(commit.comment)
+
+        parentId.foreach({
+          commitBuilder.setParentId(_)
+        })
+
+        val commitId = inserter.insert(commitBuilder)
+        inserter.flush();
+
+        log("parentID:" + parentId.map(_.name));
+        log("treeID:" + treeId.name);
+        log("commitID:" + commitId.name);
+
+        updateRef(cvsRefPrefix + branch, commitId)
+        //here can all tranformations take place
+        if (headRef) {
+          updateHeadRef(branch, commitId)
+        }
+
+        val note = git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
+        log("noteId: " + note.getName());
+      } finally {
+        inserter.release()
+      }
+    })
+  }
     
     //tags
      def lookupTag(tag: CVSTag,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, branch)).headOption
@@ -224,10 +238,10 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   }
 
   def getPointlessCVSCommits: Iterable[CVSCommit]= {
-      val objectId = Option(repo.resolve(trunckBranch))
+      val objectId = Option(repo.resolve(pointlessCommitsBranch))
       objectId.map((id) => {
         val logs = git.log().add(id).call()
-        logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)))).filter(_.isPointless)
+        logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId))))
       }).getOrElse(None)
     }
   
@@ -277,11 +291,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
    * @return true if there is a branch with the given name with no matching CVS branch
    */
   def isLocalBranch(branch: String) = !hasRef(cvsRefPrefix + branch) && hasRef(headRefPrefix + branch)
-  
+
   /**
-   * Streams differences between the two commits as unified type patch, that can be applied to a CVS repository. 
+   * Streams differences between the two commits as unified type patch, that can be applied to a CVS repository.
    */
-  def streamCVSDiff(out:OutputStream)(parent:ObjectId,changed:ObjectId): Unit ={
+  def streamCVSDiff(out: OutputStream)(parent: ObjectId, changed: ObjectId): Unit = {
     val commit1 = Option(revWalk.parseCommit(parent))
     val commit2 = Option(revWalk.parseCommit(changed))
     log("Diffing " + commit1 + "[" + parent.name + "]" + " vs " + commit2 + "[" + changed.name + "]")

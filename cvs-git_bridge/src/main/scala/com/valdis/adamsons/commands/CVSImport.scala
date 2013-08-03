@@ -66,7 +66,7 @@ object CVSImport extends CommandParser{
         val depth = pair._1
         val branchesForDepth = pair._2
         val possibleParentBranches = if (depth == 2) {
-          List(bridge.trunckBranch)
+          List(bridge.trunkBranch)
         } else {
           branchesByDepth.get(depth - 1).toSet.flatten.map(_.name)
         }
@@ -91,10 +91,10 @@ object CVSImport extends CommandParser{
     private def importTrunk = {
       //main branch at master
       //get last the last updated date
-      val lastUpdatedVal = bridge.lastUpdated(bridge.trunckBranch)
+      val lastUpdatedVal = bridge.lastUpdated(bridge.trunkBranch)
       log("last updated:" + lastUpdatedVal)
       val commits = cvsrepo.getCommitList(lastUpdatedVal,None)
-      bridge.appendCommits(commits, bridge.trunckBranch, cvsrepo)
+      bridge.appendCommits(commits, bridge.trunkBranch, cvsrepo)
       }
     
     private def createBranchPoint(branch: CVSTag) = {
