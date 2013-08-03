@@ -33,6 +33,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
      */
   val branchPointNameSuffix = ".branch_point"
   
+  val trunckBranch = "master"
    /**
     * @return the time last commit was made
     */
@@ -78,7 +79,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       log("Sorting done")
 	  log("Adding " + sortedCommits.length + " commits to branch " + branch)
       val relevantCommits =  getRelevantCommits(sortedCommits, branch)
-      log("Filtered, adding " + sortedCommits.length + " useful commits to branch " + branch)
+      log("Filtered, adding " + relevantCommits.length + " useful commits to branch " + branch)
       relevantCommits.foreach((commit)=>{
         log(commit.filename);
         log(commit.author);
@@ -140,6 +141,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         	inserter.release()
         }
       })
+      
     }
     
     //tags
@@ -222,7 +224,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   }
 
   def getPointlessCVSCommits: Iterable[CVSCommit]= {
-      val objectId = Option(repo.resolve("master"))
+      val objectId = Option(repo.resolve(trunckBranch))
       objectId.map((id) => {
         val logs = git.log().add(id).call()
         logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)))).filter(_.isPointless)
@@ -247,13 +249,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       val logs = git.log().add(id).call()
       val trunkCommits = logs.iterator().map(
         (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId))
-      val cleanedTag = if (branch == "master"){
-        // we will be looking at the trunk anyway, no need to clean the tag
-        tag
-        } else {
-        //clean the tag
-        cleanTag(tag)
-      }
+      val cleanedTag = cleanTag(tag)
       val result = trunkCommits.foldLeft[TagSeachState](new NotFound(cleanedTag))((oldstate, pair) => {
         log(oldstate + " with " + pair._1)
         dump(oldstate.dumpState)
