@@ -74,7 +74,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       } else {
         sortedCommits.drop(lastImportPosition + 1)
       }
-      notImportedCommits.filter(!_.isPointless)
+      notImportedCommits
     }
 
   def appendCommits(commits: Seq[CVSCommit], branch: String, cvsrepo: CVSRepository) {
@@ -82,21 +82,21 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       val sortedCommits = commits.sorted
       log("Sorting done")
 	  log("Adding " + sortedCommits.length + " commits to branch " + branch)
-      val relevantCommits =  getRelevantCommits(sortedCommits, branch)
-      log("Filtered, adding " + relevantCommits.length + " useful commits to branch " + branch)
-      appendRawCommits(relevantCommits, branch, cvsrepo, true)
+      appendSortedCommits(sortedCommits.filter(!_.isPointless), branch, cvsrepo, true)
       
       // record any pointless commits gotten from trunk
       if (branch == trunkBranch) {
-        appendRawCommits(commits.filter(_.isPointless), pointlessCommitsBranch, cvsrepo, false)
+        appendSortedCommits(sortedCommits.filter(_.isPointless), pointlessCommitsBranch, cvsrepo, false)
       }
     }
 
   /**
-   * Simply append the commits without any checks sorting as then are given. Use with care.
+   * Simply append the commits without any sorting. Use with care.
    */
-  private def appendRawCommits(commits: Seq[CVSCommit], branch: String, cvsrepo: CVSRepository, headRef:Boolean) = {
-    commits.foreach((commit) => {
+  private def appendSortedCommits(sortedCommits: Seq[CVSCommit], branch: String, cvsrepo: CVSRepository, headRef: Boolean) = {
+    val relevantCommits = getRelevantCommits(sortedCommits, branch)
+    log("Filtered, adding " + relevantCommits.length + " useful commits to branch " + branch)
+    relevantCommits.foreach((commit) => {
       log(commit.filename);
       log(commit.author);
       log(commit.revision);
