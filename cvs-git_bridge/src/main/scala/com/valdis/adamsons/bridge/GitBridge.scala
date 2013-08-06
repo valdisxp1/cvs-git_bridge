@@ -158,9 +158,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       }
     })
   }
-    
+  
     //tags
-     def lookupTag(tag: CVSTag,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, branch)).headOption
+  def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = lookupTag(branch.getBranchParent, trunk)
+  
+  def lookupTag(tag: CVSTag,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, branch)).headOption
 
   private abstract class TagSeachState {
     def tag: CVSTag
@@ -289,6 +291,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   
   def addBranch(branch: String, id: ObjectId) = updateRef(cvsRefPrefix+branch, id)
 
+  def getCVSBranches = repo.getRefDatabase().getRefs(cvsRefPrefix)
+  
   /**
    * @return true if a CVS branch with the given was imported into the repository.
    */

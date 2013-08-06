@@ -28,6 +28,8 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.lib.ObjectInserter
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.filter.RevFilter
+import scala.collection.JavaConversions._
+
 /**
  * Adds useful methods to jGit Repository object, 
  * also creates other jGit objects (like walker) as needed (lazy evaluation).
@@ -73,6 +75,10 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     new File(gitDir + ref).exists()
   }
 
+  def getAllRefs = repo.getAllRefs().seq
+  
+  def getTags = repo.getTags().seq
+  
   def getRef(branch: String): Option[ObjectId] = {
     Option(repo.resolve(branch))
   }
