@@ -35,7 +35,15 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   /**
    * @return relative path against chosen module.
    */
-  def cleanRCSpath(absolutePath:String)= absolutePath.drop(cvsroot.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2).replace("Attic/", "")
+  def cleanRCSpath(absolutePath: String) = {
+    val pathOnServer = cvsroot.map(root => if (root.startsWith(":pserver:")) {
+      val cutpos = root.lastIndexOf(':')
+      root.drop(cutpos + 1)
+    } else {
+      root
+    })
+    absolutePath.drop(pathOnServer.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2).replace("Attic/", "")
+  }
   /**
    * Should only be used for text files.
    * Binary files get corrupted because Java tries to convert them to UTF8.
