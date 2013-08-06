@@ -15,6 +15,7 @@ import com.valdis.adamsons.cvs.CVSRepository
 import com.valdis.adamsons.cvs.CVSTag
 import org.eclipse.jgit.lib.ObjectId
 import scala.collection.JavaConversions._
+import com.valdis.adamsons.utils.LazyFoldsUtil._
 import java.util.Date
 import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
@@ -164,6 +165,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   private abstract class TagSeachState {
     def tag: CVSTag
     def isFound: Boolean
+    def isDone: Boolean
     def objectId: Option[ObjectId]
     def withTag(tag: CVSTag): TagSeachState
     def withCommit(objectId: ObjectId, commit: CVSCommit) = if (commit.isPointless && tag.includesFile(commit.filename)) {
@@ -182,6 +184,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     
     private case class Found(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState{
       val isFound = true
+      val isDone = true
       val objectId = Some(objectId2)
       def withGoodCommit(objectId: ObjectId, commit: CVSCommit) = this
       def withTag(tag: CVSTag) = this
@@ -189,6 +192,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
 
     private case class NotFound(val tag: CVSTag) extends TagSeachState {
       val isFound = false
+      val isDone = false
       val objectId = None
       def withTag(tag: CVSTag) = NotFound(tag)
       def withGoodCommit(objectId: ObjectId, commit: CVSCommit) = {
@@ -207,6 +211,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     
     private case class OutOfSync(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState {
       val isFound = false
+      val isDone = true
       val objectId = Some(objectId2)
       def withGoodCommit(objectId: ObjectId,commit: CVSCommit) = this
       def withTag(tag: CVSTag) = this
@@ -215,6 +220,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   private case class PartialFound(val tag: CVSTag, objectId2: ObjectId, val found: Set[String]) extends TagSeachState {
     val objectId = Some(objectId2)
     val isFound = false
+    val isDone = false
     def withGoodCommit(objectId: ObjectId, commit: CVSCommit) = {
       val filename = commit.filename
       if (tag.includesCommit(commit)) {
@@ -264,11 +270,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       val trunkCommits = logs.iterator().map(
         (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId))
       val cleanedTag = cleanTag(tag)
-      val result = trunkCommits.foldLeft[TagSeachState](new NotFound(cleanedTag))((oldstate, pair) => {
+      val result = trunkCommits.toStream.foldLeftWhile[TagSeachState](new NotFound(cleanedTag))((oldstate, pair) => {
         log(oldstate + " with " + pair._1)
         dump(oldstate.dumpState)
         oldstate.withCommit(pair._2, pair._1)
-      })
+      })(!_.isDone)
 
       log(result)
       dump(result.dumpState)
