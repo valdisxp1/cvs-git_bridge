@@ -330,9 +330,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
 
   def addTag(place: ObjectId, tag: CVSTag) = {
     val revobj = revWalk.parseAny(place)
-    val previous = getRef(Constants.R_TAGS + tag.name).map(_.toObjectId())
-    val shouldRun = previous.map(_.toObjectId() != revobj.getId()).getOrElse(true)
+    val previous = getRef(Constants.R_TAGS + tag.name).map(revWalk.parseTag(_).getObject())
+    val shouldRun = previous.map(_ != revobj).getOrElse(true)
     val force = previous.isDefined
+    log("tagging previous: "+previous)
+    log("new: "+revobj)
     if (shouldRun) {
       git.tag().setObjectId(revobj)
         .setName(tag.name)
