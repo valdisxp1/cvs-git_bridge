@@ -141,10 +141,10 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
 
   def putFile(tree: RevTree, filename: String, fileId: Option[ObjectId], inserter: ObjectInserter): ObjectId = {
     val tokens = filename.split("/").toList
-    putFile(tree, tokens.init, tokens.last, fileId, inserter)
+    putFile(tree, tokens.init, tokens.last, fileId, inserter).getOrElse(createEmptyTree(inserter))
   }
 
-  def putFile(tree: RevTree, path: Seq[String], filename: String, fileId: Option[ObjectId], inserter: ObjectInserter): ObjectId = path match {
+  private def putFile(tree: RevTree, path: Seq[String], filename: String, fileId: Option[ObjectId], inserter: ObjectInserter): Option[ObjectId] = path match {
     case folder :: tail => {
       val treeWalk = new TreeWalk(repo)
       val treeFormatter = new TreeFormatter
@@ -156,7 +156,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       val entries = traversable.toSeq
       //TODO handle revWalkParse fail
       val mergedExistingTree = entries.find(_.pathString == folder)
-      	.map(oldentry => putFile(revWalk.parseTree(oldentry.objectId), tail, filename, fileId, inserter))
+      	.map(oldentry => putFile(revWalk.parseTree(oldentry.objectId), tail, filename, fileId, inserter)).flatten
       def createdTree = fileId.map(id=> createTree(tail, filename, id, inserter))
       //TODO can be optimized, simple algorithm
       
@@ -164,9 +164,13 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       
       val itemsToKeep = entries.filter(_.pathString != folder) 
       val toBeAdded = newTree.map(itemsToKeep :+ TreeEntry(folder,FileMode.TREE,_)).getOrElse(itemsToKeep)
-      toBeAdded.sortBy(_.pathString).foreach(entry=> treeFormatter.append(entry.pathString, entry.fileMode, entry.objectId))
-      
-      inserter.insert(treeFormatter)
+
+      if (!toBeAdded.isEmpty) {
+        toBeAdded.sortBy(_.pathString).foreach(entry => treeFormatter.append(entry.pathString, entry.fileMode, entry.objectId))
+        Some(inserter.insert(treeFormatter))
+      } else {
+        None
+      }
     }
     case Nil => {
       val treeWalk = new TreeWalk(repo)
@@ -180,8 +184,12 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       val entries = traversable.toSeq
       //TODO can be optimized, simple algorithm
       val toBeAdded = entries.filter(_.pathString != filename) ++ fileId.map(TreeEntry(filename,FileMode.REGULAR_FILE,_))
-      toBeAdded.sortBy(_.pathString).foreach(entry=> treeFormatter.append(entry.pathString, entry.fileMode, entry.objectId))
-      inserter.insert(treeFormatter)
+      if (!toBeAdded.isEmpty) {
+        toBeAdded.sortBy(_.pathString).foreach(entry => treeFormatter.append(entry.pathString, entry.fileMode, entry.objectId))
+        Some(inserter.insert(treeFormatter))
+      } else {
+        None
+      }
     }
   }
 
