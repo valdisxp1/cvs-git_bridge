@@ -162,7 +162,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     //tags
   def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = lookupTag(branch.getBranchParent, trunk)
   
-  def lookupTag(tag: CVSTag,branches:Iterable[String]): Option[ObjectId] = branches.flatMap((branch)=>lookupTag(tag, branch)).headOption
+  //converting to iterator to lookup on individual branches lazily
+  def lookupTag(tag: CVSTag,branches:Iterable[String]): Option[ObjectId] = branches.toIterator.map((branch)=>lookupTag(tag, branch)).find(_.isDefined).flatten
 
   private abstract class TagSeachState {
     def tag: CVSTag
