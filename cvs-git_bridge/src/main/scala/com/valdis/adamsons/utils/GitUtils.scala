@@ -125,6 +125,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     val tokens = filename.split("/").toList
     createTree(tokens.init, tokens.last, fileId, inserter)
   }
+  
   def createTree(path: Seq[String], filename: String, fileId: ObjectId,inserter: ObjectInserter): ObjectId = path match {
     case folder :: tail => {
       val treeFormatter = new TreeFormatter
@@ -143,7 +144,6 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     putFile(tree, tokens.init, tokens.last, fileId, inserter)
   }
 
-  //TODO prune empty branches
   def putFile(tree: RevTree, path: Seq[String], filename: String, fileId: Option[ObjectId], inserter: ObjectInserter): ObjectId = path match {
     case folder :: tail => {
       val treeWalk = new TreeWalk(repo)
@@ -154,16 +154,16 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       val traversable = new SingleTreeWalkTraversable(treeWalk)
       //stores in memory
       val entries = traversable.toSeq
-      //TODO can be optimized, simple algorithm
       //TODO handle revWalkParse fail
-      val newTree = entries.find(_.pathString == folder)
+      val mergedExistingTree = entries.find(_.pathString == folder)
       	.map(oldentry => putFile(revWalk.parseTree(oldentry.objectId), tail, filename, fileId, inserter))
-      	.getOrElse(fileId.map(id=> createTree(tail, filename, id, inserter))
-      	    //TODO someone remove me
-      	    .getOrElse(createEmptyTree(inserter))
-      	    )
-      	
-      val toBeAdded = entries.filter(_.pathString != folder) :+ TreeEntry(folder,FileMode.TREE,newTree)
+      def createdTree = fileId.map(id=> createTree(tail, filename, id, inserter))
+      //TODO can be optimized, simple algorithm
+      
+      val newTree = mergedExistingTree orElse(createdTree)
+      
+      val itemsToKeep = entries.filter(_.pathString != folder) 
+      val toBeAdded = newTree.map(itemsToKeep :+ TreeEntry(folder,FileMode.TREE,_)).getOrElse(itemsToKeep)
       toBeAdded.sortBy(_.pathString).foreach(entry=> treeFormatter.append(entry.pathString, entry.fileMode, entry.objectId))
       
       inserter.insert(treeFormatter)
