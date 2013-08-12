@@ -16,21 +16,39 @@ import com.valdis.adamsons.cvs.CVSTag
 class CVSRepositoryTest {
   @Test
   def testGetFileContents {
-	  val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest5")
-	  assertEquals("1", repo.getFileContents("1.txt", CVSFileVersion("1.1")).trim());
+    {
+      val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"), "cvstest5")
+      assertEquals("1", repo.getFileContents("1.txt", CVSFileVersion("1.1")).trim())
+    }
+    //spaces
+    {
+      val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"), "spacetest")
+      assertEquals("this is not empty", repo.getFileContents("space man.bin", CVSFileVersion("1.1")).trim())
+      assertEquals("simple file", repo.getFileContents("My documents/simple file.txt", CVSFileVersion("1.1")).trim())
+    }
   }
   @Test
   def testFileNameList {
+    {
     val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest5")
-    assertEquals(List("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt", "dir/3.txt"),repo.fileNameList);
+    assertEquals(List("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt", "dir/3.txt"),repo.fileNameList)
+    }
+    //spaces
+    {
+    val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"spacetest")
+    assertEquals(List("space man.bin", "My Documents/simple file.txt"),repo.fileNameList)
+    }
   }
   
   lazy val defaultDateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy",Locale.UK)
+  lazy val defaultDateFormat2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z",Locale.UK)
   
   def date(str:String) = defaultDateFormat.parse(str)
+  def date2(str:String) = defaultDateFormat2.parse(str)
   
   @Test
   def testGetCommitList {
+    {
     val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest5")
     val expected = List(
     		CVSCommit("1.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:38 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")),
@@ -39,8 +57,16 @@ class CVSRepositoryTest {
             CVSCommit("dir/1.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")),
             CVSCommit("dir/2.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")),
             CVSCommit("dir/3.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")))
-    assertEquals(expected, repo.getCommitList)
-    assertTrue(true);
+    assertEquals(expected, repo.getCommitList.toList)
+    }
+    //spaces
+    {
+    val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"spacetest")
+    val expected = List(
+    		CVSCommit("space man.bin",CVSFileVersion("1.1"),false,date2("2013-08-12 19:34:29 +0300"),"Valdis","added file with spaces in name",Some("JmIDJDLFOoMgub1x")),
+            CVSCommit("My Documents/simple file.txt",CVSFileVersion("1.1"),false,date2("2013-08-12 19:38:35 +0300"),"Valdis","directory with spaces",Some("mPqUXPXuv58Gvb1x")))
+    assertEquals(expected, repo.getCommitList.toList)
+    }
   }
   
   @Test
