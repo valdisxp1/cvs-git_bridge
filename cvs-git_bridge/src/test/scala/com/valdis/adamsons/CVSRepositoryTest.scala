@@ -12,6 +12,7 @@ import com.valdis.adamsons.cvs.CVSCommit
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.valdis.adamsons.cvs.CVSTag
+import scala.io.Source
 
 class CVSRepositoryTest {
   @Test
@@ -19,14 +20,23 @@ class CVSRepositoryTest {
     {
       val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"), "cvstest5")
       assertEquals("1", repo.getFileContents("1.txt", CVSFileVersion("1.1")).trim())
+      val file = repo.getFile("1.txt", CVSFileVersion("1.1"))
+      assertEquals("1", Source.fromFile(file).getLines.mkString)
     }
     //spaces
     {
       val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"), "spacetest")
       assertEquals("this is not empty", repo.getFileContents("space man.bin", CVSFileVersion("1.1")).trim())
       assertEquals("simple file", repo.getFileContents("My documents/simple file.txt", CVSFileVersion("1.1")).trim())
+      
+      val spaceManFile = repo.getFile("space man.bin", CVSFileVersion("1.1"))
+      assertEquals("this is not empty", Source.fromFile(spaceManFile).getLines.mkString)
+      
+      val simpleFile = repo.getFile("My documents/simple file.txt", CVSFileVersion("1.1"))
+      assertEquals("simple file", Source.fromFile(simpleFile).getLines.mkString)
     }
   }
+  
   @Test
   def testFileNameList {
     {
