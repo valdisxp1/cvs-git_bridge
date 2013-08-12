@@ -48,9 +48,14 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
    * Should only be used for text files.
    * Binary files get corrupted because Java tries to convert them to UTF8.
    */
-  def getFileContents(name: String, version: CVSFileVersion) = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name!!
+  def getFileContents(name: String, version: CVSFileVersion) = {
+    val process = cvsString + "co -p -r " + version + module.map(" \"" + _ + "/").getOrElse("\"") + name + "\""
+    log("running command:\n" + process)    
+    process!! 
+  }
+  
   def getFile(name: String, version: CVSFileVersion) = {
-    val process = cvsString+"co -p -r "+version +module.map(" "+ _ + "/").getOrElse("")+name
+    val process = cvsString + "co -p -r " + version + module.map(" \"" + _ + "/").getOrElse("\"") + name + "\""
     log("running command:\n" + process)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
