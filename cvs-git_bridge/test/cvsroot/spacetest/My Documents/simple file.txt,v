@@ -1,0 +1,25 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2013.08.12.16.38.35;	author Valdis;	state Exp;
+branches;
+next	;
+commitid	mPqUXPXuv58Gvb1x;
+
+
+desc
+@@
+
+
+1.1
+log
+@directory with spaces
+@
+text
+@simple file
+@

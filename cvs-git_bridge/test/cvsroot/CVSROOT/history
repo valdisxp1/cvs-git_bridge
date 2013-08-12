@@ -75,3 +75,6 @@ O51a8d781|Valdis|~/cvsworkdir/outofsynctest/*0|outofsynctest|bad_branch|outofsyn
 O51a8d79a|Valdis|~/cvsworkdir/*0|outofsynctest|bad_branch|outofsynctest
 M51a8d7ce|Valdis|~/cvsworkdir/*0|outofsynctest|1.1.2.1|A
 M51a8d7ce|Valdis|~/cvsworkdir/*0|outofsynctest|1.2.2.1|B
+O52090977|Valdis|~/cvsworkdir/*0|spacetest||spacetest
+A52090e95|Valdis|~/cvsworkdir/*0|spacetest|1.1|space man.bin
+A52090f8b|Valdis|~/cvsworkdir/spacetest|spacetest/My Documents|1.1|simple file.txt
