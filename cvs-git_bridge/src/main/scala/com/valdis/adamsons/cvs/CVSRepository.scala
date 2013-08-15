@@ -30,7 +30,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
    */
   def module(module: String) = CVSRepository(this.cvsroot, Some(module))
 
-  private def cvsString = "cvs " + cvsroot.map("-d " + _ + " ").getOrElse("");
+  private def cvsString = "cvs " + cvsroot.map("-d " + argument(_) + " ").getOrElse("");
   
   /**
    * @return relative path against chosen module.
@@ -44,18 +44,21 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     })
     absolutePath.drop(pathOnServer.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2).replace("Attic/", "")
   }
+
+  private def argument(str: String) = "\"" + str + "\""
+  
   /**
    * Should only be used for text files.
    * Binary files get corrupted because Java tries to convert them to UTF8.
    */
   def getFileContents(name: String, version: CVSFileVersion) = {
-    val process = cvsString + "co -p -r " + version + module.map(" \"" + _ + "/").getOrElse("\"") + name + "\""
+    val process = cvsString + "co -p -r " + version + " " +argument(module.map( _ + "/").getOrElse("") + name)
     log("running command:\n" + process)    
     process!! 
   }
   
   def getFile(name: String, version: CVSFileVersion) = {
-    val process = cvsString + "co -p -r " + version + module.map(" \"" + _ + "/").getOrElse("\"") + name + "\""
+    val process = cvsString + "co -p -r " + version + " " + argument(module.map( _ + "/").getOrElse("") + name)
     log("running command:\n" + process)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
@@ -64,12 +67,12 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     file
   }
   def fileNameList = {
-    val responseLines = stringToProcess(cvsString+ "rlog -R " + module.getOrElse("")).lines;
+    val responseLines = stringToProcess(cvsString+ "rlog -R " + module.map(argument).getOrElse("")).lines;
     responseLines.toList.map(cleanRCSpath)
   }
 
   private def getTagProcess = {
-    val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
     log("running command:\n" + command)
     stringToProcess(command);
   }
@@ -193,7 +196,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
 
   def resolveTag(tagName: String): CVSTag = {
-    val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
     log("running command:\n" + command)
     val process = stringToProcess(command);
     new ProcessAsTraversable(process, line => log(line))
@@ -201,7 +204,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
   
   def resolveTags(tagNames: Iterable[String]): Iterable[CVSTag] = {
-    val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
     log("running command:\n" + command)
     val process = stringToProcess(command);
     new ProcessAsTraversable(process, line => log(line))
@@ -209,7 +212,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
   
   def resolveAllTagsAndBranches: Set[CVSTag] = {
-    val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
     log("running command:\n" + command)
     val process = stringToProcess(command);
     new ProcessAsTraversable(process, line => log(line))
@@ -217,7 +220,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
   
   def resolveAllBranches: Set[CVSTag] = {
-    val command = cvsString + "rlog -h" + module.map(" " + _ + "/").getOrElse("")
+    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
     log("running command:\n" + command)
     val process = stringToProcess(command);
     new ProcessAsTraversable(process, line => log(line))
@@ -225,7 +228,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
 
   def getCommit(filename: String, version: CVSFileVersion): Option[CVSCommit] = {
-    val command = cvsString + "rlog " + " -r" + version.toString +" "+ module.map( _ + "/").getOrElse("") + filename
+    val command = cvsString + "rlog " + " -r" + version.toString +" "+ argument(module.map( _ + "/").getOrElse("") + filename)
     log("running command:\n" + command)
     parseRlogLines(stringToProcess(command)).headOption
   }
