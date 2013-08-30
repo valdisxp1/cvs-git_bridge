@@ -53,7 +53,10 @@ object CVSImport extends CommandParser{
         val lastUpdatedVal = bridge.lastUpdated(branch.name)
         log("last updated:" + lastUpdatedVal)
         val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
-        createBranchPoint(branch)
+        // only create branch points when branch is not created
+        if (!bridge.isCVSBranch(branch.name)) {
+          createBranchPoint(branch)
+        }
         bridge.appendCommits(commits, branch.name, cvsrepo)
       })
     }
