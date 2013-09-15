@@ -36,7 +36,8 @@ object CVSImport extends CommandParser{
     private def getCommitsForTag(tag: CVSTag): Iterable[CVSCommit] = tag.fileVersions.flatMap(version => cvsrepo.getCommit(version._1, version._2))
     
     def apply = {
-      if (onlyNew && !bridge.isCVSBranch(bridge.trunkBranch)) {
+      val shouldNotImportTrunk = onlyNew && bridge.isCVSBranch(bridge.trunkBranch)
+      if (!shouldNotImportTrunk) {
         importTrunk
       }
       log("looking up all other branches and tags")
