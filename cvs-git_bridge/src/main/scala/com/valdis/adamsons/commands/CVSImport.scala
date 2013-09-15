@@ -17,10 +17,14 @@ import com.valdis.adamsons.bridge.GitBridge
  * Parser for CVS repository importing command.
  */
 object CVSImport extends CommandParser{
+  /**
+   * @param onlyNew true if only add new branches and do not update allready imported ones.
+   */
   case class CVSImportCommand(val cvsRoot: Option[String],
 		  					  val module: Option[String],
 		  					  val resolveTags: Boolean = true,
-		  					  val autoGraft: Boolean = true) extends Command with SweetLogger{
+		  					  val autoGraft: Boolean = true,
+		  					  val onlyNew: Boolean = false) extends Command with SweetLogger{
     protected val logger = Logger
     
     def this() = this(None,None)
@@ -32,18 +36,21 @@ object CVSImport extends CommandParser{
     private def getCommitsForTag(tag: CVSTag): Iterable[CVSCommit] = tag.fileVersions.flatMap(version => cvsrepo.getCommit(version._1, version._2))
     
     def apply = {
-      importTrunk      
+      if (onlyNew && !bridge.isCVSBranch(bridge.trunkBranch)) {
+        importTrunk
+      }
       log("looking up all other branches and tags")
       //other branches follow
-      val branches = cvsrepo.resolveAllBranches
-      log("processing " + branches.size + " branches")
+      val allBranches = cvsrepo.resolveAllBranches
+      val branchesToImport = if (onlyNew) allBranches.filter(branch => !bridge.isCVSBranch(branch.name)) else allBranches
+      log("processing " + allBranches.size + " branches")
       if (autoGraft) {
-        importBranchesAndGraft(branches)
+        importBranchesAndGraft(branchesToImport)
       } else {
-        importBranches(branches)
+        importBranches(branchesToImport)
       }
       if (resolveTags) {
-        resolveTags(branches)
+        resolveTags(branchesToImport)
       }
       0
     }
@@ -141,7 +148,8 @@ object CVSImport extends CommandParser{
       case cmd: CVSImportCommand =>
         val resolveTags = !hasFlag("skipTags") || hasFlag("resolveTags")
         val autoGraft = !hasFlag("noGraft") || hasFlag("graft")
-        cmd.copy(resolveTags = resolveTags, autoGraft = autoGraft)
+        val onlyNew = !hasFlag("allBranches") && hasFlag("onlyNew");
+        cmd.copy(resolveTags = resolveTags, autoGraft = autoGraft, onlyNew = onlyNew)
       case _ => super.applyFlags(command)
     }
   }
