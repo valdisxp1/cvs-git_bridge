@@ -27,9 +27,9 @@ trait CommandParser{
   val subcommands: List[CommandParser] = Nil
   def parse(args: List[String]): Command = {
     parseSubcommands(args)
-      .getOrElse(parseCommand(args).map(applyFlags)
-        .getOrElse(parseHelp(args)
-        .getOrElse(generateUsage)))
+      .orElse(parseCommand(args).map(applyFlags))
+      .orElse(parseHelp(args))
+      .getOrElse(generateUsage)
   }
   
   private def generateUsage = HelpCommand(usage)
