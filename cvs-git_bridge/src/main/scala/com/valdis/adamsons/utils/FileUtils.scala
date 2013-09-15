@@ -42,15 +42,19 @@ object FileUtils extends SweetLogger{
   }
   
   private lazy val random = new Random
-  val tempDir = "temp"
+  val tempPath = "temp"
+  lazy val tempDirectory = new File(tempPath)
 
   /**
    * Creates a file with the given suffix and prefix, but randomness in between.
    * This file will NOT be deleted automatically.
    */
   def createTempFile(prefix: String, suffix: String): File = {
-    val file = new File(tempDir, prefix + System.currentTimeMillis() + "_" + random.nextInt(10000) + suffix)
+    val file = new File(tempPath, prefix + System.currentTimeMillis() + "_" + random.nextInt(10000) + suffix)
     if (file.exists()) {
+      if (!tempDirectory.exists()) {
+    	  tempDirectory.mkdirs();
+      }
       createTempFile(prefix, suffix)
     } else {
       log("creating a temporary file " + file.getAbsolutePath())
