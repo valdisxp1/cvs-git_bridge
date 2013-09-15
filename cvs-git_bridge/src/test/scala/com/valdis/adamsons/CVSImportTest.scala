@@ -35,8 +35,9 @@ class CVSImportTest {
 		  											  cvsRoot: String,
 		  											  module: String,
 		  											  resolveTags: Boolean = true,
-		  											  autoGraft: Boolean = true
-		  											  ) extends CVSImportCommand(Some(cvsRoot), Some(module),resolveTags,autoGraft)
+		  											  autoGraft: Boolean = true,
+		  											  onlyNew: Boolean = false
+		  											  ) extends CVSImportCommand(Some(cvsRoot), Some(module),resolveTags,autoGraft,onlyNew)
 
   def commitCount(branch: String) = {
     val logs = gitUtils.git.log().add(gitUtils.repo.resolve(branch)).call();
@@ -219,6 +220,14 @@ class CVSImportTest {
     assertEquals(1, commitCount("opengl" + bridge.branchPointNameSuffix))
     assertEquals(3, commitCount("experiment" + bridge.branchPointNameSuffix))
     
+  }
+  
+  @Test
+  def testOnlyNew1 {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").copy(onlyNew = true).apply
+    checkMultibranch
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").copy(onlyNew = true).apply
+    checkMultibranch
   }
 
   @After
