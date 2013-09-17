@@ -29,30 +29,32 @@ class CVSImportTest {
   def tempDir = new File("temp/")
   def patchesDir = new File("patches/")
   var bridge: GitBridge = null
-  var gitUtils: GitUtilsImpl = null
 
   private class TestableCVSImportCommand(override val bridge: GitBridge,
 		  											  cvsRoot: String,
 		  											  module: String,
 		  											  resolveTags: Boolean = true,
-		  											  autoGraft: Boolean = true
-		  											  ) extends CVSImportCommand(Some(cvsRoot), Some(module),resolveTags,autoGraft)
+		  											  autoGraft: Boolean = true,
+		  											  onlyNew: Boolean = false
+		  											  ) extends CVSImportCommand(Some(cvsRoot), Some(module),resolveTags,autoGraft,onlyNew)
 
-  def commitCount(branch: String) = {
-    val logs = gitUtils.git.log().add(gitUtils.repo.resolve(branch)).call();
+  def commitCount(branchName: String) = {
+    val branch = bridge.repo.resolve(branchName)
+    assertNotNull("Branch " + branchName + " not found", branch);
+    val logs = bridge.git.log().add(branch).call();
     logs.count(a => true)
   }
   
   def tags = {
-    gitUtils.git.tagList().call().toList.map(tag => tag.getName() -> tag.getObjectId()).toMap
+    bridge.git.tagList().call().toList.map(tag => tag.getName() -> tag.getObjectId()).toMap
   }
 
   def tagNames = tags.keys.toSet.map((s: String) => s.drop("refs/tags/".length))
 
   def getFileNames(branch:String) = {
-    val logs = gitUtils.git.log().add(gitUtils.repo.resolve(branch)).call()
+    val logs = bridge.git.log().add(bridge.repo.resolve(branch)).call()
     logs.map(_.getTree()).map((tree) => {
-      val treewalk = new TreeWalk(gitUtils.repo)
+      val treewalk = new TreeWalk(bridge.repo)
       try {
         treewalk.addTree(tree)
         treewalk.setRecursive(true)
@@ -68,9 +70,9 @@ class CVSImportTest {
   }
   
    def getObjectIds(branch:String) = {
-    val logs = gitUtils.git.log().add(gitUtils.repo.resolve(branch)).call()
+    val logs = bridge.git.log().add(bridge.repo.resolve(branch)).call()
     logs.map(_.getTree()).map((tree) => {
-      val treewalk = new TreeWalk(gitUtils.repo)
+      val treewalk = new TreeWalk(bridge.repo)
       try {
         treewalk.addTree(tree)
         treewalk.setRecursive(true)
@@ -96,9 +98,8 @@ class CVSImportTest {
     clearDirs
     println("using git directory:" + gitDirString)
     println("num:" + num)
-    gitUtils = new GitUtilsImpl(gitDirString)
     new InitCommand() {
-      override val repo = gitUtils.repo
+      override val repo = new GitUtilsImpl(gitDirString).repo
     }.apply
     bridge = new GitBridge(gitDirString)
   }
@@ -220,11 +221,18 @@ class CVSImportTest {
     assertEquals(3, commitCount("experiment" + bridge.branchPointNameSuffix))
     
   }
+  
+  @Test
+  def testOnlyNew1 {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply
+    checkMultibranch
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply
+    checkMultibranch
+  }
 
   @After
   def after {
     bridge.close
-    gitUtils.close
     clearDirs
   }
   
