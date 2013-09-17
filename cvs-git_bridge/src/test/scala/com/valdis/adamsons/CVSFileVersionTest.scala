@@ -10,7 +10,7 @@ class CVSFileVersionTest {
     {
       val versionStr = "1.1"
       val list = List(1,1)
-      assertEquals(list,CVSFileVersion(versionStr).list)
+      assertEquals(list,CVSFileVersion(versionStr).seq)
       assertEquals(versionStr,CVSFileVersion(versionStr).toString)
       assertEquals(versionStr,CVSFileVersion(list).toString)
       assertEquals(CVSFileVersion(list),CVSFileVersion(versionStr))
@@ -18,7 +18,7 @@ class CVSFileVersionTest {
     {
       val versionStr = "1.1.0.3"
       val list = List(1,1,0,3)
-      assertEquals(list,CVSFileVersion(versionStr).list)
+      assertEquals(list,CVSFileVersion(versionStr).seq)
       assertEquals(versionStr,CVSFileVersion(versionStr).toString)
       assertEquals(versionStr,CVSFileVersion(list).toString)
       assertEquals(CVSFileVersion(list),CVSFileVersion(versionStr))
@@ -26,7 +26,7 @@ class CVSFileVersionTest {
     {
       val versionStr = "1.1.2.1.0.2"
       val list = List(1,1,2,1,0,2)
-      assertEquals(list,CVSFileVersion(versionStr).list)
+      assertEquals(list,CVSFileVersion(versionStr).seq)
       assertEquals(versionStr,CVSFileVersion(versionStr).toString)
       assertEquals(versionStr,CVSFileVersion(list).toString)
       assertEquals(CVSFileVersion(list),CVSFileVersion(versionStr))
