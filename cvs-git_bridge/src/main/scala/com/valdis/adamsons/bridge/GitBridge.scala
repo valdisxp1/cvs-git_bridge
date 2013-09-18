@@ -162,8 +162,9 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   }
 
   def refAsTag(ref: Ref) = {
-    val logs = git.log().add(ref.getObjectId()).call()
-    val commits = logs.iterator().map(
+    val objectId = ref.getObjectId()
+    val logs = getGitCommits(objectId)
+    val commits = logs.iterator.map(
       (commit) => CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)))
     commits.foldLeft(CVSTag (ref.getName()))(
       (tag, commit) => if (tag.includesFile(commit.filename)) {
@@ -263,7 +264,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   def getPointlessCVSCommits: Iterable[CVSCommit]= {
       val objectId = Option(repo.resolve(cvsRefPrefix + pointlessCommitsBranch))
       objectId.map((id) => {
-        val logs = git.log().add(id).call()
+        val logs = getGitCommits(id);
         logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId))))
       }).getOrElse(None)
     }
@@ -283,8 +284,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   def lookupTag(tag: CVSTag, branch: String): Option[ObjectId] = {
     val objectId = Option(repo.resolve(cvsRefPrefix + branch))
     objectId.flatMap((id) => {
-      val logs = git.log().add(id).call()
-      val trunkCommits = logs.iterator().map(
+      val logs = getGitCommits(id)
+      val trunkCommits = logs.iterator.map(
         (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId))
       val cleanedTag = cleanTag(tag)
       val result = trunkCommits.toStream.foldLeftWhile[TagSeachState](new NotFound(cleanedTag))((oldstate, pair) => {
@@ -303,6 +304,15 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     })
   }
     
+  
+  /**
+   * The lazy kind of rebasing. Only changes commit ordering, copies objectTree
+   * */
+  def moveCommits(first: Option[ObjectId], last: ObjectId, target: ObjectId): ObjectId={
+    //TODO
+    
+    target
+  }
   
   def addBranch(branch: String, id: ObjectId) = updateRef(cvsRefPrefix+branch, id)
 
@@ -361,6 +371,10 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         //forcing the update to use the latest tag version
         .setForceUpdate(force).call()
     }
+  }
+  
+  private def getGitCommits(objectId: ObjectId): Iterable[RevCommit] = {
+    git.log().add(objectId).call()
   }
 }
 /**
