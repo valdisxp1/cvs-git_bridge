@@ -23,6 +23,8 @@ import java.io.OutputStream
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.DiffEntry
+import com.valdis.adamsons.cvs.CVSTag
+import org.eclipse.jgit.lib.Ref
 
 class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   override protected val logger = Logger
@@ -158,6 +160,18 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       }
     })
   }
+
+  def refAsTag(ref: Ref) = {
+    val logs = git.log().add(ref.getObjectId()).call()
+    val commits = logs.iterator().map(
+      (commit) => CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)))
+    commits.foldLeft(CVSTag (ref.getName()))(
+      (tag, commit) => if (tag.includesFile(commit.filename)) {
+        tag.withFile(commit.filename, commit.revision)
+      } else {
+        tag
+      })
+  } 
   
     //tags
   def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = lookupTag(branch.getBranchParent, trunk)
@@ -292,6 +306,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   
   def addBranch(branch: String, id: ObjectId) = updateRef(cvsRefPrefix+branch, id)
 
+  def removeBranch(branch: String) = {
+    removeRef(cvsRefPrefix + branch)
+    removeRef(headRefPrefix + branch)
+  }
+  
   def getCVSBranches = repo.getRefDatabase().getRefs(cvsRefPrefix)
   
   /**

@@ -92,6 +92,11 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     updateCmd.setForceUpdate(true);
     updateCmd.update(revWalk);
   }
+  
+  def removeRef(ref:String) = {
+    log("remove ref:"+ref)
+    
+  }
 
   def getMergeBase(id1: ObjectId, id2: ObjectId): Option[RevCommit] = {
     val commit1 = Option(revWalk.parseCommit(id1))
