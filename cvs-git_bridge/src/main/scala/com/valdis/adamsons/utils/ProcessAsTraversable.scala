@@ -14,6 +14,5 @@ case class ProcessAsTraversable(val processBuilder: ProcessBuilder, val errorLog
 	  val processLogger = ProcessLogger(line => f(line), line => errorLogger(line))
 	  val process = processBuilder.run(processLogger)
 	  process.exitValue
-	  process.destroy
 	}
 }

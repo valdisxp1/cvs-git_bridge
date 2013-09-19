@@ -64,7 +64,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     //forces the to wait until process finishes.
     val process =processStr.#>(file).run
     val exitvalue=process.exitValue;
-    process.destroy
     file.deleteOnExit()
     file
   }
