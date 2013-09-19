@@ -58,11 +58,13 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
   }
   
   def getFile(name: String, version: CVSFileVersion) = {
-    val process = cvsString + "co -p -r " + version + " " + argument(module.map( _ + "/").getOrElse("") + name)
-    log("running command:\n" + process)
+    val processStr = cvsString + "co -p -r " + version + " " + argument(module.map( _ + "/").getOrElse("") + name)
+    log("running command:\n" + processStr)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
-    val exitvalue=process.#>(file).run.exitValue;
+    val process =processStr.#>(file).run
+    val exitvalue=process.exitValue;
+    process.destroy
     file.deleteOnExit()
     file
   }
@@ -227,6 +229,15 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     	.foldLeft(new RlogAllBranchParseState())(_ withLine _).tags.values.toSet
   }
 
+  def getCommitsForTag(tag: CVSTag) = {
+    val commandStrings = tag.fileVersions.map(entry => cvsString + "rlog " + " -r" + entry._2.toString + " " + argument(module.map(_ + "/").getOrElse("") + entry._1))
+    log("running command batch")
+    commandStrings.foreach(log(_))
+    log("end of batch")
+    val combinedProcess = commandStrings.map(stringToProcess(_)).reduce(_ ### _)
+    parseRlogLines(combinedProcess)
+  }
+  
   def getCommit(filename: String, version: CVSFileVersion): Option[CVSCommit] = {
     val command = cvsString + "rlog " + " -r" + version.toString +" "+ argument(module.map( _ + "/").getOrElse("") + filename)
     log("running command:\n" + command)

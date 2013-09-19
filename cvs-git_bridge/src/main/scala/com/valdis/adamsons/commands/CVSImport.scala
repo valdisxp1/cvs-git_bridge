@@ -33,8 +33,6 @@ object CVSImport extends CommandParser{
     val bridge: GitBridge = Bridge
     val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
     
-    private def getCommitsForTag(tag: CVSTag): Iterable[CVSCommit] = tag.fileVersions.flatMap(version => cvsrepo.getCommit(version._1, version._2))
-    
     def apply = {
       val shouldNotImportTrunk = onlyNew && bridge.isCVSBranch(bridge.trunkBranch)
       if (!shouldNotImportTrunk) {
@@ -108,7 +106,7 @@ object CVSImport extends CommandParser{
     
     private def createBranchPoint(branch: CVSTag) = {
       val branchPointName = branch.name + bridge.branchPointNameSuffix
-      bridge.appendCommits(getCommitsForTag(branch.getBranchParent).toSeq, branchPointName, cvsrepo)
+      bridge.appendCommits(cvsrepo.getCommitsForTag(branch.getBranchParent).toSeq, branchPointName, cvsrepo)
       val ref = bridge.getRef(bridge.headRefPrefix + branchPointName)
       ref.foreach(bridge.updateRef(bridge.cvsRefPrefix + branch.name, _))
     }
