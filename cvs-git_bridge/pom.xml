@@ -4,7 +4,7 @@
 
   <groupId>com.valdis.adamsons</groupId>
   <artifactId>cvs-git_bridge</artifactId>
-  <version>0.1.3</version>
+  <version>0.1.4</version>
   <packaging>jar</packaging>
 
   <name>cvs-git_bridge</name>
