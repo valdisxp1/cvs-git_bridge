@@ -8,7 +8,7 @@ class Graft extends CommandParser{
   case object GraftCommand extends Command{
     val bridge: GitBridge = Bridge
     def apply = {
-      val (branchPointsToGraft, graftTargets) = bridge.getAllRefs.partition(_._1.endsWith(bridge.branchPointNameSuffix))
+      val (branchPointsToGraft, graftTargets) = bridge.getCVSBranches.partition(_._1.endsWith(bridge.branchPointNameSuffix))
       val tagsToGraft = branchPointsToGraft.mapValues(ref => (ref.getObjectId(), bridge.refAsTag(ref)))
       val graftTargetNames = graftTargets.keys
       tagsToGraft.foreach(item => {
@@ -21,8 +21,9 @@ class Graft extends CommandParser{
         val graftPoint = bridge.getGraftLocation(tag, targets)
         graftPoint.foreach(point => {
           //TODO handle None.get
-          val branchTop = bridge.getRef(bridge.cvsRefPrefix + branchName).get
-          bridge.moveCommits(Some(branchPointId), branchTop, point)
+          val branchTop = bridge.getRef(branchName).get
+          val newBranchTop = bridge.moveCommits(Some(branchPointId), branchTop, point)
+          bridge.updateRef(branchName, newBranchTop)
           bridge.removeBranch(name)
         })
       })

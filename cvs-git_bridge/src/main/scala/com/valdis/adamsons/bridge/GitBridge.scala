@@ -348,7 +348,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     removeRef(headRefPrefix + branch)
   }
   
-  def getCVSBranches = repo.getRefDatabase().getRefs(cvsRefPrefix)
+  def getCVSBranches = repo.getRefDatabase().getRefs(cvsRefPrefix).toMap
   
   /**
    * @return true if a CVS branch with the given was imported into the repository.
