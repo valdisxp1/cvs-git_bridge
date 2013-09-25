@@ -303,16 +303,46 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       }
     })
   }
-    
-  
+
   /**
    * The lazy kind of rebasing. Only changes commit ordering, copies objectTree
-   * */
-  def moveCommits(first: Option[ObjectId], last: ObjectId, target: ObjectId): ObjectId={
-    //TODO
-    
-    target
+   */
+  def moveCommits(first: Option[ObjectId], last: ObjectId, target: ObjectId): ObjectId = {
+    val allCommits = getGitCommits(last)
+    val movableCommits = first.map(lim => allCommits.takeWhile(_.getId() != lim)).getOrElse(allCommits)
+    //move main branch
+    val newLocation = movableCommits.foldRight(target)((commit, id) => {
+      val inserter = repo.newObjectInserter()
+      try {
+        val commitBuilder = new CommitBuilder
+        commitBuilder.setTreeId(commit.getTree().getId())
+        commitBuilder.setAuthor(commit.getAuthorIdent())
+        commitBuilder.setCommitter(commit.getCommitterIdent())
+        commitBuilder.setMessage(commit.getFullMessage())
+
+        commitBuilder.setParentId(id)
+
+        val commitId = inserter.insert(commitBuilder)
+        inserter.flush();
+
+        //copyNote
+        val oldNote = getNoteMessage(commit.getId())
+        val note = git.notesAdd().setMessage(oldNote).setObjectId(commit).call()
+        log("noteId: " + note.getName());
+        commitId
+      } finally {
+        inserter.release()
+      }
+    })
+    //TODO XXX
+    //find branches pointing at it
+    //move'em
+    //find tags pointing to it.
+    //change them
+    newLocation
   }
+  
+//  def copyCommit()
   
   def addBranch(branch: String, id: ObjectId) = updateRef(cvsRefPrefix+branch, id)
 
