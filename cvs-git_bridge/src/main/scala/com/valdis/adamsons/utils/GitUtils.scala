@@ -75,7 +75,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     new File(gitDir + ref).exists()
   }
 
-  def getAllRefs = repo.getAllRefs().seq
+  def getAllRefs = repo.getAllRefs().toMap
   
   def getTags = repo.getTags().seq
   
