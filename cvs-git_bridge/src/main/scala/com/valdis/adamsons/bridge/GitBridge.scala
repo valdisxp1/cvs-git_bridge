@@ -311,11 +311,12 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     val allCommits = getGitCommits(last)
     val movableCommits = first.map(lim => allCommits.takeWhile(_.getId() != lim)).getOrElse(allCommits)
     //move main branch
-    val newLocation = copyCommits(target, movableCommits)
+    //commit map grows over time
+    val (newLocation,commitMap) = copyCommits(target, movableCommits)
     //find branches pointing at it
     val branchesByCommitId = getAllRefs.mapValues(_.getObjectId()).groupBy(_._2).map(pair => (pair._1, pair._2.unzip._1))
     //XXX possible problems with first
-    val realatedBranches = branchesByCommitId.map(pair => {
+    val relatedBranches = branchesByCommitId.map(pair => {
       val key = pair._1
       val value = pair._2
       val mergeBase = getMergeBase(last, key)
@@ -323,19 +324,23 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     }).flatten.toMap
     //move'em
     //TODO do as single transaction
-    realatedBranches.foreach(movable => {
+    val localMaps = relatedBranches.flatMap(movable => {
       val objectId = movable._1
       val mergeBase = movable._2._2
       val branchNames = movable._2._1
       
-      //TODO actually look for the correctId
-      val translatedId = objectId
-      
-      val newId = copyCommits(objectId, getGitCommits(translatedId))
-      branchNames.foreach(updateRef(_, newId))
+      //can this be == None?
+      val translatedId = commitMap.get(objectId)
+      translatedId.map(translated => {
+        val (newId,localCommitsMap) = copyCommits(objectId, getGitCommits(translated))
+        branchNames.foreach(updateRef(_, newId))
+        localCommitsMap
+      })
     })
+    val fullCommitMap = localMaps.reduce(_ ++ _) ++ commitMap
     //TODO XXX
-    //find tags pointing to it.
+    //find tags pointing to it
+//    val affectedTags = getTags.filter(fullCommitMap.contains((_._2.getObjectId())))
     //change them
     newLocation
   }
@@ -404,8 +409,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     git.log().add(objectId).call()
   }
   
-  private def copyCommits(target: ObjectId, movableCommits: Iterable[RevCommit]): ObjectId = {
-    movableCommits.foldRight(target)((commit, id) => {
+  private def copyCommits(target: ObjectId, movableCommits: Iterable[RevCommit]) = {
+    val initial = (target,Map[ObjectId,ObjectId]())
+    movableCommits.foldRight(initial)((commit, item) => {
+      val id = item._1
+      val map =item._2
       val inserter = repo.newObjectInserter()
       try {
         val commitBuilder = new CommitBuilder
@@ -427,7 +435,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         //TODO FOLD MAP
         val mapFragment = (commit.getId() -> commitId)
         
-        commitId
+        (commitId,map + mapFragment)
       } finally {
         inserter.release()
       }

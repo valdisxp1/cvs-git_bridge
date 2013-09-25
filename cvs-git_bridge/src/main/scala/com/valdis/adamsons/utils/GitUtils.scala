@@ -77,7 +77,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
 
   def getAllRefs = repo.getAllRefs().toMap
   
-  def getTags = repo.getTags().seq
+  def getTags = repo.getTags().toMap
   
   def getRef(branch: String): Option[ObjectId] = {
     Option(repo.resolve(branch))
