@@ -229,6 +229,13 @@ class CVSImportTest {
     new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply
     checkMultibranch
   }
+  
+  @Test
+  def testOnlyNewAndTagsLater {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", false, true, true).apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply
+    checkMultibranch
+  }
 
   @After
   def after {
