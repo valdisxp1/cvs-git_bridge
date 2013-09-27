@@ -10,11 +10,7 @@ class CVSFileVersionTest {
     {
       val versionStr = "1.1"
       val list = List(1,1)
-      assertEquals(list,CVSFileVersion(versionStr).seq)
-      assertEquals(CVSFileVersion(list),CVSFileVersion(versionStr))
-      assertEquals(versionStr,CVSFileVersion(versionStr).toString)
-      assertEquals(versionStr,CVSFileVersion(list).toString)
-      assertEquals(CVSFileVersion(list),CVSFileVersion(versionStr))
+      testVersion(versionStr, list)
       
       //checking if it uses cached value
       assertTrue(CVSFileVersion.V1_1 eq CVSFileVersion(versionStr))
@@ -23,18 +19,49 @@ class CVSFileVersionTest {
     {
       val versionStr = "1.1.0.3"
       val list = List(1,1,0,3)
-      assertEquals(list,CVSFileVersion(versionStr).seq)
-      assertEquals(versionStr,CVSFileVersion(versionStr).toString)
-      assertEquals(versionStr,CVSFileVersion(list).toString)
-      assertEquals(CVSFileVersion(list),CVSFileVersion(versionStr))
+      testVersion(versionStr, list)
     }
     {
       val versionStr = "1.1.2.1.0.2"
       val list = List(1,1,2,1,0,2)
-      assertEquals(list,CVSFileVersion(versionStr).seq)
-      assertEquals(versionStr,CVSFileVersion(versionStr).toString)
-      assertEquals(versionStr,CVSFileVersion(list).toString)
-      assertEquals(CVSFileVersion(list),CVSFileVersion(versionStr))
+      testVersion(versionStr, list)
     }
+    {
+      val versionStr = "1.1.2." + Short.MaxValue
+      val list = List(1, 1, 2, Short.MaxValue)
+      testVersion(versionStr, list)
+    }
+    {
+      val versionStr = "1.1.2." + (Short.MaxValue + 1)
+      val list = List(1, 1, 2, (Short.MaxValue + 1))
+      testVersion(versionStr, list)
+    }
+    {
+      val versionStr = "1.1.2." + Byte.MaxValue
+      val list = List(1, 1, 2, Byte.MaxValue)
+      testVersion(versionStr, list)
+    }
+    {
+      val versionStr = "1.1.2." + (Byte.MaxValue + 1)
+      val list = List(1, 1, 2, (Byte.MaxValue + 1))
+      testVersion(versionStr, list)
+    }
+  }
+  @Test
+  def testIntegrity{
+    try {
+    	CVSFileVersion("1.3.4")
+    	fail("version cannot be odd length")
+    } catch {
+      case _:Throwable => {}
+    }
+  }
+  
+  private def testVersion(versionStr: String, list: List[Int]): Unit = {
+    assertEquals(list,CVSFileVersion(versionStr).seq)
+    assertEquals(CVSFileVersion(list),CVSFileVersion(versionStr))
+    assertEquals(versionStr,CVSFileVersion(versionStr).toString)
+    assertEquals(versionStr,CVSFileVersion(list).toString)
+    assertEquals(CVSFileVersion(list),CVSFileVersion(versionStr))
   }
 }

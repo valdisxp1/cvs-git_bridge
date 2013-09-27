@@ -3,6 +3,7 @@ package com.valdis.adamsons.cvs
 import scala.collection.mutable.WrappedArray
 
 case class CVSFileVersion(val seq: Seq[AnyVal]) {
+  require(seq.length % 2 == 0)
   def this(array:Array[Short]) = this(wrapShortArray(array))
   def this(array:Array[Byte]) = this(wrapByteArray(array))
   def this(array:Array[Int]) = this(wrapIntArray(array))
