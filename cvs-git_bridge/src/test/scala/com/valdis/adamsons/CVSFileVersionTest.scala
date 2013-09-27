@@ -47,16 +47,6 @@ class CVSFileVersionTest {
       testVersion(versionStr, list)
     }
   }
-  @Test
-  def testIntegrity{
-    try {
-    	CVSFileVersion("1.3.4")
-    	fail("version cannot be odd length")
-    } catch {
-      case _:Throwable => {}
-    }
-  }
-  
   private def testVersion(versionStr: String, list: List[Int]): Unit = {
     assertEquals(list,CVSFileVersion(versionStr).seq)
     assertEquals(CVSFileVersion(list),CVSFileVersion(versionStr))
