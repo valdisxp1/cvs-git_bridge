@@ -40,8 +40,14 @@ object CVSImport extends CommandParser{
       }
       log("looking up all other branches and tags")
       //other branches follow
-      def allBranches = cvsrepo.resolveAllBranches
-      val branchesToImport = if (onlyNew) allBranches.filter(branch => !bridge.isCVSBranch(branch.name)) else allBranches
+      
+      //allows the large allBranches collection to be garbageCollected
+      val (allBranchNames,branchesToImport) = {
+        val allBranches = cvsrepo.resolveAllBranches
+        val importable = if (onlyNew) allBranches.filter(branch => !bridge.isCVSBranch(branch.name)) else allBranches
+        
+        (allBranches.map(_.name),importable)
+      }
       log("processing " + branchesToImport.size + " branches")
       if (autoGraft) {
         importBranchesAndGraft(branchesToImport)
@@ -49,7 +55,7 @@ object CVSImport extends CommandParser{
         importBranches(branchesToImport)
       }
       if (resolveTags) {
-        resolveTags(branchesToImport.map(_.name), cvsrepo.getBranchNameSet)
+        resolveTags(branchesToImport.map(_.name), allBranchNames)
       }
       0
     }
