@@ -277,11 +277,15 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       tag
     }
   })
-  
-  def lookupTags(tags: Set[CVSTag],branches:Iterable[String]): Map[CVSTag,ObjectId] ={
-    val seperateResults = branches.toIterator.flatMap(branch=>lookupTagsImpl(tags, branch)).takeWhile(!_.isAllFound).map(_.objectIds)
-    seperateResults.reduce(_ ++ _).toMap
+
+  def lookupTags(tags: Set[CVSTag], branches: Iterable[String]): Map[CVSTag, ObjectId] = {
+    val seperateResults = branches.toIterator.flatMap(branch => lookupTagsImpl(tags, branch)).takeWhile(!_.isAllFound).map(_.objectIds)
+    if (!seperateResults.isEmpty) {
+      seperateResults.reduce(_ ++ _).toMap
+    } else {
+      Map()
     }
+  }
   
   private def lookupTagsImpl(tags: Set[CVSTag], branch: String) = {
     val objectId = Option(repo.resolve(cvsRefPrefix + branch))
