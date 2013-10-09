@@ -28,7 +28,7 @@ object CVSImport extends CommandParser{
     protected val logger = Logger
     
     def this() = this(None,None)
-    def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
+    def this(cvsroot: String, module: String) = this(Some(cvsroot), Some(module))
     
     val bridge: GitBridge = Bridge
     val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
@@ -40,16 +40,16 @@ object CVSImport extends CommandParser{
       }
       log("looking up all other branches and tags")
       //other branches follow
-      val allBranches = cvsrepo.resolveAllBranches
+      def allBranches = cvsrepo.resolveAllBranches
       val branchesToImport = if (onlyNew) allBranches.filter(branch => !bridge.isCVSBranch(branch.name)) else allBranches
-      log("processing " + allBranches.size + " branches")
+      log("processing " + branchesToImport.size + " branches")
       if (autoGraft) {
         importBranchesAndGraft(branchesToImport)
       } else {
         importBranches(branchesToImport)
       }
       if (resolveTags) {
-        resolveTags(branchesToImport, allBranches)
+        resolveTags(branchesToImport.map(_.name), cvsrepo.getBranchNameSet)
       }
       0
     }
@@ -107,15 +107,14 @@ object CVSImport extends CommandParser{
     private def createBranchPoint(branch: CVSTag) = {
       val branchPointName = branch.name + bridge.branchPointNameSuffix
       bridge.appendCommits(cvsrepo.getCommitsForTag(branch.getBranchParent).toSeq, branchPointName, cvsrepo)
-      val ref = bridge.getRef(bridge.headRefPrefix + branchPointName)
+      val ref = bridge.getRef(bridge.cvsRefPrefix + branchPointName)
       ref.foreach(bridge.updateRef(bridge.cvsRefPrefix + branch.name, _))
     }
 
-    private def resolveTags(newlyImportedBranches: Set[CVSTag], allBranches: Set[CVSTag]) = {
+    private def resolveTags(newlyImportedBranches: Set[String], allBranches: Set[String]) = {
       //tags
       log("resolving tags")
-      val branchNames = newlyImportedBranches.map(_.name)
-      val otherBranchNames = allBranches.map(_.name) -- branchNames
+      val otherBranchNames = allBranches -- newlyImportedBranches
       val tagNames = cvsrepo.getTagNameSet
       log("processiong " + tagNames.size + " tags in total")
       val tagGroupSize = 2000
@@ -124,7 +123,7 @@ object CVSImport extends CommandParser{
         log("processing " + tags.size + " tags")
         val resolvedTags = cvsrepo.resolveTags(tags.map(_._1))
         resolvedTags.foreach((tag) => {
-          val objectId = bridge.lookupTag(tag, branchNames) orElse bridge.lookupTag(tag, otherBranchNames)
+          val objectId = bridge.lookupTag(tag, newlyImportedBranches) orElse bridge.lookupTag(tag, otherBranchNames)
           if (objectId.isDefined) {
             bridge.addTag(objectId.get, tag)
           }
