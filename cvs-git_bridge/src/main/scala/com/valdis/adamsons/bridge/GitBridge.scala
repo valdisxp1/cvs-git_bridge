@@ -250,7 +250,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   private case class MultiTagSearchState(val searchers:Set[TagSeachState]){
     def isDone = searchers.forall(_.isDone)
     def isAllFound = searchers.forall(_.isFound)
-    def objectIds = searchers.flatMap(state => state.objectId.map(state.tag.name -> _))
+    def objectIds = searchers.flatMap(state => state.objectId.map(state.tag -> _))
     def withCommit(objectId: ObjectId, commit: CVSCommit) = MultiTagSearchState(searchers.map(_.withCommit(objectId,commit)))
   }
   
@@ -278,7 +278,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     }
   })
   
-  def lookupTags(tags: Set[CVSTag],branches:Iterable[String]): Map[String,ObjectId] ={
+  def lookupTags(tags: Set[CVSTag],branches:Iterable[String]): Map[CVSTag,ObjectId] ={
     val seperateResults = branches.toIterator.flatMap(branch=>lookupTagsImpl(tags, branch)).takeWhile(!_.isAllFound).map(_.objectIds)
     seperateResults.reduce(_ ++ _).toMap
     }
@@ -295,7 +295,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     })
   }
 
-  def lookupTags(tags: Set[CVSTag], branch: String): Map[String, ObjectId] = {
+  def lookupTags(tags: Set[CVSTag], branch: String): Map[CVSTag, ObjectId] = {
     lookupTagsImpl(tags, branch).map(_.objectIds.toMap).getOrElse(Map())
   }
   

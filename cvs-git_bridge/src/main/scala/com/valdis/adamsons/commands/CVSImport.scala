@@ -131,12 +131,7 @@ object CVSImport extends CommandParser{
       tagGroups.foreach(tags => {
         log("processing " + tags.size + " tags")
         val resolvedTags = cvsrepo.resolveTags(tags.map(_._1))
-        resolvedTags.foreach((tag) => {
-          val objectId = bridge.lookupTag(tag, newlyImportedBranches) orElse bridge.lookupTag(tag, otherBranchNames)
-          if (objectId.isDefined) {
-            bridge.addTag(objectId.get, tag)
-          }
-        })
+        bridge.lookupTags(resolvedTags.toSet, allBranches).foreach(tag => bridge.addTag(tag._2, tag._1))
       })
     }
   }
