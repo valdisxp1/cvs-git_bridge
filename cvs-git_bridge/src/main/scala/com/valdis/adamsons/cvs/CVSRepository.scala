@@ -13,8 +13,11 @@ import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.utils.FileUtils
 import com.valdis.adamsons.utils.ProcessAsTraversable
 import com.valdis.adamsons.cvs.rlog.parse.{RlogParseState, RlogTagNameLookupState}
+import java.text.DateFormat
 
-case class CVSRepository(val cvsroot: Option[String], val module: Option[String]) extends SweetLogger {
+case class CVSRepository(val cvsroot: Option[String],
+						 val module: Option[String],
+						 val serverDateFormat: DateFormat = CVSRepository.DEFAULT_CVS_DATE_FORMAT) extends SweetLogger {
   protected def logger = Logger
   def this(cvsroot: Option[String]) = this(cvsroot, None)
   def this() = this(None, None)
@@ -295,7 +298,7 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
     val revisionStr = commit(0).trim.split(' ')(1)
     val revision = CVSFileVersion(revisionStr)
     val params = commit(1).trim.dropRight(1).split(';').map(_.split(": ")).map((x) => x(0).trim -> x(1).trim).toMap
-    val date = CVSRepository.CVS_DATE_FORMAT.parse(params.get("date").getOrElse(missing("date")))
+    val date = serverDateFormat.parse(params.get("date").getOrElse(missing("date")))
     val author = params.get("author").getOrElse(missing("author"))
     val commitId = params.get("commitid");
     val isDead = params.get("state").exists(_ == "dead")
@@ -320,6 +323,6 @@ case class CVSRepository(val cvsroot: Option[String], val module: Option[String]
 object CVSRepository {
   def apply() = new CVSRepository();
   def apply(cvsroot: String, module: String) = new CVSRepository(cvsroot, module);
-  private val CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-MM-dd kk:mm:ss Z",Locale.UK)
+  private val DEFAULT_CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-MM-dd kk:mm:ss Z",Locale.UK)
   private val CVS_SHORT_DATE_FORMAT= new SimpleDateFormat("yyyy/MM/dd",Locale.UK)
 }

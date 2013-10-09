@@ -12,6 +12,7 @@ import com.valdis.adamsons.bridge.Bridge
 import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.bridge.GitBridge
+import java.text.DateFormat
 
 /**
  * Parser for CVS repository importing command.
@@ -20,14 +21,14 @@ object CVSImport extends CommandParser{
   /**
    * @param onlyNew true if only add new branches and do not update allready imported ones.
    */
-  case class CVSImportCommand(val cvsRoot: Option[String],
-		  					  val module: Option[String],
+  case class CVSImportCommand(val cvsRoot: Option[String] = None,
+		  					  val module: Option[String] = None,
+		  					  val serverDateFormat: Option[DateFormat] = None,
 		  					  val resolveTags: Boolean = true,
 		  					  val autoGraft: Boolean = true,
 		  					  val onlyNew: Boolean = false) extends Command with SweetLogger{
     protected val logger = Logger
     
-    def this() = this(None,None)
     def this(cvsroot: String, module: String) = this(Some(cvsroot), Some(module))
     
     val bridge: GitBridge = Bridge

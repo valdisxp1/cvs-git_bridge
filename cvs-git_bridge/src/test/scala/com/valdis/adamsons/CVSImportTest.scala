@@ -36,7 +36,7 @@ class CVSImportTest {
 		  											  resolveTags: Boolean = true,
 		  											  autoGraft: Boolean = true,
 		  											  onlyNew: Boolean = false
-		  											  ) extends CVSImportCommand(Some(cvsRoot), Some(module),resolveTags,autoGraft,onlyNew)
+		  											  ) extends CVSImportCommand(Some(cvsRoot), Some(module),None,resolveTags,autoGraft,onlyNew)
 
   def commitCount(branchName: String) = {
     val branch = bridge.repo.resolve(branchName)
