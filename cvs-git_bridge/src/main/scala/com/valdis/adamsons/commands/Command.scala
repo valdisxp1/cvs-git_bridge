@@ -58,6 +58,7 @@ trait CommandParser{
   }
   protected def parseCommand(args: List[String]): Option[Command]
 
+  protected def getValue(flag:String) = Option(System.getProperty(flag, null))
   protected def hasFlag(flag:String) = System.getProperty(flag, null) != null  
   protected def applyFlags(command: Command): Command = command
   

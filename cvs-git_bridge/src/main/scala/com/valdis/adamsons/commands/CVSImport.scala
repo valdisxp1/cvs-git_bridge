@@ -13,6 +13,7 @@ import com.valdis.adamsons.logger.SweetLogger
 import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.bridge.GitBridge
 import java.text.DateFormat
+import java.text.SimpleDateFormat
 
 /**
  * Parser for CVS repository importing command.
@@ -32,7 +33,8 @@ object CVSImport extends CommandParser{
     def this(cvsroot: String, module: String) = this(Some(cvsroot), Some(module))
     
     val bridge: GitBridge = Bridge
-    val cvsrepo = CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module);
+    val cvsrepo = serverDateFormat.map(dateFormat => CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module,dateFormat))
+    									  .getOrElse(CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module))
     
     def apply = {
       val shouldNotImportTrunk = onlyNew && bridge.isCVSBranch(bridge.trunkBranch)
@@ -154,8 +156,9 @@ object CVSImport extends CommandParser{
       case cmd: CVSImportCommand =>
         val resolveTags = !hasFlag("skipTags") || hasFlag("resolveTags")
         val autoGraft = !hasFlag("noGraft") || hasFlag("graft")
-        val onlyNew = !hasFlag("allBranches") && hasFlag("onlyNew");
-        cmd.copy(resolveTags = resolveTags, autoGraft = autoGraft, onlyNew = onlyNew)
+        val onlyNew = !hasFlag("allBranches") && hasFlag("onlyNew")
+        val serverDateFormat = getValue("dateFormat").map(new SimpleDateFormat(_))
+        cmd.copy(resolveTags = resolveTags, autoGraft = autoGraft, onlyNew = onlyNew, serverDateFormat = serverDateFormat)
       case _ => super.applyFlags(command)
     }
   }
