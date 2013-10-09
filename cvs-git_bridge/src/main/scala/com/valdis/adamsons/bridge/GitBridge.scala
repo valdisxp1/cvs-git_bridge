@@ -163,7 +163,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = lookupTag(branch.getBranchParent, trunk)
   
   //converting to iterator to lookup on individual branches lazily
-  def lookupTag(tag: CVSTag,branches:Iterable[String]): Option[ObjectId] = branches.toIterator.map((branch)=>lookupTag(tag, branch)).find(_.isDefined).flatten
+  def lookupTag(tag: CVSTag,branches:Iterable[String]): Option[ObjectId] = branches.toIterator.map(branch=>lookupTag(tag, branch)).find(_.isDefined).flatten
+
 
   private abstract class TagSeachState {
     def tag: CVSTag
@@ -245,6 +246,17 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     override def dumpState = super.dumpState + "\n\t found: " + found
     def withTag(tag: CVSTag) = if (found == tag.fileVersions.keys) Found(tag, objectId2) else PartialFound(tag, objectId2, found)
   }
+  
+  private case class MultiTagSearchState(val searchers:Set[TagSeachState]){
+    def isDone = searchers.forall(_.isDone)
+    def isAllFound = searchers.forall(_.isFound)
+    def objectIds = searchers.flatMap(state => state.objectId.map(state.tag.name -> _))
+    def withCommit(objectId: ObjectId, commit: CVSCommit) = MultiTagSearchState(searchers.map(_.withCommit(objectId,commit)))
+  }
+  
+  private object MultiTagSearchState{
+    def fromTags(tags:Set[CVSTag]) = new MultiTagSearchState(tags.map(NotFound(_)))
+  }
 
   def getPointlessCVSCommits: Iterable[CVSCommit]= {
       val objectId = Option(repo.resolve(cvsRefPrefix + pointlessCommitsBranch))
@@ -266,12 +278,37 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     }
   })
   
+  def lookupTags(tags: Set[CVSTag],branches:Iterable[String]): Map[String,ObjectId] ={
+    val seperateResults = branches.toIterator.flatMap(branch=>lookupTagsImpl(tags, branch)).takeWhile(!_.isAllFound).map(_.objectIds)
+    seperateResults.reduce(_ ++ _).toMap
+    }
+  
+  private def lookupTagsImpl(tags: Set[CVSTag], branch: String) = {
+    val objectId = Option(repo.resolve(cvsRefPrefix + branch))
+    objectId.map((id) => {
+      val trunkCommits = getCommits(id)
+      val cleanedTags = tags.map(cleanTag)
+      val result = trunkCommits.toStream.foldLeftWhile(MultiTagSearchState.fromTags(cleanedTags))((oldstate, pair) => {
+        oldstate.withCommit(pair._2, pair._1)
+      })(!_.isDone)
+      result
+    })
+  }
+
+  def lookupTags(tags: Set[CVSTag], branch: String): Map[String, ObjectId] = {
+    lookupTagsImpl(tags, branch).map(_.objectIds.toMap).getOrElse(Map())
+  }
+  
+  private def getCommits(id:ObjectId) = {
+    val logs = git.log().add(id).call()
+    logs.iterator().map(
+        (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId))
+  }
+  
   def lookupTag(tag: CVSTag, branch: String): Option[ObjectId] = {
     val objectId = Option(repo.resolve(cvsRefPrefix + branch))
     objectId.flatMap((id) => {
-      val logs = git.log().add(id).call()
-      val trunkCommits = logs.iterator().map(
-        (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId))
+      val trunkCommits = getCommits(id)
       val cleanedTag = cleanTag(tag)
       val result = trunkCommits.toStream.foldLeftWhile[TagSeachState](new NotFound(cleanedTag))((oldstate, pair) => {
         log(oldstate + " with " + pair._1)
