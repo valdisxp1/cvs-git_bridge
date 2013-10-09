@@ -1,6 +1,8 @@
 package com.valdis.adamsons.cvs
 
 import scala.collection.mutable.WrappedArray
+import scala.collection.mutable
+import scala.reflect.internal.util.WeakReferenceWithEquals
 
 case class CVSFileVersion(val seq: Seq[AnyVal]) {
   def this(array:Array[Short]) = this(wrapShortArray(array))
@@ -23,21 +25,30 @@ case class CVSFileVersion(val seq: Seq[AnyVal]) {
 }
 
 object CVSFileVersion {
+  val cache = new mutable.HashSet[WeakReferenceWithEquals[CVSFileVersion]]()
   val V1_1 = new CVSFileVersion(Array[Byte](1, 1))
+  // Guaranteed to have at least one version
+  cache += new WeakReferenceWithEquals(V1_1)
+  
+  private val cacheLim = Byte.MaxValue;
   def apply(s: String): CVSFileVersion = {
     val intArray = wrapIntArray(s.split('.').map(_.toInt))
-    findCachedValue(intArray).getOrElse {
-      val max = intArray.max
-      val smallestCollection = findSmallestWrappedArray(intArray, max)
-      new CVSFileVersion(smallestCollection)
+    val max = intArray.max
+    val smallestCollection = findSmallestWrappedArray(intArray, max)
+    val newInstance = new CVSFileVersion(smallestCollection)
+    if (max <= cacheLim) {
+      findCachedValue(newInstance)
+    } else {
+      newInstance
     }
   }
 
-  private def findCachedValue(intArray: WrappedArray[Int]) = {
-    if (intArray == V1_1.seq) {
-      Some(V1_1)
-    } else {
-      None
+  private def findCachedValue(newInstance: CVSFileVersion) = {
+    cache.synchronized {
+      cache.find(_.get == newInstance).map(_.get).getOrElse {
+        cache.add(new WeakReferenceWithEquals(newInstance))
+        newInstance
+      }
     }
   }
   
