@@ -101,21 +101,14 @@ case class CVSRepository(val cvsroot: Option[String],
       }
     }
   
-  private trait RlogAllTagParseStateLike[This] extends RlogParseState[This] {
-    
-    val tags: Map[String,CVSTag]
+  private trait TagParseState[This] extends RlogParseState[This] {
     val fileName: String
     
-    protected def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]): This
-    
-    protected def withTagEntry(tagName: String, version: CVSFileVersion): This = {
-      val previousTag = tags.getOrElse(tagName, CVSTag(tagName))
-      val updatedTags = tags + (tagName -> previousTag.withFile(this.fileName, version))
-      create(isInHeader, this.fileName, updatedTags)
-    }
+    protected def withTagEntry(tagName: String, version: CVSFileVersion): This
+    protected def withFileName(fileName:String): This
     
     override protected def withHeaderLine(line: String): This = {
-      val fileNameUpdated = extractFileName(line).map(create(isInHeader, _, tags))
+      val fileNameUpdated = extractFileName(line).map(withFileName(_))
       fileNameUpdated.getOrElse({
         lazy val pair = {
           val arr = line.split(':')
@@ -129,6 +122,20 @@ case class CVSRepository(val cvsroot: Option[String],
         }
       })
     }
+  }
+  
+  private trait RlogAllTagParseStateLike[This] extends TagParseState[This] {
+    val tags: Map[String,CVSTag]
+    
+    protected def withFileName(fileName:String) = create(isInHeader, fileName, tags)
+    protected def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]): This
+    
+    protected def withTagEntry(tagName: String, version: CVSFileVersion): This = {
+      val previousTag = tags.getOrElse(tagName, CVSTag(tagName))
+      val updatedTags = tags + (tagName -> previousTag.withFile(this.fileName, version))
+      create(isInHeader, this.fileName, updatedTags)
+    }
+    
   }
   
    private case class RlogAllTagParseState(override val isInHeader: Boolean,
