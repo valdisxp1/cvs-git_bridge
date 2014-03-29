@@ -2,9 +2,7 @@ package com.valdis.adamsons.cvs.commands
 
 import Argument._
 import com.valdis.adamsons.cvs.CVSFileVersion
-sealed trait CVSRevisionSelector extends Argument{
-  def toArg:Seq[String]
-}
+sealed trait CVSRevisionSelector extends Argument
   
 object CVSRevisionSelector{
   implicit def version2selector(version: CVSFileVersion) = Version(version)
