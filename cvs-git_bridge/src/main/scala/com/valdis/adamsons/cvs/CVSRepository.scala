@@ -25,7 +25,7 @@ case class CVSRepository(val cvsroot: Option[String],
   def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
 
   private val commandBuilder = CVSCommandBuilder(cvsroot,module)
-//  import commandBuilder._
+  import commandBuilder.{CVSCheckout}
   
   /**
    * Creates a new repository object with the given module.
@@ -54,13 +54,13 @@ case class CVSRepository(val cvsroot: Option[String],
    * Binary files get corrupted because Java tries to convert them to UTF8.
    */
   def getFileContents(name: String, version: CVSFileVersion) = {
-    val process = commandBuilder.CVSCheckout(name,version).process
+    val process = CVSCheckout(name,version).process
     log("running command:\n" + process)    
     process!! 
   }
   
   def getFile(name: String, version: CVSFileVersion) = {
-    val processStr = commandBuilder.CVSCheckout(name,version).process
+    val processStr = CVSCheckout(name,version).process
     log("running command:\n" + processStr)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
