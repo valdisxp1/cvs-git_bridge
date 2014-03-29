@@ -22,6 +22,6 @@ object CVSRevisionSelector{
   def Tag = Branch
   
   case class Version(version: CVSFileVersion) extends CVSRevisionSelector {
-    def toArg = Seq("-r", escape(version.toString))
+    def toArg = Seq(escape("-r"+version))
   }
 }

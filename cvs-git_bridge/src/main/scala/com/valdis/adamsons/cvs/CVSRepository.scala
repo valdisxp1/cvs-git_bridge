@@ -35,8 +35,6 @@ case class CVSRepository(val cvsroot: Option[String],
    */
   def module(module: String) = CVSRepository(this.cvsroot, Some(module))
 
-  private def cvsString = "cvs " + cvsroot.map("-d " + argument(_) + " ").getOrElse("");
-  
   /**
    * @return relative path against chosen module.
    */
@@ -50,8 +48,6 @@ case class CVSRepository(val cvsroot: Option[String],
     absolutePath.drop(pathOnServer.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2).replace("Attic/", "")
   }
 
-  private def argument(str: String) = "\"" + str + "\""
-  
   /**
    * Should only be used for text files.
    * Binary files get corrupted because Java tries to convert them to UTF8.
@@ -257,11 +253,11 @@ case class CVSRepository(val cvsroot: Option[String],
   }
 
   def getCommitsForTag(tag: CVSTag) = {
-    val commandStrings = tag.fileVersions.map(entry => cvsString + "rlog " + " -r" + entry._2.toString + " " + argument(module.map(_ + "/").getOrElse("") + entry._1))
+    val commandStrings = tag.fileVersions.map{case (name,version) => CVSRLog(filePath=Some(name),revision=version).process}
     log("running command batch")
     commandStrings.foreach(log(_))
     log("end of batch")
-    val combinedProcess = commandStrings.map(stringToProcess(_)).reduce(_ ### _)
+    val combinedProcess = commandStrings.reduce(_ ### _)
     parseRlogLines(combinedProcess)
   }
   
