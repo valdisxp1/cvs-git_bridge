@@ -16,6 +16,7 @@ import com.valdis.adamsons.cvs.rlog.parse.{RlogParseState, RlogTagNameLookupStat
 import java.text.DateFormat
 import com.valdis.adamsons.cvs.commands.CVSCommandBuilder
 import com.valdis.adamsons.cvs.commands.LogOutputMode
+import com.valdis.adamsons.cvs.commands.CVSRevisionSelector
 
 case class CVSRepository(val cvsroot: Option[String],
 						 val module: Option[String],
@@ -76,9 +77,9 @@ case class CVSRepository(val cvsroot: Option[String],
   }
 
   private def getTagProcess = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
+    val command = CVSRLog(outputMode = LogOutputMode.OnlyHeaders).process
     log("running command:\n" + command)
-    stringToProcess(command);
+    command
   }
   
 
@@ -235,34 +236,22 @@ case class CVSRepository(val cvsroot: Option[String],
   }
 
   def resolveTag(tagName: String): CVSTag = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command);
-    new ProcessAsTraversable(process, line => log(line))
+    new ProcessAsTraversable(getTagProcess, line => log(line))
     	.foldLeft(new RlogSingleTagParseState(tagName))(_ withLine _).tag
   }
   
   def resolveTags(tagNames: Iterable[String]): Iterable[CVSTag] = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command);
-    new ProcessAsTraversable(process, line => log(line))
+    new ProcessAsTraversable(getTagProcess, line => log(line))
     	.foldLeft(new SmartRlogMultiTagParseState(tagNames))(_ withLine _).tags.flatten
   }
   
   def resolveAllTagsAndBranches: Set[CVSTag] = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command);
-    new ProcessAsTraversable(process, line => log(line))
+    new ProcessAsTraversable(getTagProcess, line => log(line))
     	.foldLeft(new RlogAllTagParseState())(_ withLine _).tags.values.toSet
   }
   
   def resolveAllBranches: Set[CVSTag] = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command);
-    new ProcessAsTraversable(process, line => log(line))
+    new ProcessAsTraversable(getTagProcess, line => log(line))
     	.foldLeft(new RlogAllBranchParseState())(_ withLine _).tags.values.toSet
   }
 
@@ -276,9 +265,10 @@ case class CVSRepository(val cvsroot: Option[String],
   }
   
   def getCommit(filename: String, version: CVSFileVersion): Option[CVSCommit] = {
-    val command = cvsString + "rlog " + " -r" + version.toString +" "+ argument(module.map( _ + "/").getOrElse("") + filename)
+    import CVSRevisionSelector._
+    val command = CVSRLog(revision=version).process
     log("running command:\n" + command)
-    parseRlogLines(stringToProcess(command)).headOption
+    parseRlogLines(command).headOption
   }
   
   def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
