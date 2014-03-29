@@ -23,10 +23,8 @@ case class CVSRepository(val cvsroot: Option[String],
   def this() = this(None, None)
   def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
   
-  /**
-   * The path to repository root.
-   */
-  def root = cvsroot.getOrElse("echo $CVSROOT"!!)
+  private val commandBuilder = CVSCommandBuilder(cvsroot=cvsroot,module=module)
+  import commandBuilder._
   
   /**
    * Creates a new repository object with the given module.
@@ -55,13 +53,13 @@ case class CVSRepository(val cvsroot: Option[String],
    * Binary files get corrupted because Java tries to convert them to UTF8.
    */
   def getFileContents(name: String, version: CVSFileVersion) = {
-    val process = cvsString + "co -p -r " + version + " " +argument(module.map( _ + "/").getOrElse("") + name)
+    val process = CVSCheckout(name,version).commandString
     log("running command:\n" + process)    
     process!! 
   }
   
   def getFile(name: String, version: CVSFileVersion) = {
-    val processStr = cvsString + "co -p -r " + version + " " + argument(module.map( _ + "/").getOrElse("") + name)
+    val processStr = CVSCheckout(name,version).commandString
     log("running command:\n" + processStr)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
