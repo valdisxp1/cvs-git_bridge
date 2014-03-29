@@ -2,7 +2,7 @@ package com.valdis.adamsons.cvs
 
 import scala.collection.mutable.WrappedArray
 import scala.collection.mutable
-import scala.reflect.internal.util.WeakReferenceWithEquals
+import scala.collection.concurrent.TrieMap
 
 case class CVSFileVersion(val seq: Seq[AnyVal]) {
   def this(array:Array[Short]) = this(wrapShortArray(array))
@@ -25,10 +25,10 @@ case class CVSFileVersion(val seq: Seq[AnyVal]) {
 }
 
 object CVSFileVersion {
-  val cache = new mutable.HashSet[WeakReferenceWithEquals[CVSFileVersion]]()
+  val cache = new TrieMap[CVSFileVersion,CVSFileVersion]
   val V1_1 = new CVSFileVersion(Array[Byte](1, 1))
   // Guaranteed to have at least one version
-  cache += new WeakReferenceWithEquals(V1_1)
+  cache += V1_1 -> V1_1
   
   private val cacheLim = Byte.MaxValue;
   def apply(s: String): CVSFileVersion = {
@@ -43,14 +43,7 @@ object CVSFileVersion {
     }
   }
 
-  private def findCachedValue(newInstance: CVSFileVersion) = {
-    cache.synchronized {
-      cache.find(_.get == newInstance).map(_.get).getOrElse {
-        cache.add(new WeakReferenceWithEquals(newInstance))
-        newInstance
-      }
-    }
-  }
+  private def findCachedValue(newInstance: CVSFileVersion) = cache.putIfAbsent(newInstance, newInstance).getOrElse(newInstance)
   
   private def findSmallestWrappedArray(intArray: WrappedArray[Int], max: Int) = {
     if (max <= Byte.MaxValue) {

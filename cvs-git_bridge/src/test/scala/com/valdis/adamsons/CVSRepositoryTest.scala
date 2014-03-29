@@ -67,7 +67,7 @@ class CVSRepositoryTest {
             CVSCommit("dir/1.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")),
             CVSCommit("dir/2.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")),
             CVSCommit("dir/3.txt",CVSFileVersion("1.1"),false,date("Sat Feb 16 19:18:39 EET 2013"),"Valdis","initial",Some("IhZzWJhSWp6aqrEw")))
-    assertEquals(expected, repo.getCommitList.toList)
+    assertEquals(expected, repo.getTrunkCommitList().toList)
     }
     //spaces
     {
@@ -75,7 +75,7 @@ class CVSRepositoryTest {
     val expected = List(
     		CVSCommit("space man.bin",CVSFileVersion("1.1"),false,date2("2013-08-12 19:34:29 +0300"),"Valdis","added file with spaces in name",Some("JmIDJDLFOoMgub1x")),
             CVSCommit("My Documents/simple file.txt",CVSFileVersion("1.1"),false,date2("2013-08-12 19:38:35 +0300"),"Valdis","directory with spaces",Some("mPqUXPXuv58Gvb1x")))
-    assertEquals(expected, repo.getCommitList.toList)
+    assertEquals(expected, repo.getTrunkCommitList().toList)
     }
   }
   

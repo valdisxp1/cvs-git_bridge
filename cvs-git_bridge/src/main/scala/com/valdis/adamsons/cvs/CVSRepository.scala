@@ -14,6 +14,10 @@ import com.valdis.adamsons.utils.FileUtils
 import com.valdis.adamsons.utils.ProcessAsTraversable
 import com.valdis.adamsons.cvs.rlog.parse.{RlogParseState, RlogTagNameLookupState}
 import java.text.DateFormat
+import com.valdis.adamsons.cvs.commands.CVSCommandBuilder
+import com.valdis.adamsons.cvs.commands.LogOutputMode
+import com.valdis.adamsons.cvs.commands.CVSRevisionSelector
+import com.valdis.adamsons.cvs.commands.DateSelector
 
 case class CVSRepository(val cvsroot: Option[String],
 						 val module: Option[String],
@@ -22,19 +26,15 @@ case class CVSRepository(val cvsroot: Option[String],
   def this(cvsroot: Option[String]) = this(cvsroot, None)
   def this() = this(None, None)
   def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
-  
-  /**
-   * The path to repository root.
-   */
-  def root = cvsroot.getOrElse("echo $CVSROOT"!!)
+
+  private val commandBuilder = CVSCommandBuilder(cvsroot,module)
+  import commandBuilder.{CVSCheckout, CVSRLog}
   
   /**
    * Creates a new repository object with the given module.
    */
   def module(module: String) = CVSRepository(this.cvsroot, Some(module))
 
-  private def cvsString = "cvs " + cvsroot.map("-d " + argument(_) + " ").getOrElse("");
-  
   /**
    * @return relative path against chosen module.
    */
@@ -48,20 +48,18 @@ case class CVSRepository(val cvsroot: Option[String],
     absolutePath.drop(pathOnServer.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2).replace("Attic/", "")
   }
 
-  private def argument(str: String) = "\"" + str + "\""
-  
   /**
    * Should only be used for text files.
    * Binary files get corrupted because Java tries to convert them to UTF8.
    */
   def getFileContents(name: String, version: CVSFileVersion) = {
-    val process = cvsString + "co -p -r " + version + " " +argument(module.map( _ + "/").getOrElse("") + name)
+    val process = CVSCheckout(name,version).process
     log("running command:\n" + process)    
     process!! 
   }
   
   def getFile(name: String, version: CVSFileVersion) = {
-    val processStr = cvsString + "co -p -r " + version + " " + argument(module.map( _ + "/").getOrElse("") + name)
+    val processStr = CVSCheckout(name,version).process
     log("running command:\n" + processStr)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
@@ -71,14 +69,14 @@ case class CVSRepository(val cvsroot: Option[String],
     file
   }
   def fileNameList = {
-    val responseLines = stringToProcess(cvsString+ "rlog -R " + module.map(argument).getOrElse("")).lines;
+    val responseLines = CVSRLog(outputMode = LogOutputMode.OnlyFileNames).process.lines;
     responseLines.toList.map(cleanRCSpath)
   }
 
   private def getTagProcess = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
+    val command = CVSRLog(outputMode = LogOutputMode.OnlyHeaders).process
     log("running command:\n" + command)
-    stringToProcess(command);
+    command
   }
   
 
@@ -101,21 +99,14 @@ case class CVSRepository(val cvsroot: Option[String],
       }
     }
   
-  private trait RlogAllTagParseStateLike[This] extends RlogParseState[This] {
-    
-    val tags: Map[String,CVSTag]
+  private trait TagParseState[This] extends RlogParseState[This] {
     val fileName: String
     
-    protected def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]): This
-    
-    protected def withTagEntry(tagName: String, version: CVSFileVersion): This = {
-      val previousTag = tags.getOrElse(tagName, CVSTag(tagName))
-      val updatedTags = tags + (tagName -> previousTag.withFile(this.fileName, version))
-      create(isInHeader, this.fileName, updatedTags)
-    }
+    protected def withTagEntry(tagName: String, version: CVSFileVersion): This
+    protected def withFileName(fileName:String): This
     
     override protected def withHeaderLine(line: String): This = {
-      val fileNameUpdated = extractFileName(line).map(create(isInHeader, _, tags))
+      val fileNameUpdated = extractFileName(line).map(withFileName(_))
       fileNameUpdated.getOrElse({
         lazy val pair = {
           val arr = line.split(':')
@@ -129,6 +120,20 @@ case class CVSRepository(val cvsroot: Option[String],
         }
       })
     }
+  }
+  
+  private trait RlogAllTagParseStateLike[This] extends TagParseState[This] {
+    val tags: Map[String,CVSTag]
+    
+    protected def withFileName(fileName:String) = create(isInHeader, fileName, tags)
+    protected def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]): This
+    
+    protected def withTagEntry(tagName: String, version: CVSFileVersion): This = {
+      val previousTag = tags.getOrElse(tagName, CVSTag(tagName))
+      val updatedTags = tags + (tagName -> previousTag.withFile(this.fileName, version))
+      create(isInHeader, this.fileName, updatedTags)
+    }
+    
   }
   
    private case class RlogAllTagParseState(override val isInHeader: Boolean,
@@ -172,6 +177,34 @@ case class CVSRepository(val cvsroot: Option[String],
     ).getOrElse(self)
     }
   }
+  
+  /**
+   * This passes multiple tags and keeps identical tags (identical file versions) using the same immutable map
+   * by grouping them accordingly to the tag. Even if differences appear at some point the common ancestry makes
+   * at least some recycled parts the same.
+   */
+  private case class SmartRlogMultiTagParseState(override val isInHeader: Boolean,
+		  										 override val fileName: String,
+		  										 val tags: Set[Set[CVSTag]],
+		  										 val currentChanges: Map[String,CVSFileVersion]) extends TagParseState[SmartRlogMultiTagParseState]{
+    def this(names: Iterable[String]) = this(RlogParseState.isFirstLineHeader, "", Set(names.map(CVSTag(_)).toSet),Map())
+    protected def create(isInHeader: Boolean) = new SmartRlogMultiTagParseState(isInHeader, fileName, tags, currentChanges)
+    override protected def self = this
+
+    private def processTags = {
+      tags.flatMap(group => {
+        val versionMap = group.head.fileVersions
+        group.map(tag => tag -> currentChanges.get(tag.name)).groupBy(_._2).map(entry => {
+          val updatedVersionMap = entry._1.map(version => versionMap + (fileName -> version)).getOrElse(versionMap)
+          entry._2.map(pair => CVSTag(pair._1.name, updatedVersionMap))
+        })
+      })
+    }
+    
+    protected def withFileName(fileName: String) = new SmartRlogMultiTagParseState(isInHeader, fileName, processTags, currentChanges)
+    protected def withTagEntry(tagName: String, version: CVSFileVersion) = new SmartRlogMultiTagParseState(isInHeader, fileName, tags, currentChanges + (tagName -> version))
+    
+  }
 
   private case class RlogSingleTagParseState(override val isInHeader: Boolean, val fileName: String, val tag: CVSTag) extends RlogParseState[RlogSingleTagParseState] {
     def this(name: String) = this(RlogParseState.isFirstLineHeader, "", CVSTag(name))
@@ -200,69 +233,53 @@ case class CVSRepository(val cvsroot: Option[String],
   }
 
   def resolveTag(tagName: String): CVSTag = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command);
-    new ProcessAsTraversable(process, line => log(line))
+    new ProcessAsTraversable(getTagProcess, line => log(line))
     	.foldLeft(new RlogSingleTagParseState(tagName))(_ withLine _).tag
   }
   
   def resolveTags(tagNames: Iterable[String]): Iterable[CVSTag] = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command);
-    new ProcessAsTraversable(process, line => log(line))
-    	.foldLeft(new RlogMultiTagParseState(tagNames))(_ withLine _).tags.values
+    new ProcessAsTraversable(getTagProcess, line => log(line))
+    	.foldLeft(new SmartRlogMultiTagParseState(tagNames))(_ withLine _).tags.flatten
   }
   
   def resolveAllTagsAndBranches: Set[CVSTag] = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command);
-    new ProcessAsTraversable(process, line => log(line))
+    new ProcessAsTraversable(getTagProcess, line => log(line))
     	.foldLeft(new RlogAllTagParseState())(_ withLine _).tags.values.toSet
   }
   
   def resolveAllBranches: Set[CVSTag] = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command);
-    new ProcessAsTraversable(process, line => log(line))
+    new ProcessAsTraversable(getTagProcess, line => log(line))
     	.foldLeft(new RlogAllBranchParseState())(_ withLine _).tags.values.toSet
   }
 
   def getCommitsForTag(tag: CVSTag) = {
-    val commandStrings = tag.fileVersions.map(entry => cvsString + "rlog " + " -r" + entry._2.toString + " " + argument(module.map(_ + "/").getOrElse("") + entry._1))
+    val commandStrings = tag.fileVersions.map{case (name,version) => CVSRLog(filePath=Some(name),revision=version).process}
     log("running command batch")
     commandStrings.foreach(log(_))
     log("end of batch")
-    val combinedProcess = commandStrings.map(stringToProcess(_)).reduce(_ ### _)
+    val combinedProcess = commandStrings.reduce(_ ### _)
     parseRlogLines(combinedProcess)
   }
   
   def getCommit(filename: String, version: CVSFileVersion): Option[CVSCommit] = {
-    val command = cvsString + "rlog " + " -r" + version.toString +" "+ argument(module.map( _ + "/").getOrElse("") + filename)
+    import CVSRevisionSelector._
+    val command = CVSRLog(revision=version).process
     log("running command:\n" + command)
-    parseRlogLines(stringToProcess(command)).headOption
+    parseRlogLines(command).headOption
   }
-  
-  def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
-  def getCommitList(start: Option[Date], end: Option[Date]): Seq[CVSCommit] = getCommitList(None, start, end)
-  def getCommitList(branch:String, start:Option[Date], end:Option[Date]):Seq[CVSCommit] = getCommitList(Some(branch),start, end)
-  /**
-   * A branch of None means trunk. A empty (None) date means the search is not limited in that direction.
-   */
-  def getCommitList(branch:Option[String], start:Option[Date], end:Option[Date]):Seq[CVSCommit]={
-    val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
-    val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
-    val dateString = if (start.isDefined || end.isDefined) {
-      "-d \"" + startString.getOrElse("") + "<" + endString.getOrElse("") + "\" "
-     } else {
-      ""
-     }
-    val command = cvsString+ "rlog "+branch.map(" -r"+_+" ").getOrElse(" -b ") + dateString + module.getOrElse("")
+
+  def getCommitList(branchName: String, date: DateSelector = DateSelector.Any): Seq[CVSCommit] = {
+    import CVSRevisionSelector._
+    val command = CVSRLog(revision = Branch(branchName), date = date).process
     log("running command:\n" + command)
-    parseRlogLines(stringToProcess(command))
+    parseRlogLines(command)
+  }
+
+  def getTrunkCommitList(date: DateSelector = DateSelector.Any): Seq[CVSCommit] = {
+    import CVSRevisionSelector._
+    val command = CVSRLog(revision = Trunk, date = date).process
+    log("running command:\n" + command)
+    parseRlogLines(command)
   }
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")

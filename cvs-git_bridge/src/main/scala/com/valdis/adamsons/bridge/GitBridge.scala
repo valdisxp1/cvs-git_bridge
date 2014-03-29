@@ -278,6 +278,15 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     }
   })
 
+  def cleanTags(tags: Set[CVSTag]): Set[CVSTag] = getPointlessCVSCommits.foldLeft(tags)((tags, commit) => {
+    tags.map(tag =>
+      if (commit.isPointless && tag.includesCommit(commit)) {
+        tag.ignoreFile(commit.filename)
+      } else {
+        tag
+      })
+  })
+
   def lookupTags(tags: Set[CVSTag], branches: Iterable[String]): Map[CVSTag, ObjectId] = {
     //TODO find a way to stop earlier
     val seperateResults = branches.toIterator.flatMap(branch => lookupTagsImpl(tags, branch)).map(_.objectIds)
@@ -292,7 +301,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     val objectId = Option(repo.resolve(cvsRefPrefix + branch))
     objectId.map((id) => {
       val trunkCommits = getCommits(id)
-      val cleanedTags = tags.map(cleanTag)
+      val cleanedTags = cleanTags(tags)
       val result = trunkCommits.toStream.foldLeftWhile(MultiTagSearchState.fromTags(cleanedTags))((oldstate, pair) => {
         oldstate.withCommit(pair._2, pair._1)
       })(!_.isDone)
