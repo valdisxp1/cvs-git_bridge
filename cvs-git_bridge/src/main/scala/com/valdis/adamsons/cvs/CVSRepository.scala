@@ -53,13 +53,13 @@ case class CVSRepository(val cvsroot: Option[String],
    * Binary files get corrupted because Java tries to convert them to UTF8.
    */
   def getFileContents(name: String, version: CVSFileVersion) = {
-    val process = CVSCheckout(name,version).commandString
+    val process = CVSCheckout(name,version).process
     log("running command:\n" + process)    
     process!! 
   }
   
   def getFile(name: String, version: CVSFileVersion) = {
-    val processStr = CVSCheckout(name,version).commandString
+    val processStr = CVSCheckout(name,version).process
     log("running command:\n" + processStr)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
