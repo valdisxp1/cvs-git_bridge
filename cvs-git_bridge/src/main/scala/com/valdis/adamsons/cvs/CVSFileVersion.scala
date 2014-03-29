@@ -2,7 +2,6 @@ package com.valdis.adamsons.cvs
 
 import scala.collection.mutable.WrappedArray
 import scala.collection.mutable
-import scala.reflect.internal.util.WeakReferenceWithEquals
 import scala.collection.concurrent.TrieMap
 
 case class CVSFileVersion(val seq: Seq[AnyVal]) {
