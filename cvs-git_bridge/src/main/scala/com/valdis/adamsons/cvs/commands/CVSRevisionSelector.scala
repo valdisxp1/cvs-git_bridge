@@ -16,7 +16,7 @@ object CVSRevisionSelector{
   }
 
   case class Branch(name: String) extends CVSRevisionSelector {
-    def toArg = Seq("-r", escape(name))
+    def toArg = Seq(escape("-r"+name))
   }
 
   def Tag = Branch
