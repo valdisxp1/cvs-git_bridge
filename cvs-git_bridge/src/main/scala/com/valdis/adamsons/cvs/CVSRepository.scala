@@ -14,6 +14,7 @@ import com.valdis.adamsons.utils.FileUtils
 import com.valdis.adamsons.utils.ProcessAsTraversable
 import com.valdis.adamsons.cvs.rlog.parse.{RlogParseState, RlogTagNameLookupState}
 import java.text.DateFormat
+import com.valdis.adamsons.cvs.commands.CVSCommandBuilder
 
 case class CVSRepository(val cvsroot: Option[String],
 						 val module: Option[String],

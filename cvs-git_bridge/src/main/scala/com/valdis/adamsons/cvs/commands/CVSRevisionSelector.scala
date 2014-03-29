@@ -1,11 +1,12 @@
-package com.valdis.adamsons.cvs
+package com.valdis.adamsons.cvs.commands
 
-trait CVSRevisionSelector{
+import CVSCommandBuilder._
+import com.valdis.adamsons.cvs.CVSFileVersion
+sealed trait CVSRevisionSelector extends Argument{
   def toArg:Seq[String]
 }
   
 object CVSRevisionSelector{
-  import CVSCommandBuilder._
   implicit def version2selector(version: CVSFileVersion) = Version(version)
   
   object Trunk extends CVSRevisionSelector{
@@ -20,6 +21,8 @@ object CVSRevisionSelector{
     def toArg = Seq("-r", argument(name))
   }
 
+  def Tag = Branch
+  
   case class Version(version: CVSFileVersion) extends CVSRevisionSelector {
     def toArg = Seq("-r", argument(version.toString))
   }

@@ -1,6 +1,8 @@
-package com.valdis.adamsons.cvs
+package com.valdis.adamsons.cvs.commands
 
 import scala.sys.process.{ProcessBuilder,Process}
+import CVSRevisionSelector.version2selector
+import com.valdis.adamsons.cvs.CVSFileVersion
 
 case class CVSCommandBuilder(val cvsroot: Option[String],
 							 val module: Option[String],
@@ -17,7 +19,6 @@ case class CVSCommandBuilder(val cvsroot: Option[String],
     def process: ProcessBuilder = Process(args)
     def commandString =  (args).mkString(" ")
   }
-  
 
   case class CVSCheckout(file: String, version: CVSFileVersion) extends CVSCommand {
     import CVSRevisionSelector._
@@ -29,9 +30,30 @@ case class CVSCommandBuilder(val cvsroot: Option[String],
     
     protected val arguments = "co" +: toSTDOutArg ++: versionArg
   }
+
+  case class CVSRLog(revision: CVSRevisionSelector = CVSRevisionSelector.Any,
+		  			 outputMode: CVSRLog.OutputMode = CVSRLog.OutputMode.HeadersAndFiles,
+		  			 filePath: Option[String] = None) extends CVSCommand {
+	val arguments = Seq(revision).map(_.toArg).flatten
+  }
+  
+  object CVSRLog{
+    sealed trait OutputMode extends Argument
+    object OutputMode{
+      object OnlyHeaders extends OutputMode{
+        def toArg = Seq("-h") 
+      }
+      object HeadersAndFiles extends OutputMode{
+        def toArg = Nil
+      }
+    }
+  }
 }
 
 object CVSCommandBuilder{
-	def argument(str: String) = "\"" + str + "\""
+  trait Argument{
+    def toArg:Seq[String]
+  }
+  def argument(str: String) = "\"" + str + "\""
 }
 
