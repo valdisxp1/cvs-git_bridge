@@ -14,6 +14,7 @@ import com.valdis.adamsons.logger.Logger
 import com.valdis.adamsons.bridge.GitBridge
 import java.text.DateFormat
 import java.text.SimpleDateFormat
+import com.valdis.adamsons.cvs.commands.DateSelector
 
 /**
  * Parser for CVS repository importing command.
@@ -67,7 +68,9 @@ object CVSImport extends CommandParser{
       branches.foreach(branch => {
         val lastUpdatedVal = bridge.lastUpdated(branch.name)
         log("last updated:" + lastUpdatedVal)
-        val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
+        import DateSelector._
+        val date = lastUpdatedVal.map(From(_)).getOrElse(Any)
+        val commits = cvsrepo.getCommitList(branch.name, date)
         // only create branch points when branch is not created
         if (!bridge.isCVSBranch(branch.name)) {
           createBranchPoint(branch)
@@ -89,7 +92,9 @@ object CVSImport extends CommandParser{
         branchesForDepth.foreach(branch => {
           val lastUpdatedVal = bridge.lastUpdated(branch.name)
           log("last updated:" + lastUpdatedVal)
-          val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
+          import DateSelector._
+          val date = lastUpdatedVal.map(From(_)).getOrElse(Any)
+          val commits = cvsrepo.getCommitList(branch.name, date)
           if (lastUpdatedVal.isEmpty) {
             log("possibleParentBranches:" + possibleParentBranches)
             val graftLocation = bridge.getGraftLocation(branch, possibleParentBranches)
@@ -109,7 +114,9 @@ object CVSImport extends CommandParser{
       //get last the last updated date
       val lastUpdatedVal = bridge.lastUpdated(bridge.trunkBranch)
       log("last updated:" + lastUpdatedVal)
-      val commits = cvsrepo.getCommitList(lastUpdatedVal,None)
+      import DateSelector._
+      val date = lastUpdatedVal.map(From(_)).getOrElse(Any)
+      val commits = cvsrepo.getTrunkCommitList(date)
       bridge.appendCommits(commits, bridge.trunkBranch, cvsrepo)
       }
     

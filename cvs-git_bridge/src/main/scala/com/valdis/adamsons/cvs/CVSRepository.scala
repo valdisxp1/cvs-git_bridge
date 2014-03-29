@@ -17,6 +17,7 @@ import java.text.DateFormat
 import com.valdis.adamsons.cvs.commands.CVSCommandBuilder
 import com.valdis.adamsons.cvs.commands.LogOutputMode
 import com.valdis.adamsons.cvs.commands.CVSRevisionSelector
+import com.valdis.adamsons.cvs.commands.DateSelector
 
 case class CVSRepository(val cvsroot: Option[String],
 						 val module: Option[String],
@@ -270,24 +271,19 @@ case class CVSRepository(val cvsroot: Option[String],
     log("running command:\n" + command)
     parseRlogLines(command).headOption
   }
-  
-  def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
-  def getCommitList(start: Option[Date], end: Option[Date]): Seq[CVSCommit] = getCommitList(None, start, end)
-  def getCommitList(branch:String, start:Option[Date], end:Option[Date]):Seq[CVSCommit] = getCommitList(Some(branch),start, end)
-  /**
-   * A branch of None means trunk. A empty (None) date means the search is not limited in that direction.
-   */
-  def getCommitList(branch:Option[String], start:Option[Date], end:Option[Date]):Seq[CVSCommit]={
-    val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
-    val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
-    val dateString = if (start.isDefined || end.isDefined) {
-      "-d \"" + startString.getOrElse("") + "<" + endString.getOrElse("") + "\" "
-     } else {
-      ""
-     }
-    val command = cvsString+ "rlog "+branch.map(" -r"+_+" ").getOrElse(" -b ") + dateString + module.getOrElse("")
+
+  def getCommitList(branchName: String, date: DateSelector = DateSelector.Any): Seq[CVSCommit] = {
+    import CVSRevisionSelector._
+    val command = CVSRLog(revision = Branch(branchName), date = date).process
     log("running command:\n" + command)
-    parseRlogLines(stringToProcess(command))
+    parseRlogLines(command)
+  }
+
+  def getTrunkCommitList(date: DateSelector = DateSelector.Any): Seq[CVSCommit] = {
+    import CVSRevisionSelector._
+    val command = CVSRLog(revision = Trunk, date = date).process
+    log("running command:\n" + command)
+    parseRlogLines(command)
   }
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")

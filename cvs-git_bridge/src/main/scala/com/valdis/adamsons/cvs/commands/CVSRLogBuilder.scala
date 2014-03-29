@@ -7,6 +7,6 @@ trait CVSRLogBuilder extends CommandBuilder {
 		  			 date: DateSelector = DateSelector.Any,
 		  			 filePath: Option[String] = None) extends CVSCommand {
     
-    val arguments = "rlog" +: Seq(revision, outputMode).map(_.toArg).flatten
+    val arguments = "rlog" +: Seq(revision, outputMode, date).map(_.toArg).flatten
   }
 }
