@@ -6,6 +6,6 @@ trait CVSRLogBuilder extends CommandBuilder {
 		  			 outputMode: LogOutputMode = LogOutputMode.HeadersAndFiles,
 		  			 filePath: Option[String] = None) extends CVSCommand {
     
-    val arguments = Seq(revision).map(_.toArg).flatten
+    val arguments = "rlog" +: Seq(revision, outputMode).map(_.toArg).flatten
   }
 }

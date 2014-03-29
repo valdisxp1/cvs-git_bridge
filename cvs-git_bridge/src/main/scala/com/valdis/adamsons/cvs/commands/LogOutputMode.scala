@@ -8,4 +8,7 @@ object LogOutputMode {
   object HeadersAndFiles extends LogOutputMode {
     def toArg = Nil
   }
+  object OnlyFileNames extends LogOutputMode {
+    def toArg = Seq("-R")
+  }
 }

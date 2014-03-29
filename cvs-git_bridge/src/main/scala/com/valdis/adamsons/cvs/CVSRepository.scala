@@ -15,6 +15,7 @@ import com.valdis.adamsons.utils.ProcessAsTraversable
 import com.valdis.adamsons.cvs.rlog.parse.{RlogParseState, RlogTagNameLookupState}
 import java.text.DateFormat
 import com.valdis.adamsons.cvs.commands.CVSCommandBuilder
+import com.valdis.adamsons.cvs.commands.LogOutputMode
 
 case class CVSRepository(val cvsroot: Option[String],
 						 val module: Option[String],
@@ -25,7 +26,7 @@ case class CVSRepository(val cvsroot: Option[String],
   def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
 
   private val commandBuilder = CVSCommandBuilder(cvsroot,module)
-  import commandBuilder.{CVSCheckout}
+  import commandBuilder.{CVSCheckout, CVSRLog}
   
   /**
    * Creates a new repository object with the given module.
@@ -70,7 +71,7 @@ case class CVSRepository(val cvsroot: Option[String],
     file
   }
   def fileNameList = {
-    val responseLines = stringToProcess(cvsString+ "rlog -R " + module.map(argument).getOrElse("")).lines;
+    val responseLines = CVSRLog(outputMode = LogOutputMode.OnlyFileNames).process.lines;
     responseLines.toList.map(cleanRCSpath)
   }
 
