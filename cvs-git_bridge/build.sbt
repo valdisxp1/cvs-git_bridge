@@ -9,3 +9,5 @@ libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "2.3.1.20130220
 resolvers += "jgit-repository" at "http://download.eclipse.org/jgit/maven"
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.9" % "test"
+
+EclipseKeys.withSource := true
