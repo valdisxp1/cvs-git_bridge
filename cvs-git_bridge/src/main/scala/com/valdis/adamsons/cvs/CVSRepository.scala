@@ -371,7 +371,7 @@ object CVSRepository {
   private val DEFAULT_CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-MM-dd kk:mm:ss Z",Locale.UK)
   private val ACCEPTED_DATE_FORMATS = {
 	val formatStrings = Seq("yyyy-MM-dd kk:mm:ss Z",
-							"yyyy/dd/MM kk:mm:ss")
+							"yyyy/MM/dd kk:mm:ss")
 	formatStrings.map(new SimpleDateFormat(_,Locale.UK))
   }
   private val CVS_SHORT_DATE_FORMAT= new SimpleDateFormat("yyyy/MM/dd",Locale.UK)
