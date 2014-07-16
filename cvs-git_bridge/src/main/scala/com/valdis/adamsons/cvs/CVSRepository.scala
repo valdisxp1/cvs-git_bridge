@@ -325,6 +325,16 @@ case class CVSRepository(val cvsroot: Option[String],
     override protected def withCommitSpliter = new RlogCommitParseState(false, updatedCommits, headerBuffer, Vector())
   }
 
+  private def parseDate(dateString:String) ={
+	CVSRepository.ACCEPTED_DATE_FORMATS.view.flatMap{format=>
+	try{
+	  Some(format.parse(dateString))
+	}catch{
+	  case _:java.text.ParseException => None
+	}
+	}.head
+  }
+  
   private def commitFromRLog(header: IndexedSeq[String], commit: IndexedSeq[String]): CVSCommit = {
     val headerPairs = header.toList.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
     val headerMap = headerPairs.toMap
@@ -333,7 +343,7 @@ case class CVSRepository(val cvsroot: Option[String],
     val revisionStr = commit(0).trim.split(' ')(1)
     val revision = CVSFileVersion(revisionStr)
     val params = commit(1).trim.dropRight(1).split(';').map(_.split(": ")).map((x) => x(0).trim -> x(1).trim).toMap
-    val date = serverDateFormat.parse(params.get("date").getOrElse(missing("date")))
+    val date = parseDate(params.get("date").getOrElse(missing("date")))
     val author = params.get("author").getOrElse(missing("author"))
     val commitId = params.get("commitid");
     val isDead = params.get("state").exists(_ == "dead")
@@ -359,5 +369,10 @@ object CVSRepository {
   def apply() = new CVSRepository();
   def apply(cvsroot: String, module: String) = new CVSRepository(cvsroot, module);
   private val DEFAULT_CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-MM-dd kk:mm:ss Z",Locale.UK)
+  private val ACCEPTED_DATE_FORMATS = {
+	val formatStrings = Seq("yyyy-MM-dd kk:mm:ss Z",
+							"yyyy/dd/MM kk:mm:ss")
+	formatStrings.map(new SimpleDateFormat(_,Locale.UK))
+  }
   private val CVS_SHORT_DATE_FORMAT= new SimpleDateFormat("yyyy/MM/dd",Locale.UK)
 }
