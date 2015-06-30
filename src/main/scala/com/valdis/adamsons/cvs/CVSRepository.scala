@@ -39,12 +39,15 @@ case class CVSRepository(val cvsroot: Option[String],
    * @return relative path against chosen module.
    */
   def cleanRCSpath(absolutePath: String) = {
-    val pathOnServer = cvsroot.map(root => if (root.startsWith(":pserver:")) {
-      val cutpos = root.lastIndexOf(':')
-      root.drop(cutpos + 1)
-    } else {
-      root
-    })
+    val pathOnServer = cvsroot.map {
+      root =>
+        if (root.startsWith(":pserver:")) {
+          val cutpos = root.lastIndexOf(':')
+          root.drop(cutpos + 1)
+        } else {
+          root
+        }
+    }
     absolutePath.drop(pathOnServer.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2).replace("Attic/", "")
   }
 
@@ -55,7 +58,7 @@ case class CVSRepository(val cvsroot: Option[String],
    * Binary files get corrupted because Java tries to convert them to UTF8.
    */
   def getFileContents(name: String, version: CVSFileVersion) = {
-    val process = cvsString + "co -p -r " + version + " " +argument(module.map( _ + "/").getOrElse("") + name)
+    val process = cvsString + "co -p -r " + version + " " + argument(module.map(_ + "/").getOrElse("") + name)
     log("running command:\n" + process)    
     process!! 
   }
@@ -65,8 +68,8 @@ case class CVSRepository(val cvsroot: Option[String],
     log("running command:\n" + processStr)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
-    val process =processStr.#>(file).run
-    val exitvalue=process.exitValue;
+    val process = processStr.#>(file).run
+    val exitvalue = process.exitValue;
     file.deleteOnExit()
     file
   }
@@ -109,23 +112,24 @@ case class CVSRepository(val cvsroot: Option[String],
     
     override protected def withHeaderLine(line: String): This = {
       val fileNameUpdated = extractFileName(line).map(withFileName(_))
-      fileNameUpdated.getOrElse({
-        lazy val pair = {
+      fileNameUpdated.getOrElse {
+        lazy val (tagName, version) = {
           val arr = line.split(':')
           (arr(0).trim(), CVSFileVersion(arr(1).trim))
         }
+        
         def isTagLine = line.size > 1 && line(0) == '\t'
         if (isTagLine) {
-        	withTagEntry(pair._1, pair._2)
+        	withTagEntry(tagName, version)
         } else {
           self
         }
-      })
+      }
     }
   }
   
   private trait RlogAllTagParseStateLike[This] extends TagParseState[This] {
-    val tags: Map[String,CVSTag]
+    val tags: Map[String, CVSTag]
     
     protected def withFileName(fileName:String) = create(isInHeader, fileName, tags)
     protected def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]): This
@@ -137,20 +141,24 @@ case class CVSRepository(val cvsroot: Option[String],
     }
     
   }
-  
-   private case class RlogAllTagParseState(override val isInHeader: Boolean,
-		  									 override val fileName: String,
-		  									 override val tags: Map[String,CVSTag]) extends RlogAllTagParseStateLike[RlogAllTagParseState]{
+
+  private case class RlogAllTagParseState(
+    override val isInHeader: Boolean,
+    override val fileName: String,
+    override val tags: Map[String, CVSTag]) extends RlogAllTagParseStateLike[RlogAllTagParseState] {
+     
     def this() = this(RlogParseState.isFirstLineHeader, "", Map())
     
     override protected def create(isInHeader: Boolean): RlogAllTagParseState = new RlogAllTagParseState(isInHeader, fileName, tags)
     override protected def self = this
     protected def create(isInHeader: Boolean,fileName: String, tags: Map[String,CVSTag]) = new RlogAllTagParseState(isInHeader, fileName, tags)
   }
-  
-  private case class RlogAllBranchParseState(override val isInHeader: Boolean,
-		  									 override val fileName: String,
-		  									 override val tags: Map[String,CVSTag]) extends RlogAllTagParseStateLike[RlogAllBranchParseState]{
+
+  private case class RlogAllBranchParseState(
+    override val isInHeader: Boolean,
+    override val fileName: String,
+    override val tags: Map[String, CVSTag]) extends RlogAllTagParseStateLike[RlogAllBranchParseState] {
+    
     def this() = this(RlogParseState.isFirstLineHeader, "", Map())
     
     override protected def create(isInHeader: Boolean): RlogAllBranchParseState = new RlogAllBranchParseState(isInHeader, fileName, tags)
@@ -179,28 +187,32 @@ case class CVSRepository(val cvsroot: Option[String],
     ).getOrElse(self)
     }
   }
-  
+
   /**
    * This passes multiple tags and keeps identical tags (identical file versions) using the same immutable map
    * by grouping them accordingly to the tag. Even if differences appear at some point the common ancestry makes
    * at least some recycled parts the same.
    */
-  private case class SmartRlogMultiTagParseState(override val isInHeader: Boolean,
-		  										 override val fileName: String,
-		  										 val tags: Set[Set[CVSTag]],
-		  										 val currentChanges: Map[String,CVSFileVersion]) extends TagParseState[SmartRlogMultiTagParseState]{
+  private case class SmartRlogMultiTagParseState(
+    override val isInHeader: Boolean,
+    override val fileName: String,
+    val tags: Set[Set[CVSTag]],
+    val currentChanges: Map[String, CVSFileVersion]) extends TagParseState[SmartRlogMultiTagParseState] {
+    
     def this(names: Iterable[String]) = this(RlogParseState.isFirstLineHeader, "", Set(names.map(CVSTag(_)).toSet),Map())
     protected def create(isInHeader: Boolean) = new SmartRlogMultiTagParseState(isInHeader, fileName, tags, currentChanges)
     override protected def self = this
 
     private def processTags = {
-      tags.flatMap(group => {
-        val versionMap = group.head.fileVersions
-        group.map(tag => tag -> currentChanges.get(tag.name)).groupBy(_._2).map(entry => {
-          val updatedVersionMap = entry._1.map(version => versionMap + (fileName -> version)).getOrElse(versionMap)
-          entry._2.map(pair => CVSTag(pair._1.name, updatedVersionMap))
-        })
-      })
+      tags.flatMap {
+        group =>
+          val versionMap = group.head.fileVersions
+          group.map(tag => tag -> currentChanges.get(tag.name)).groupBy(_._2).map {
+            entry =>
+              val updatedVersionMap = entry._1.map(version => versionMap + (fileName -> version)).getOrElse(versionMap)
+              entry._2.map{pair => CVSTag(pair._1.name, updatedVersionMap)}
+          }
+      }
     }
     
     protected def withFileName(fileName: String) = new SmartRlogMultiTagParseState(isInHeader, fileName, processTags, currentChanges)
@@ -218,14 +230,14 @@ case class CVSRepository(val cvsroot: Option[String],
     override protected def withHeaderLine(line: String): RlogSingleTagParseState = {
       val fileNameUpdated = extractFileName(line).map(create(isInHeader, _, tag))
       fileNameUpdated.getOrElse({
-        lazy val pair = {
+        lazy val (tagName, version) = {
           val arr = line.split(':')
           (arr(0).trim(), CVSFileVersion(arr(1).trim))
         }
         def isTagLine = line.size > 1 && line(0) == '\t'
-        def isTheRightTag = tag.name == pair._1
+        def isTheRightTag = tag.name == tagName
         if (isTagLine && isTheRightTag) {
-          create(isInHeader, this.fileName, tag.withFile(this.fileName, pair._2))
+          create(isInHeader, this.fileName, tag.withFile(this.fileName, version))
         } else {
           this
         }
@@ -267,7 +279,10 @@ case class CVSRepository(val cvsroot: Option[String],
   }
 
   def getCommitsForTag(tag: CVSTag) = {
-    val commandStrings = tag.fileVersions.map(entry => cvsString + "rlog " + " -r" + entry._2.toString + " " + argument(module.map(_ + "/").getOrElse("") + entry._1))
+    val commandStrings = tag.fileVersions.map {
+      case (path, version) =>
+        cvsString + "rlog " + " -r" + version.toString + " " + argument(module.map(_ + "/").getOrElse("") + path)
+    }
     log("running command batch")
     commandStrings.foreach(log(_))
     log("end of batch")
@@ -287,7 +302,7 @@ case class CVSRepository(val cvsroot: Option[String],
   /**
    * A branch of None means trunk. A empty (None) date means the search is not limited in that direction.
    */
-  def getCommitList(branch:Option[String], start:Option[Date], end:Option[Date]):Seq[CVSCommit]={
+  def getCommitList(branch: Option[String], start: Option[Date], end: Option[Date]): Seq[CVSCommit] = {
     val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
     val dateString = if (start.isDefined || end.isDefined) {
@@ -295,7 +310,7 @@ case class CVSRepository(val cvsroot: Option[String],
      } else {
       ""
      }
-    val command = cvsString+ "rlog "+branch.map(" -r"+_+" ").getOrElse(" -b ") + dateString + module.getOrElse("")
+    val command = cvsString + "rlog " + branch.map(" -r" + _ + " ").getOrElse(" -b ") + dateString + module.getOrElse("")
     log("running command:\n" + command)
     parseRlogLines(stringToProcess(command))
   }
@@ -325,14 +340,15 @@ case class CVSRepository(val cvsroot: Option[String],
     override protected def withCommitSpliter = new RlogCommitParseState(false, updatedCommits, headerBuffer, Vector())
   }
 
-  private def parseDate(dateString:String) ={
-	CVSRepository.ACCEPTED_DATE_FORMATS.view.flatMap{format=>
-	try{
-	  Some(format.parse(dateString))
-	}catch{
-	  case _:java.text.ParseException => None
-	}
-	}.head
+  private def parseDate(dateString: String) = {
+    CVSRepository.ACCEPTED_DATE_FORMATS.view.flatMap {
+      format =>
+        try {
+          Some(format.parse(dateString))
+        } catch {
+          case _: java.text.ParseException => None
+        }
+    }.head
   }
   
   private def commitFromRLog(header: IndexedSeq[String], commit: IndexedSeq[String]): CVSCommit = {

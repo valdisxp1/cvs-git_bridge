@@ -8,8 +8,8 @@ case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion
   /**
    * @return a new tag object with the given file version changed.
    */
-  def withFile(fileName: String, version: CVSFileVersion): CVSTag ={
-    	CVSTag(name, fileVersions + (fileName -> version))
+  def withFile(fileName: String, version: CVSFileVersion): CVSTag = {
+    CVSTag(name, fileVersions + (fileName -> version))
   }
 
   /**
@@ -33,15 +33,15 @@ case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion
   /**
    * @return if the file version resulted from the commit is included in this tag.
    */
-  def includesCommit(commit: CVSCommit) ={ 
+  def includesCommit(commit: CVSCommit) = {
     fileVersions.get(commit.filename).map(_ == commit.revision).getOrElse(false)
   }
   def includesFile(path: String) = fileVersions.keys.exists(_ == path)
   
   def depth = fileVersions.values.map(_.depth).max
-  
-  def ignoreFile(file:String) = CVSTag(name,fileVersions - file)
-  def ignoreFiles(files:Iterable[String]) = CVSTag(name,fileVersions -- files) 
+
+  def ignoreFile(file: String) = CVSTag(name, fileVersions - file)
+  def ignoreFiles(files: Iterable[String]) = CVSTag(name, fileVersions -- files) 
   
   def isBranch = fileVersions.headOption.map(_._2.isBranch).getOrElse(false)
 }

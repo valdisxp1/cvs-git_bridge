@@ -13,23 +13,24 @@ import com.valdis.adamsons.bridge.GitBridge
 object CVSDiff extends CommandParser{
   case class CVSDiffCommand(val parentBranch: String, val branch: String) extends Command with SweetLogger {
     protected def logger = Logger
-    
+
     val bridge: GitBridge = Bridge
-    
+
     def apply = {
       val parentId = bridge.getRef(parentBranch).getOrElse(throw new IllegalAccessException("parent branch not found"))
       val branchId = bridge.getRef(branch).getOrElse(throw new IllegalAccessException("child branch not found"))
-        val commonId = Bridge.getMergeBase(parentId, branchId)
-        log("common commit:"+commonId)
-        commonId.foreach(common=>{
+      val commonId = Bridge.getMergeBase(parentId, branchId)
+      log("common commit:" + commonId)
+      commonId.foreach {
+        common =>
           Bridge.streamCVSDiff(System.out)(common, branchId)
-          val patchesDir = new File("patches/"+parentBranch+"/")
-          if(!patchesDir.exists()){
+          val patchesDir = new File("patches/" + parentBranch + "/")
+          if (!patchesDir.exists()) {
             patchesDir.mkdirs();
           }
-          val patchFile = new File(patchesDir,branch+"__"+branchId.name+".diff")
+          val patchFile = new File(patchesDir, branch + "__" + branchId.name + ".diff")
           Bridge.streamCVSDiff(new FileOutputStream(patchFile))(common, branchId)
-        })
+      }
       0
     }
   }

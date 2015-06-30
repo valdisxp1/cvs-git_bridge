@@ -54,29 +54,32 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
         }
       })
     }
-  
-//commits
+
+  //commits
   private def getRelevantCommits(sortedCommits: Seq[CVSCommit], branch: String) = {
-      val previousHead = getRef(cvsRefPrefix + branch)
-      val previousCommit = previousHead.map((headId) => {
+    val previousHead = getRef(cvsRefPrefix + branch)
+    val previousCommit = previousHead.map {
+      headId =>
         val gitCommit = revWalk.parseCommit(headId)
         val noteString = getNoteMessage(headId.name())
         log("last note: " + noteString)
         CVSCommit.fromGitCommit(gitCommit, noteString)
-      })
-      val lastImportPosition = sortedCommits.indexWhere((commit) => {
-        previousCommit.map((prevCommit) => {
-          prevCommit.filename == commit.filename && prevCommit.revision == commit.revision
-        }).getOrElse(false)
-      })
-      log("last position: " + lastImportPosition)
-      val notImportedCommits = if (lastImportPosition < 0) {
-        sortedCommits
-      } else {
-        sortedCommits.drop(lastImportPosition + 1)
-      }
-      notImportedCommits
     }
+    val lastImportPosition = sortedCommits.indexWhere {
+      commit =>
+        previousCommit.map {
+          prevCommit =>
+            prevCommit.filename == commit.filename && prevCommit.revision == commit.revision
+        }.getOrElse(false)
+    }
+    log("last position: " + lastImportPosition)
+    val notImportedCommits = if (lastImportPosition < 0) {
+      sortedCommits
+    } else {
+      sortedCommits.drop(lastImportPosition + 1)
+    }
+    notImportedCommits
+  }
 
   def appendCommits(commits: Seq[CVSCommit], branch: String, cvsrepo: CVSRepository) {
 	  log("Started sorting")
@@ -97,73 +100,74 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   private def appendSortedCommits(sortedCommits: Seq[CVSCommit], branch: String, cvsrepo: CVSRepository, headRef: Boolean) = {
     val relevantCommits = getRelevantCommits(sortedCommits, branch)
     log("Filtered, adding " + relevantCommits.length + " useful commits to branch " + branch)
-    relevantCommits.foreach((commit) => {
-      log(commit.filename);
-      log(commit.author);
-      log(commit.revision);
-      log(commit.date);
-      log("\n")
-      log(commit.comment)
-      log("\n")
-      val inserter = repo.newObjectInserter()
-      //stage
-      try {
-        val treeWalk = new TreeWalk(repo)
+    relevantCommits.foreach {
+      commit =>
+        log(commit.filename);
+        log(commit.author);
+        log(commit.revision);
+        log(commit.date);
+        log("\n")
+        log(commit.comment)
+        log("\n")
+        val inserter = repo.newObjectInserter()
+        //stage
+        try {
+          val treeWalk = new TreeWalk(repo)
 
-        val parentId = getRef(cvsRefPrefix + branch)
+          val parentId = getRef(cvsRefPrefix + branch)
 
-        val fileId = if (commit.isDead) { None } else {
-          val file = cvsrepo.getFile(commit.filename, commit.revision)
-          log("tmp file:" + file.getAbsolutePath())
-          val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
-          log("len:" + file.length)
-          log("fileID:" + fileId.name);
-          Some(fileId)
+          val fileId = if (commit.isDead) { None } else {
+            val file = cvsrepo.getFile(commit.filename, commit.revision)
+            log("tmp file:" + file.getAbsolutePath())
+            val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
+            log("len:" + file.length)
+            log("fileID:" + fileId.name);
+            Some(fileId)
+          }
+
+          val treeId = parentId.map(revWalk.parseTree(_)).map(putFile(_, commit.filename, fileId, inserter))
+            .getOrElse(
+              fileId.map(createTree(commit.filename, _, inserter))
+                .getOrElse(createEmptyTree(inserter)))
+
+          //commit
+          val author = new PersonIdent(commit.author, commit.author + "@nowhere.com", commit.date, TimeZone.getDefault())
+          val commitBuilder = new CommitBuilder
+          commitBuilder.setTreeId(treeId)
+          commitBuilder.setAuthor(author)
+          commitBuilder.setCommitter(author)
+          commitBuilder.setMessage(commit.comment)
+
+          parentId.foreach {
+            commitBuilder.setParentId(_)
+          }
+
+          val commitId = inserter.insert(commitBuilder)
+          inserter.flush();
+
+          log("parentID:" + parentId.map(_.name));
+          log("treeID:" + treeId.name);
+          log("commitID:" + commitId.name);
+
+          updateRef(cvsRefPrefix + branch, commitId)
+          //here can all tranformations take place
+          if (headRef) {
+            updateHeadRef(branch, commitId)
+          }
+
+          val note = git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
+          log("noteId: " + note.getName());
+        } finally {
+          inserter.release()
         }
-
-        val treeId = parentId.map(revWalk.parseTree(_)).map(putFile(_, commit.filename, fileId, inserter))
-          .getOrElse(
-            fileId.map(createTree(commit.filename, _, inserter))
-              .getOrElse(createEmptyTree(inserter)))
-
-        //commit
-        val author = new PersonIdent(commit.author, commit.author + "@nowhere.com", commit.date, TimeZone.getDefault())
-        val commitBuilder = new CommitBuilder
-        commitBuilder.setTreeId(treeId)
-        commitBuilder.setAuthor(author)
-        commitBuilder.setCommitter(author)
-        commitBuilder.setMessage(commit.comment)
-
-        parentId.foreach({
-          commitBuilder.setParentId(_)
-        })
-
-        val commitId = inserter.insert(commitBuilder)
-        inserter.flush();
-
-        log("parentID:" + parentId.map(_.name));
-        log("treeID:" + treeId.name);
-        log("commitID:" + commitId.name);
-
-        updateRef(cvsRefPrefix + branch, commitId)
-        //here can all tranformations take place
-        if (headRef) {
-          updateHeadRef(branch, commitId)
-        }
-
-        val note = git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
-        log("noteId: " + note.getName());
-      } finally {
-        inserter.release()
-      }
-    })
+    }
   }
   
     //tags
   def getGraftLocation(branch: CVSTag, trunk: Iterable[String]): Option[ObjectId] = lookupTag(branch.getBranchParent, trunk)
-  
+
   //converting to iterator to lookup on individual branches lazily
-  def lookupTag(tag: CVSTag,branches:Iterable[String]): Option[ObjectId] = branches.toIterator.map(branch=>lookupTag(tag, branch)).find(_.isDefined).flatten
+  def lookupTag(tag: CVSTag, branches: Iterable[String]): Option[ObjectId] = branches.toIterator.map(branch => lookupTag(tag, branch)).find(_.isDefined).flatten
 
 
   private abstract class TagSeachState {
@@ -250,7 +254,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   private case class MultiTagSearchState(val searchers:Set[TagSeachState]){
     def isDone = searchers.forall(_.isDone)
     def isAllFound = searchers.forall(_.isFound)
-    def objectIds = searchers.flatMap(state => state.objectId.map(state.tag -> _))
+    def objectIds = searchers.flatMap{state => state.objectId.map(state.tag -> _)}
     def withCommit(objectId: ObjectId, commit: CVSCommit) = MultiTagSearchState(searchers.map(_.withCommit(objectId,commit)))
   }
   
@@ -318,26 +322,27 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     logs.iterator().map(
         (commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId)), commit.getId))
   }
-  
+
   def lookupTag(tag: CVSTag, branch: String): Option[ObjectId] = {
     val objectId = Option(repo.resolve(cvsRefPrefix + branch))
-    objectId.flatMap((id) => {
-      val trunkCommits = getCommits(id)
-      val cleanedTag = cleanTag(tag)
-      val result = trunkCommits.toStream.foldLeftWhile[TagSeachState](new NotFound(cleanedTag))((oldstate, pair) => {
-        log(oldstate + " with " + pair._1)
-        dump(oldstate.dumpState)
-        oldstate.withCommit(pair._2, pair._1)
-      })(!_.isDone)
+    objectId.flatMap {
+      id =>
+        val trunkCommits = getCommits(id)
+        val cleanedTag = cleanTag(tag)
+        val result = trunkCommits.toStream.foldLeftWhile[TagSeachState](new NotFound(cleanedTag))((oldstate, pair) => {
+          log(oldstate + " with " + pair._1)
+          dump(oldstate.dumpState)
+          oldstate.withCommit(pair._2, pair._1)
+        })(!_.isDone)
 
-      log(result)
-      dump(result.dumpState)
-      if (result.isFound) {
-        result.objectId
-      } else {
-        None
-      }
-    })
+        log(result)
+        dump(result.dumpState)
+        if (result.isFound) {
+          result.objectId
+        } else {
+          None
+        }
+    }
   }
     
   

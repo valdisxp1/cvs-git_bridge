@@ -63,7 +63,7 @@ object CVSCommit {
     val path = lines(0).drop(CVS_PATH_KEY.length())
     val version = CVSFileVersion(lines(1).drop(CVS_REV_KEY.length()))
     val isDead = lines(2) == CVS_DEAD
-    val commitId = if (lines.length > 3) { Some(lines(3).drop(CVS_COMMIT_ID_KEY.length())) } else { None }
+    val commitId = if (lines.length > 3) { Some(lines(3).drop(CVS_COMMIT_ID_KEY.length)) } else { None }
     CVSCommit(path, version, isDead, author.getWhen(), author.getName(), commit.getFullMessage(), commitId)
   }
 }
