@@ -12,7 +12,7 @@ import com.valdis.adamsons.utils.FileUtils
  * Parser for directory creation and git repository initialization command. 
  */
 object Init extends CommandParser{
-  case class InitCommand extends Command with SweetLogger{
+  case class InitCommand() extends Command with SweetLogger{
     protected def logger = Logger
     val repo = GitUtils.repo;
     
