@@ -1,5 +1,11 @@
 
-/cvs-git_bridge/target
-git
-/cvs-git_bridge/*.log
-/cvs-git_bridge/src/main/scala/rebel.xml
+*.cache
+.classpath
+.project
+/temp
+target
+
+/git_clone
+
+/patch.diff
+/patches
