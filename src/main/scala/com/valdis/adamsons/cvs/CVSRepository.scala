@@ -21,7 +21,7 @@ case class CVSRepository(val cvsroot: Option[String],
   protected def logger = Logger
   def this(cvsroot: Option[String]) = this(cvsroot, None)
   def this() = this(None, None)
-  def this(cvsroot: String, module:String) = this(Some(cvsroot), Some(module))
+  def this(cvsroot: String, module: String) = this(Some(cvsroot), Some(module))
   
   /**
    * The path to repository root.

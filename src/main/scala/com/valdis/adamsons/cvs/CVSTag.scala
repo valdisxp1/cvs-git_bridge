@@ -13,20 +13,21 @@ case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion
   }
 
   /**
-   * Important: when used for a tag (not a branch) 
+   * Important: when used for a tag (not a branch)
    * the result MAY NOT BE a full branch parent of the branch the tag is on.
    * @return a new tag object describing this branches parent (branch point).
    */
   def getBranchParent = {
-    val files = fileVersions.map((pair) => (pair._1, pair._2.branchParent))
-    		.withFilter(_._2.isDefined).map((pair) => (pair._1, pair._2.get))
+    val files = fileVersions.mapValues(_.branchParent)
+      .collect { case (path, Some(parent)) => (path, parent) }
+
     CVSTag(name, files)
   }
   /**
    * @return a nice and long human-readable string describing this object
    */
-  def generateMessage ={ 
-    name + "\n" + fileVersions.map((pair)=>pair._1+" : "+pair._2).mkString("\n")
+  def generateMessage ={
+    name + "\n" + fileVersions.map { case (path, version) => path + " : " + version }.mkString("\n")
   }
 
   /**
