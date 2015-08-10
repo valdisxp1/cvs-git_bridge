@@ -69,7 +69,7 @@ case class CVSRepository(
     file
   }
   def fileNameList = {
-    val responseLines = stringToProcess(cvsString+ "rlog -R " + module.map(argument).getOrElse("")).lines;
+    val responseLines = stringToProcess(cvsString+ "rlog -R " + module.map(argument).getOrElse("")).lines
     responseLines.toList.map(cleanRCSpath)
   }
 
@@ -348,7 +348,7 @@ case class CVSRepository(
   }
   
   private def commitFromRLog(header: IndexedSeq[String], commit: IndexedSeq[String]): CVSCommit = {
-    val headerPairs = header.toList.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
+    val headerPairs = header.toList.map(_.split(": ")).filter(_.length > 1).map((x) => x(0).trim -> x(1))
     val headerMap = headerPairs.toMap
     val fileName = cleanRCSpath(headerMap.getOrElse("RCS file", missing("file name(RCS file)")))
 

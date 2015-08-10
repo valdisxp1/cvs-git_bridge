@@ -37,7 +37,7 @@ class CVSDiffTest {
   
   @After
   def after() {
-    bridge.close
+    bridge.close()
     clearDirs()
   }
 }

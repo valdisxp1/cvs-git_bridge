@@ -7,8 +7,8 @@ import com.valdis.adamsons.cvs.CVSFileVersion
  */
 case class RlogTagNameLookupState(
   override val isInHeader: Boolean,
-  val check: (=> String, => CVSFileVersion) => Boolean,
-  val nameSet: Set[String]) extends RlogParseState[RlogTagNameLookupState] {
+  check: (=> String, => CVSFileVersion) => Boolean,
+  nameSet: Set[String]) extends RlogParseState[RlogTagNameLookupState] {
   
     def this(check: (=> String, => CVSFileVersion) => Boolean, set: Set[String]) = this(RlogParseState.isFirstLineHeader, check, set)
     def this(check: (=> String, => CVSFileVersion) => Boolean) = this(check, Set())
@@ -17,7 +17,7 @@ case class RlogTagNameLookupState(
     override protected def create(isInHeader: Boolean) = new RlogTagNameLookupState(isInHeader, check, nameSet)
 
     override protected def withHeaderLine(line: String) = {
-      val isTagLine = line.size > 0 && line(0) == '\t'
+      val isTagLine = line.length > 0 && line(0) == '\t'
       if (isTagLine) {
         val split = line.trim.split(':')
         if (split.length != 2) {
