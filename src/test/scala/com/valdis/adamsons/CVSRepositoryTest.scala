@@ -1,17 +1,13 @@
 package com.valdis.adamsons
 
-import com.valdis.adamsons.cvs.CVSRepository
-import org.junit.Test
-import org.junit.Assert._
-import org.junit.Before
-import com.valdis.adamsons.cvs.CVSFileVersion
-import java.io.File
-import com.valdis.adamsons.utils.CVSUtils
-import java.util.Date
-import com.valdis.adamsons.cvs.CVSCommit
 import java.text.SimpleDateFormat
 import java.util.Locale
-import com.valdis.adamsons.cvs.CVSTag
+
+import com.valdis.adamsons.cvs.{CVSCommit, CVSFileVersion, CVSRepository, CVSTag}
+import com.valdis.adamsons.utils.CVSUtils
+import org.junit.Assert._
+import org.junit.Test
+
 import scala.io.Source
 
 class CVSRepositoryTest {

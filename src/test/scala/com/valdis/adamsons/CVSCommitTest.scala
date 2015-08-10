@@ -1,12 +1,11 @@
 package com.valdis.adamsons
 
-import org.junit.Test
-import org.junit.Assert._
-import com.valdis.adamsons.cvs.CVSCommit
-import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
-import com.valdis.adamsons.cvs.CVSFileVersion
+
+import com.valdis.adamsons.cvs.{CVSCommit, CVSFileVersion}
+import org.junit.Assert._
+import org.junit.Test
 
 class CVSCommitTest {
   lazy val defaultDateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy", Locale.UK)

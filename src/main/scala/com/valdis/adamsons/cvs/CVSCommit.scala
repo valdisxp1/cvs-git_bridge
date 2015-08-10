@@ -1,10 +1,8 @@
 package com.valdis.adamsons.cvs
 
 import java.util.Date
+
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.notes.Note
-import com.valdis.adamsons.logger.SweetLogger
-import com.valdis.adamsons.logger.Logger
 /**
  * commitId may not be None when dealing with older CVS versions.
  */

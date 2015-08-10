@@ -1,6 +1,6 @@
 package com.valdis.adamsons.utils
 
-import scala.sys.process.{ProcessBuilder,ProcessLogger}
+import scala.sys.process.{ProcessBuilder, ProcessLogger}
 
 /**
  * A Scala collection with all the standard out (stdout) lines from the given process.

@@ -1,28 +1,18 @@
 package com.valdis.adamsons.bridge
 
+import java.io.{FileInputStream, OutputStream}
+import java.util.{Date, TimeZone}
+
+import com.valdis.adamsons.cvs.{CVSCommit, CVSRepository, CVSTag}
+import com.valdis.adamsons.logger.{Logger, SweetLogger}
 import com.valdis.adamsons.utils.GitUtilsImpl
-import com.valdis.adamsons.cvs.CVSCommit
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.treewalk.TreeWalk
-import org.eclipse.jgit.lib.TreeFormatter
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.FileMode
-import java.io.FileInputStream
-import org.eclipse.jgit.lib.CommitBuilder
-import org.eclipse.jgit.lib.PersonIdent
-import java.util.TimeZone
-import com.valdis.adamsons.cvs.CVSRepository
-import com.valdis.adamsons.cvs.CVSTag
-import org.eclipse.jgit.lib.ObjectId
-import scala.collection.JavaConversions._
 import com.valdis.adamsons.utils.LazyFoldsUtil._
-import java.util.Date
-import com.valdis.adamsons.logger.SweetLogger
-import com.valdis.adamsons.logger.Logger
-import java.io.OutputStream
-import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.DiffEntry
+import org.eclipse.jgit.lib.{CommitBuilder, Constants, ObjectId, PersonIdent}
+import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.treewalk.TreeWalk
+
+import scala.collection.JavaConversions._
 
 class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   override protected val logger = Logger

@@ -1,11 +1,9 @@
 package com.valdis.adamsons.utils
 
-import java.io.File
-import scala.io.Source
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import com.valdis.adamsons.logger.SweetLogger
-import com.valdis.adamsons.logger.Logger
+import java.io.{File, FileInputStream, FileOutputStream}
+
+import com.valdis.adamsons.logger.{Logger, SweetLogger}
+
 import scala.util.Random
 
 object FileUtils extends SweetLogger{

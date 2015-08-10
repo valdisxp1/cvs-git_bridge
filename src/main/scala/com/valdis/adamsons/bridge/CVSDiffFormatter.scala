@@ -1,10 +1,9 @@
 package com.valdis.adamsons.bridge
 
-import org.eclipse.jgit.diff.DiffFormatter
-import java.io.OutputStream
-import java.io.ByteArrayOutputStream
+import java.io.{ByteArrayOutputStream, OutputStream}
+
 import org.eclipse.jgit.diff.DiffEntry.ChangeType
-import org.eclipse.jgit.lib.Constants.encode
+import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.lib.Constants.encodeASCII
 
 /**

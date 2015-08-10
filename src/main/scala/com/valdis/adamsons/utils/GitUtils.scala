@@ -1,33 +1,14 @@
 package com.valdis.adamsons.utils
 
-import org.eclipse.jgit.lib.RepositoryBuilder
 import java.io.File
-import scala.sys.process._
-import java.io.ByteArrayInputStream
-import scala.io.Source._
-import java.io.FileOutputStream
-import java.util.Date
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.io.InputStream
-import scala.io.Source
-import java.io.FileInputStream
-import org.eclipse.jgit.dircache.DirCache
-import org.eclipse.jgit.dircache.DirCacheEntry
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.TreeFormatter
-import org.eclipse.jgit.lib.FileMode
-import com.sun.jndi.ldap.Obj
+
+import com.valdis.adamsons.logger.{Logger, SweetLogger}
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.revwalk.RevWalk
-import com.valdis.adamsons.logger.Logger
-import com.valdis.adamsons.logger.SweetLogger
-import org.eclipse.jgit.revwalk.RevTree
-import org.eclipse.jgit.treewalk.TreeWalk
-import org.eclipse.jgit.lib.ObjectInserter
-import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.lib.{FileMode, ObjectId, ObjectInserter, RepositoryBuilder, TreeFormatter}
+import org.eclipse.jgit.revwalk.{RevCommit, RevTree, RevWalk}
 import org.eclipse.jgit.revwalk.filter.RevFilter
+import org.eclipse.jgit.treewalk.TreeWalk
+
 import scala.collection.JavaConversions._
 
 /**

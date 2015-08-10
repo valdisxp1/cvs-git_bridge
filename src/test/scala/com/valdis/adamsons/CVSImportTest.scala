@@ -1,21 +1,16 @@
 package com.valdis.adamsons
 
-import org.junit.Test
-import org.junit.Assert._
-import com.valdis.adamsons.utils.GitUtils
-import org.junit.After
-import org.junit.Before
 import java.io.File
-import com.valdis.adamsons.utils.FileUtils
+
+import com.valdis.adamsons.bridge.GitBridge
 import com.valdis.adamsons.commands.CVSImport.CVSImportCommand
 import com.valdis.adamsons.commands.Init.InitCommand
-import org.eclipse.jgit.api.Git
-import scala.collection.JavaConversions._
+import com.valdis.adamsons.utils.{FileUtils, GitUtilsImpl}
 import org.eclipse.jgit.treewalk.TreeWalk
-import com.valdis.adamsons.bridge.GitBridge
-import com.valdis.adamsons.bridge.GitBridge
-import com.valdis.adamsons.utils.GitUtilsImpl
-import org.eclipse.jgit.lib.ObjectId
+import org.junit.Assert._
+import org.junit.{After, Before, Test}
+
+import scala.collection.JavaConversions._
 
 object CVSImportTest{
   var num = 0
@@ -87,20 +82,20 @@ class CVSImportTest {
     }).toList
   }
 
-  def clearDirs {
+  def clearDirs() {
     FileUtils.deleteDir(gitDir)
     FileUtils.deleteDir(tempDir)
     FileUtils.deleteDir(patchesDir)
   }
   @Before
-  def before {
+  def before() {
     num += 1
     clearDirs
     println("using git directory:" + gitDirString)
     println("num:" + num)
     new InitCommand() {
       override val repo = new GitUtilsImpl(gitDirString).repo
-    }.apply
+    }.apply()
     bridge = new GitBridge(gitDirString)
   }
   @Test
@@ -224,16 +219,16 @@ class CVSImportTest {
   
   @Test
   def testOnlyNew1 {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply()
     checkMultibranch
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply()
     checkMultibranch
   }
   
   @Test
   def testOnlyNewAndTagsLater {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", false, true, true).apply
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", false, true, true).apply()
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply()
     checkMultibranch
   }
 

@@ -1,7 +1,5 @@
 package com.valdis.adamsons.utils
 
-import scala.annotation.tailrec
-
 object LazyFoldsUtil {
   /**
    * To avoid saying "folder".

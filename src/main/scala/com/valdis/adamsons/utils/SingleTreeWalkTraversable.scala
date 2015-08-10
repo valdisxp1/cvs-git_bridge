@@ -1,8 +1,7 @@
 package com.valdis.adamsons.utils
 
+import org.eclipse.jgit.lib.{FileMode, ObjectId}
 import org.eclipse.jgit.treewalk.TreeWalk
-import org.eclipse.jgit.lib.FileMode
-import org.eclipse.jgit.lib.ObjectId
 
 case class TreeEntry(val pathString: String,val fileMode: FileMode, val objectId: ObjectId)
 /**

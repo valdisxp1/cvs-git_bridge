@@ -1,8 +1,7 @@
 package com.valdis.adamsons.cvs
 
-import scala.collection.mutable.WrappedArray
-import scala.collection.mutable
 import scala.collection.concurrent.TrieMap
+import scala.collection.mutable.WrappedArray
 
 case class CVSFileVersion(val seq: Seq[AnyVal]) {
   def this(array:Array[Short]) = this(wrapShortArray(array))

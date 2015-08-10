@@ -1,19 +1,13 @@
 package com.valdis.adamsons
 
-import org.junit.Test
-import org.junit.Assert._
-import com.valdis.adamsons.utils.GitUtils
-import org.junit.After
-import org.junit.Before
 import java.io.File
-import com.valdis.adamsons.utils.FileUtils
-import org.eclipse.jgit.lib.Repository
+
+import com.valdis.adamsons.utils.{FileUtils, GitUtils}
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.CommitBuilder
+import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevWalk
-import org.eclipse.jgit.lib.TreeFormatter
-import org.eclipse.jgit.lib.PersonIdent
-import com.valdis.adamsons.utils.CVSUtils
+import org.junit.Assert._
+import org.junit.{After, Before, Test}
 
 class GitUtilsTest {
   var repo:Repository = null

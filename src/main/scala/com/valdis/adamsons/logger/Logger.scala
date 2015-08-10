@@ -1,10 +1,6 @@
 package com.valdis.adamsons.logger
 
-import java.io.File
-import java.io.PrintWriter
-import java.io.BufferedOutputStream
-import java.io.FileOutputStream
-import java.io.FileWriter
+import java.io.{File, FileWriter, PrintWriter}
 
 /**
  * A simple logger implementation that writes to logs on screen as well to the given file.

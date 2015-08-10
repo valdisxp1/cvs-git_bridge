@@ -1,8 +1,8 @@
 package com.valdis.adamsons
 
 import com.valdis.adamsons.utils.LazyFoldsUtil._
-import org.junit.Test
 import org.junit.Assert._
+import org.junit.Test
 
 class LazyFoldsTest {
   @Test

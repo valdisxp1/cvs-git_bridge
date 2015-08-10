@@ -1,17 +1,13 @@
 package com.valdis.adamsons
 
-import org.junit.Test
-import org.junit.Assert._
-import com.valdis.adamsons.bridge.GitBridge
-import com.valdis.adamsons.commands.CVSImport.CVSImportCommand
-import org.junit.Before
-import com.valdis.adamsons.commands.Init.InitCommand
-import com.valdis.adamsons.utils.GitUtilsImpl
-import com.valdis.adamsons.utils.GitUtils
-import com.valdis.adamsons.utils.FileUtils
 import java.io.File
+
+import com.valdis.adamsons.bridge.GitBridge
 import com.valdis.adamsons.commands.CVSDiff.CVSDiffCommand
-import org.junit.After
+import com.valdis.adamsons.commands.CVSImport.CVSImportCommand
+import com.valdis.adamsons.commands.Init.InitCommand
+import com.valdis.adamsons.utils.{FileUtils, GitUtils, GitUtilsImpl}
+import org.junit.{After, Before, Test}
 
 class CVSDiffTest {
   val gitDir = new File(GitUtils.gitDir)
@@ -21,27 +17,27 @@ class CVSDiffTest {
   private class TestableCVSDiffCommand(override val bridge: GitBridge, parentBranch: String, branch: String) extends CVSDiffCommand(parentBranch, branch)
   
   @Before
-  def before {
-    clearDirs
+  def before() {
+    clearDirs()
     new InitCommand(){
       override val repo = new GitUtilsImpl(GitUtils.gitDir).repo
-    }.apply
-    bridge=new GitBridge(GitUtils.gitDir)
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
+    }.apply()
+    bridge = new GitBridge(GitUtils.gitDir)
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply()
   }
   
-  def clearDirs {
+  def clearDirs() {
     FileUtils.deleteDir(gitDir)
   }
   
   @Test
-  def CVSvCVS {
-    new TestableCVSDiffCommand(bridge,"opengl","experiment").apply
+  def CVSvCVS() {
+    new TestableCVSDiffCommand(bridge,"opengl","experiment").apply()
   }
   
   @After
-  def after{
+  def after() {
     bridge.close
-    clearDirs
+    clearDirs()
   }
 }

@@ -1,8 +1,8 @@
 package com.valdis.adamsons
 
-import org.junit.Test
-import org.junit.Assert._
 import com.valdis.adamsons.logger.Logger
+import org.junit.Assert._
+import org.junit.Test
 
 class LoggerTest {
   @Test

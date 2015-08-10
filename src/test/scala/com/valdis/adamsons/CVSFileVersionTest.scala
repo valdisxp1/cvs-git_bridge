@@ -1,8 +1,8 @@
 package com.valdis.adamsons
 
-import org.junit.Test
-import org.junit.Assert._
 import com.valdis.adamsons.cvs.CVSFileVersion
+import org.junit.Assert._
+import org.junit.Test
 
 class CVSFileVersionTest {
   @Test
@@ -28,7 +28,7 @@ class CVSFileVersionTest {
     }
     {
       val versionStr = "1.1.2." + Short.MaxValue
-      val list = List(1, 1, 2, Short.MaxValue)
+      val list = List(1, 1, 2, Short.MaxValue.toInt)
       testVersion(versionStr, list)
     }
     {
@@ -38,7 +38,7 @@ class CVSFileVersionTest {
     }
     {
       val versionStr = "1.1.2." + Byte.MaxValue
-      val list = List(1, 1, 2, Byte.MaxValue)
+      val list = List(1, 1, 2, Byte.MaxValue.toInt)
       testVersion(versionStr, list)
     }
     {

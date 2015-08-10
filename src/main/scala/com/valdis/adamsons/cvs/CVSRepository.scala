@@ -1,19 +1,13 @@
 package com.valdis.adamsons.cvs
 
-import scala.sys.process._
-import java.util.Date
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.io.ByteArrayInputStream
-import java.io.InputStream
-import java.io.File
-import scala.collection.immutable.SortedSet
-import com.valdis.adamsons.logger.SweetLogger
-import com.valdis.adamsons.logger.Logger
-import com.valdis.adamsons.utils.FileUtils
-import com.valdis.adamsons.utils.ProcessAsTraversable
+import java.text.{DateFormat, SimpleDateFormat}
+import java.util.{Date, Locale}
+
 import com.valdis.adamsons.cvs.rlog.parse.{RlogParseState, RlogTagNameLookupState}
-import java.text.DateFormat
+import com.valdis.adamsons.logger.{Logger, SweetLogger}
+import com.valdis.adamsons.utils.{FileUtils, ProcessAsTraversable}
+
+import scala.sys.process._
 
 case class CVSRepository(val cvsroot: Option[String],
 						 val module: Option[String],

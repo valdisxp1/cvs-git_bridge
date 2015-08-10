@@ -1,8 +1,6 @@
 package com.valdis.adamsons.commands
 
-import org.rogach.scallop.Scallop
-
-trait NewCommandParser {
+trait CommandParser {
   def parse(args: Seq[String]): Command
 
   def main(args: Array[String]): Unit = {

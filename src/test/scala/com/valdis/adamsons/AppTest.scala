@@ -1,7 +1,7 @@
 package com.valdis.adamsons
 
-import org.junit.Test
 import org.junit.Assert._
+import org.junit.Test
 
 /**
  * Unit test for simple App.

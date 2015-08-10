@@ -1,20 +1,14 @@
 package com.valdis.adamsons.commands
 
-import org.rogach.scallop.{ScallopConf, Scallop}
-
-import scala.collection.immutable.List
-import scala.sys.process._
-import com.valdis.adamsons.utils.GitUtils
-import java.io.File
-import com.valdis.adamsons.logger.SweetLogger
-import com.valdis.adamsons.logger.Logger
-import com.valdis.adamsons.utils.FileUtils
+import com.valdis.adamsons.logger.{Logger, SweetLogger}
+import com.valdis.adamsons.utils.{FileUtils, GitUtils}
+import org.rogach.scallop.ScallopConf
 
 /**
  * Parser for directory creation and git repository initialization command. 
  */
-object Init extends NewCommandParser {
-  case object InitCommand extends Command with SweetLogger{
+object Init extends CommandParser {
+  class InitCommand() extends Command with SweetLogger{
     protected def logger = Logger
     val repo = GitUtils.repo
     
@@ -31,15 +25,17 @@ object Init extends NewCommandParser {
     0
   }
   }
+
+  case object InitCommand extends InitCommand
   val help = "creates directory structure and initialzes git repository"
 
-  def parse(args: Seq[String]) = {
-    object Conf extends ScallopConf(args) {
-      banner(help)
-    }
-    InitCommand
+  trait InitParse {
+    self: ScallopConf =>
+    banner(help)
   }
 
-  val aliases = List("init", "initialize")
-
+  def parse(args: Seq[String]) = {
+    object Conf extends ScallopConf(args) with InitParse
+    InitCommand
+  }
 }

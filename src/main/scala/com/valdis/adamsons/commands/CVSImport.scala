@@ -1,26 +1,17 @@
 package com.valdis.adamsons.commands
 
-import org.rogach.scallop.{ScallopConf, Scallop}
+import java.text.{DateFormat, SimpleDateFormat}
 
-import scala.sys.process._
-import com.valdis.adamsons.cvs.CVSRepository
-import com.valdis.adamsons.cvs.CVSFileVersion
+import com.valdis.adamsons.bridge.{Bridge, GitBridge}
+import com.valdis.adamsons.cvs.{CVSRepository, CVSTag}
+import com.valdis.adamsons.logger.{Logger, SweetLogger}
 import com.valdis.adamsons.utils.CVSUtils
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.lib.ObjectId
-import com.valdis.adamsons.cvs.CVSCommit
-import com.valdis.adamsons.cvs.CVSTag
-import com.valdis.adamsons.bridge.Bridge
-import com.valdis.adamsons.logger.SweetLogger
-import com.valdis.adamsons.logger.Logger
-import com.valdis.adamsons.bridge.GitBridge
-import java.text.DateFormat
-import java.text.SimpleDateFormat
+import org.rogach.scallop.ScallopConf
 
 /**
  * Parser for CVS repository importing command.
  */
-object CVSImport extends NewCommandParser {
+object CVSImport extends CommandParser {
   /**
    * @param onlyNew true if only add new branches and do not update already imported ones.
    */
@@ -151,34 +142,39 @@ object CVSImport extends NewCommandParser {
     def apply() = new CVSImportCommand()
 
     def apply(cvsroot: String, module: String) = new CVSImportCommand(cvsroot, module)
+
+    def apply(parsed: CVSImportParse): CVSImportCommand = {
+      import parsed._
+      apply(
+        cvsRoot = cvsroot.get,
+        module = module.get,
+        serverDateFormat = dateFormatString.get.map(new SimpleDateFormat(_)),
+        resolveTags = !skipTags() || resolveTags(),
+        autoGraft = !noGraft() || graft(),
+        onlyNew = !allBranches() && onlyNew()
+      )
+    }
+  }
+
+  trait CVSImportParse {
+    self: ScallopConf =>
+    banner(help)
+    val cvsroot = opt[String]("cvsroot", short = 'd')
+    val skipTags = opt[Boolean]("skipTags")
+    val resolveTags = opt[Boolean]("resolveTags")
+    val noGraft = opt[Boolean]("noGraft")
+    val graft = opt[Boolean]("graft")
+    val allBranches = opt[Boolean]("allBranches")
+    val onlyNew = opt[Boolean]("onlyNew")
+    val dateFormatString = opt[String]("dateFormat",short = 'f')
+    val module = trailArg[String]("module")
   }
 
   def parse(args: Seq[String]) = {
-    object Conf extends ScallopConf(args) {
-      banner(help)
-      val cvsroot = opt[String]("cvsroot", short = 'd')
-      val skipTags = opt[Boolean]("skipTags")
-      val resolveTags = opt[Boolean]("resolveTags")
-      val noGraft = opt[Boolean]("noGraft")
-      val graft = opt[Boolean]("graft")
-      val allBranches = opt[Boolean]("allBranches")
-      val onlyNew = opt[Boolean]("onlyNew")
-      val dateFormatString = opt[String]("dateFormat",short = 'f')
-      val module = trailArg[String]("module")
-    }
+    object Conf extends ScallopConf(args) with CVSImportParse
 
-    import Conf._
-    CVSImportCommand(
-      cvsRoot = cvsroot.get,
-      module = module.get,
-      serverDateFormat = dateFormatString.get.map(new SimpleDateFormat(_)),
-      resolveTags = !skipTags() || resolveTags(),
-      autoGraft = !noGraft() || graft(),
-      onlyNew = !allBranches() && onlyNew()
-    )
+    CVSImportCommand(Conf)
   }
-
-  val aliases = List("cvsimport","import")
 
   val help = "imports all branches of the given CVS repository"
 }
