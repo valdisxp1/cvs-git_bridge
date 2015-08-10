@@ -167,11 +167,13 @@ object CVSImport extends CommandParser {
     val allBranches = opt[Boolean]("allBranches")
     val onlyNew = opt[Boolean]("onlyNew")
     val dateFormatString = opt[String]("dateFormat",short = 'f')
-    val module = trailArg[String]("module")
+    val module = trailArg[String]("module", required = false)
   }
 
   def parse(args: Seq[String]) = {
-    object Conf extends ScallopConf(args) with CVSImportParse
+    object Conf extends ScallopConf(args) with CVSImportParse{
+      ()
+    }
 
     CVSImportCommand(Conf)
   }

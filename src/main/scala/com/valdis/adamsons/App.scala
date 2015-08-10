@@ -17,26 +17,21 @@ object App extends CommandParser {
 
   def parse(args: Seq[String]): Command = {
     object Conf extends ScallopConf(args) {
-      //      banner(help)
+      banner(help)
       val init1 = new Subcommand("init") with InitParse {
-        //XXX workaround
-        val dontcare2 = opt[Boolean]("dontcare", hidden = true)
+        ()
       }
       val initialize = new Subcommand("initialize") with InitParse {
-        //XXX workaround
-        val dontcare2 = opt[Boolean]("dontcare", hidden = true)
+        ()
       }
-      val `import` = new Subcommand("import") with CVSImportParse{
-        //XXX workaround
-        val dontcare2 = opt[Boolean]("dontcare", hidden = true)
+      val `import` = new Subcommand("import") with CVSImportParse {
+        ()
       }
-      val cvsimport = new Subcommand("cvsimport") with CVSImportParse{
-        //XXX workaround
-        val dontcare2 = opt[Boolean]("dontcare", hidden = true)
+      val cvsimport = new Subcommand("cvsimport") with CVSImportParse {
+        ()
       }
-      val diff = new Subcommand("cvsdiff") with CVSDiffParse{
-        //XXX workaround
-        val dontcare2 = opt[Boolean]("dontcare", hidden = true)
+      val diff = new Subcommand("cvsdiff") with CVSDiffParse {
+        ()
       }
     }
 

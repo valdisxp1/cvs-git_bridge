@@ -35,7 +35,9 @@ object Init extends CommandParser {
   }
 
   def parse(args: Seq[String]) = {
-    object Conf extends ScallopConf(args) with InitParse
+    object Conf extends ScallopConf(args) with InitParse{
+      ()
+    }
     InitCommand
   }
 }

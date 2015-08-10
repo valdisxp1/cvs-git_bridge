@@ -52,7 +52,9 @@ object CVSDiff extends CommandParser {
   }
 
   def parse(args: Seq[String]) = {
-    object Conf extends ScallopConf(args) with CVSDiffParse
+    object Conf extends ScallopConf(args) with CVSDiffParse{
+      ()
+    }
     CVSDiffCommand(Conf)
   }
 
