@@ -35,27 +35,27 @@ class CVSImportTest {
 
   def commitCount(branchName: String) = {
     val branch = bridge.repo.resolve(branchName)
-    assertNotNull("Branch " + branchName + " not found", branch);
-    val logs = bridge.git.log().add(branch).call();
+    assertNotNull("Branch " + branchName + " not found", branch)
+    val logs = bridge.git.log().add(branch).call()
     logs.count(a => true)
   }
   
   def tags = {
-    bridge.git.tagList().call().toList.map(tag => tag.getName() -> tag.getObjectId()).toMap
+    bridge.git.tagList().call().toList.map(tag => tag.getName -> tag.getObjectId).toMap
   }
 
   def tagNames = tags.keys.toSet.map((s: String) => s.drop("refs/tags/".length))
 
   def getFileNames(branch:String) = {
     val logs = bridge.git.log().add(bridge.repo.resolve(branch)).call()
-    logs.map(_.getTree()).map((tree) => {
+    logs.map(_.getTree).map((tree) => {
       val treewalk = new TreeWalk(bridge.repo)
       try {
         treewalk.addTree(tree)
         treewalk.setRecursive(true)
         var fileNames: Set[String] = Set()
         while (treewalk.next()) {
-          fileNames = fileNames + treewalk.getPathString()
+          fileNames = fileNames + treewalk.getPathString
         }
         fileNames
       } finally {
@@ -66,7 +66,7 @@ class CVSImportTest {
   
    def getObjectIds(branch:String) = {
     val logs = bridge.git.log().add(bridge.repo.resolve(branch)).call()
-    logs.map(_.getTree()).map((tree) => {
+    logs.map(_.getTree).map((tree) => {
       val treewalk = new TreeWalk(bridge.repo)
       try {
         treewalk.addTree(tree)
@@ -90,7 +90,7 @@ class CVSImportTest {
   @Before
   def before() {
     num += 1
-    clearDirs
+    clearDirs()
     println("using git directory:" + gitDirString)
     println("num:" + num)
     new InitCommand() {
@@ -99,8 +99,8 @@ class CVSImportTest {
     bridge = new GitBridge(gitDirString)
   }
   @Test
-  def testSubdirs {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvstest5").apply
+  def testSubdirs() {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvstest5").apply()
     assertEquals(6, commitCount("master"))
     assertEquals(List(Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt", "dir/3.txt"),
     				  Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt"),
@@ -111,9 +111,9 @@ class CVSImportTest {
   }
 
   @Test
-  def testIncremental {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvstest5").apply
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvstest5").apply
+  def testIncremental() {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvstest5").apply()
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvstest5").apply()
     assertEquals(6, commitCount("master"))
     assertEquals(List(Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt", "dir/3.txt"),
     				  Set("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt"),
@@ -124,16 +124,16 @@ class CVSImportTest {
   }
   
   @Test
-  def testIncremental2 {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
-    checkMultibranch
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
-    checkMultibranch
+  def testIncremental2() {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply()
+    checkMultibranch()
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply()
+    checkMultibranch()
   }
 
   @Test
-  def testImages {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvsimagetest2").apply
+  def testImages() {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvsimagetest2").apply()
     assertEquals(2, commitCount("master"))
     assertEquals(List(Set("image.png"), Set("image.png")), getFileNames("master"))
     //checking file integrity
@@ -142,8 +142,8 @@ class CVSImportTest {
   }
 
   @Test
-  def testRemove {
-    new TestableCVSImportCommand(bridge ,"test/cvsroot", "cvsdeltetest2").apply
+  def testRemove() {
+    new TestableCVSImportCommand(bridge ,"test/cvsroot", "cvsdeltetest2").apply()
     assertEquals(4, commitCount("master"))
     assertEquals(List(Set("file.txt"),
     				  Set("file.txt", "evil.txt"),
@@ -152,8 +152,8 @@ class CVSImportTest {
   }
   
   @Test
-  def testRemoveSubdirs {
-   new TestableCVSImportCommand(bridge, "test/cvsroot", "subdirdeletetest").apply
+  def testRemoveSubdirs() {
+   new TestableCVSImportCommand(bridge, "test/cvsroot", "subdirdeletetest").apply()
     assertEquals(6, commitCount("master"))
     assertEquals(List(Set("good.txt", "really/good.txt"),
     				  Set("good.txt", "really/good.txt", "really/evil.txt"),
@@ -164,8 +164,8 @@ class CVSImportTest {
   }
 
   @Test
-  def testReAdd {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvsreaddtest").apply
+  def testReAdd() {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "cvsreaddtest").apply()
     assertEquals(4, commitCount("master"))
     assertEquals(List(Set("good.txt", "evil.txt"),
     				  Set("good.txt"),
@@ -174,8 +174,8 @@ class CVSImportTest {
   }
   
   @Test
-  def testBranchAndTag {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "branchtest").apply
+  def testBranchAndTag() {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "branchtest").apply()
     assertEquals(1, commitCount("master"))
     assertEquals(List(Set("main.cpp")), getFileNames("master"))
     // includes "master" commits
@@ -184,28 +184,28 @@ class CVSImportTest {
   }
   
   @Test
-  def testMultiBranch {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply
-    checkMultibranch
+  def testMultiBranch() {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest").apply()
+    checkMultibranch()
   }
   
   @Test
-  def testBadBranch {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "outofsynctest").apply
+  def testBadBranch() {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "outofsynctest").apply()
     assertEquals(4, commitCount("bad_branch"))//includes branchpoint
     assertEquals(2, commitCount("bad_branch.branch_point"))
     assertEquals(4, commitCount("master"))
   }
   
   @Test
-  def testNoTags {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", false).apply
+  def testNoTags() {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", false).apply()
     assertEquals(Map(), tags)
   }
   
   @Test
-  def testNoGraft {
-    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, false).apply
+  def testNoGraft() {
+    new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, false).apply()
     assertEquals(2, commitCount("directx"))
     assertEquals(2, commitCount("master"))
     assertEquals(3, commitCount("opengl"))
@@ -218,27 +218,27 @@ class CVSImportTest {
   }
   
   @Test
-  def testOnlyNew1 {
+  def testOnlyNew1() {
     new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply()
-    checkMultibranch
+    checkMultibranch()
     new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply()
-    checkMultibranch
+    checkMultibranch()
   }
   
   @Test
-  def testOnlyNewAndTagsLater {
+  def testOnlyNewAndTagsLater() {
     new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", false, true, true).apply()
     new TestableCVSImportCommand(bridge, "test/cvsroot", "multibranchtest", true, true, true).apply()
-    checkMultibranch
+    checkMultibranch()
   }
 
   @After
-  def after {
+  def after() {
     bridge.close
-    clearDirs
+    clearDirs()
   }
   
-  private def checkMultibranch = {
+  private def checkMultibranch() = {
     assertEquals(2, commitCount("directx"))
     assertEquals(2, commitCount("master"))
     assertEquals(3, commitCount("opengl"))

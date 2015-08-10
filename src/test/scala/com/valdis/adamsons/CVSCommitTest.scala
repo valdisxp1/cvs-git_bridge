@@ -14,9 +14,9 @@ class CVSCommitTest {
   val muckIsDead = false
   val muckAuthor = ""
   val muckComment = ""
-  val muckCommitId = None;
+  val muckCommitId = None
   @Test
-  def testCompare {
+  def testCompare() {
 
     //date
     {

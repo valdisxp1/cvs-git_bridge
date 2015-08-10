@@ -12,12 +12,12 @@ import scala.io.Source
 
 class CVSRepositoryTest {
   @Test
-  def testGetFileContents {
+  def testGetFileContents() {
     {
       val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"), "cvstest5")
       assertEquals("1", repo.getFileContents("1.txt", CVSFileVersion("1.1")).trim())
       val file = repo.getFile("1.txt", CVSFileVersion("1.1"))
-      assertEquals("1", Source.fromFile(file).getLines.mkString)
+      assertEquals("1", Source.fromFile(file).getLines().mkString)
     }
     //spaces
     {
@@ -26,15 +26,15 @@ class CVSRepositoryTest {
       assertEquals("simple file", repo.getFileContents("My documents/simple file.txt", CVSFileVersion("1.1")).trim())
       
       val spaceManFile = repo.getFile("space man.bin", CVSFileVersion("1.1"))
-      assertEquals("this is not empty", Source.fromFile(spaceManFile).getLines.mkString)
+      assertEquals("this is not empty", Source.fromFile(spaceManFile).getLines().mkString)
       
       val simpleFile = repo.getFile("My documents/simple file.txt", CVSFileVersion("1.1"))
-      assertEquals("simple file", Source.fromFile(simpleFile).getLines.mkString)
+      assertEquals("simple file", Source.fromFile(simpleFile).getLines().mkString)
     }
   }
   
   @Test
-  def testFileNameList {
+  def testFileNameList() {
     {
     val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest5")
     assertEquals(List("1.txt", "2.txt", "3.txt", "dir/1.txt", "dir/2.txt", "dir/3.txt"),repo.fileNameList)
@@ -53,7 +53,7 @@ class CVSRepositoryTest {
   def date2(str:String) = defaultDateFormat2.parse(str)
   
   @Test
-  def testGetCommitList {
+  def testGetCommitList() {
     {
     val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"cvstest5")
     val expected = List(
@@ -76,13 +76,13 @@ class CVSRepositoryTest {
   }
   
   @Test
-  def testGetBranchSet {
+  def testGetBranchSet() {
     val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"branchtest")
     assertEquals(Set("branch"), repo.getBranchNameSet)
   }
   
   @Test
-  def testResolveTag {
+  def testResolveTag() {
     val repo = CVSRepository(CVSUtils.absolutepath("test/cvsroot"),"branchtest")
     assertEquals(CVSTag("branch",Map("README.txt"->CVSFileVersion("1.1.0.2"),"main.cpp"->CVSFileVersion("1.1.0.2"))),repo.resolveTag("branch"))
     assertEquals(CVSTag("branch_start",Map("main.cpp"->CVSFileVersion("1.1"))),repo.resolveTag("branch_start"))

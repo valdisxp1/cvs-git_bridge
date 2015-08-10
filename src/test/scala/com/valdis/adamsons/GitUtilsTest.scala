@@ -10,16 +10,16 @@ import org.junit.Assert._
 import org.junit.{After, Before, Test}
 
 class GitUtilsTest {
-  var repo:Repository = null
+  var repo: Repository = null
   @Before
-  def before{
+  def before() {
     //copy the test repository
     FileUtils.copyDir(new File("testrepo"), new File(GitUtils.gitDir))
     repo = GitUtils.repo
   }
   
   @Test
-  def testGetNoteMessage{
+  def testGetNoteMessage() {
     val revWalk = new RevWalk(repo)
     val commitId = repo.resolve("master")
     
@@ -35,7 +35,7 @@ class GitUtilsTest {
   }
   
   @After
-  def after{
+  def after() {
     val gitDir = new File(GitUtils.gitDir)
     FileUtils.deleteDir(gitDir)
   }

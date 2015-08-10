@@ -6,7 +6,7 @@ import org.junit.Test
 
 class CVSFileVersionTest {
   @Test
-  def testConstruct{
+  def testConstruct(){
     {
       val versionStr = "1.1"
       val list = List(1,1)
@@ -33,7 +33,7 @@ class CVSFileVersionTest {
     }
     {
       val versionStr = "1.1.2." + (Short.MaxValue + 1)
-      val list = List(1, 1, 2, (Short.MaxValue + 1))
+      val list = List(1, 1, 2, Short.MaxValue + 1)
       testVersion(versionStr, list)
     }
     {
@@ -43,7 +43,7 @@ class CVSFileVersionTest {
     }
     {
       val versionStr = "1.1.2." + (Byte.MaxValue + 1)
-      val list = List(1, 1, 2, (Byte.MaxValue + 1))
+      val list = List(1, 1, 2, Byte.MaxValue + 1)
       testVersion(versionStr, list)
     }
   }

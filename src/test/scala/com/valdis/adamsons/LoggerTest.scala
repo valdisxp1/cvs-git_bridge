@@ -6,7 +6,7 @@ import org.junit.Test
 
 class LoggerTest {
   @Test
-  def testExecuteCount {
+  def testExecuteCount() {
     var count = 0
     def function = {
       count = count + 1
