@@ -9,9 +9,10 @@ import com.valdis.adamsons.utils.{FileUtils, ProcessAsTraversable}
 
 import scala.sys.process._
 
-case class CVSRepository(val cvsroot: Option[String],
-						 val module: Option[String],
-						 val serverDateFormat: DateFormat = CVSRepository.DEFAULT_CVS_DATE_FORMAT) extends SweetLogger {
+case class CVSRepository(
+                          cvsroot: Option[String],
+                          module: Option[String],
+                          serverDateFormat: DateFormat = CVSRepository.DEFAULT_CVS_DATE_FORMAT) extends SweetLogger {
   protected def logger = Logger
   def this(cvsroot: Option[String]) = this(cvsroot, None)
   def this() = this(None, None)
@@ -27,7 +28,7 @@ case class CVSRepository(val cvsroot: Option[String],
    */
   def module(module: String) = CVSRepository(this.cvsroot, Some(module))
 
-  private def cvsString = "cvs " + cvsroot.map("-d " + argument(_) + " ").getOrElse("");
+  private def cvsString = "cvs " + cvsroot.map("-d " + argument(_) + " ").getOrElse("")
   
   /**
    * @return relative path against chosen module.
@@ -42,7 +43,7 @@ case class CVSRepository(val cvsroot: Option[String],
           root
         }
     }
-    absolutePath.drop(pathOnServer.getOrElse("").size + 1 + module.getOrElse("").size + 1).trim.dropRight(2).replace("Attic/", "")
+    absolutePath.drop(pathOnServer.getOrElse("").length + 1 + module.getOrElse("").length + 1).trim.dropRight(2).replace("Attic/", "")
   }
 
   private def argument(str: String) = "\"" + str + "\""
@@ -62,8 +63,8 @@ case class CVSRepository(val cvsroot: Option[String],
     log("running command:\n" + processStr)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
-    val process = processStr.#>(file).run
-    val exitvalue = process.exitValue;
+    val process = processStr.#>(file).run()
+    val exitvalue = process.exitValue()
     file.deleteOnExit()
     file
   }
@@ -75,7 +76,7 @@ case class CVSRepository(val cvsroot: Option[String],
   private def getTagProcess = {
     val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
     log("running command:\n" + command)
-    stringToProcess(command);
+    stringToProcess(command)
   }
   
 
@@ -105,14 +106,14 @@ case class CVSRepository(val cvsroot: Option[String],
     protected def withFileName(fileName:String): This
     
     override protected def withHeaderLine(line: String): This = {
-      val fileNameUpdated = extractFileName(line).map(withFileName(_))
+      val fileNameUpdated = extractFileName(line).map(withFileName)
       fileNameUpdated.getOrElse {
         lazy val (tagName, version) = {
           val arr = line.split(':')
           (arr(0).trim(), CVSFileVersion(arr(1).trim))
         }
         
-        def isTagLine = line.size > 1 && line(0) == '\t'
+        def isTagLine = line.length > 1 && line(0) == '\t'
         if (isTagLine) {
         	withTagEntry(tagName, version)
         } else {
@@ -190,8 +191,8 @@ case class CVSRepository(val cvsroot: Option[String],
   private case class SmartRlogMultiTagParseState(
     override val isInHeader: Boolean,
     override val fileName: String,
-    val tags: Set[Set[CVSTag]],
-    val currentChanges: Map[String, CVSFileVersion]) extends TagParseState[SmartRlogMultiTagParseState] {
+    tags: Set[Set[CVSTag]],
+    currentChanges: Map[String, CVSFileVersion]) extends TagParseState[SmartRlogMultiTagParseState] {
     
     def this(names: Iterable[String]) = this(RlogParseState.isFirstLineHeader, "", Set(names.map(CVSTag(_)).toSet),Map())
     protected def create(isInHeader: Boolean) = new SmartRlogMultiTagParseState(isInHeader, fileName, tags, currentChanges)
@@ -214,7 +215,7 @@ case class CVSRepository(val cvsroot: Option[String],
     
   }
 
-  private case class RlogSingleTagParseState(override val isInHeader: Boolean, val fileName: String, val tag: CVSTag) extends RlogParseState[RlogSingleTagParseState] {
+  private case class RlogSingleTagParseState(override val isInHeader: Boolean, fileName: String, tag: CVSTag) extends RlogParseState[RlogSingleTagParseState] {
     def this(name: String) = this(RlogParseState.isFirstLineHeader, "", CVSTag(name))
     
     override protected def create(isInHeader: Boolean): RlogSingleTagParseState = new RlogSingleTagParseState(isInHeader, fileName, tag)
@@ -228,7 +229,7 @@ case class CVSRepository(val cvsroot: Option[String],
           val arr = line.split(':')
           (arr(0).trim(), CVSFileVersion(arr(1).trim))
         }
-        def isTagLine = line.size > 1 && line(0) == '\t'
+        def isTagLine = line.length > 1 && line(0) == '\t'
         def isTheRightTag = tag.name == tagName
         if (isTagLine && isTheRightTag) {
           create(isInHeader, this.fileName, tag.withFile(this.fileName, version))
@@ -243,7 +244,7 @@ case class CVSRepository(val cvsroot: Option[String],
   def resolveTag(tagName: String): CVSTag = {
     val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
     log("running command:\n" + command)
-    val process = stringToProcess(command);
+    val process = stringToProcess(command)
     new ProcessAsTraversable(process, line => log(line))
     	.foldLeft(new RlogSingleTagParseState(tagName))(_ withLine _).tag
   }
@@ -251,7 +252,7 @@ case class CVSRepository(val cvsroot: Option[String],
   def resolveTags(tagNames: Iterable[String]): Iterable[CVSTag] = {
     val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
     log("running command:\n" + command)
-    val process = stringToProcess(command);
+    val process = stringToProcess(command)
     new ProcessAsTraversable(process, line => log(line))
     	.foldLeft(new SmartRlogMultiTagParseState(tagNames))(_ withLine _).tags.flatten
   }
@@ -259,7 +260,7 @@ case class CVSRepository(val cvsroot: Option[String],
   def resolveAllTagsAndBranches: Set[CVSTag] = {
     val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
     log("running command:\n" + command)
-    val process = stringToProcess(command);
+    val process = stringToProcess(command)
     new ProcessAsTraversable(process, line => log(line))
     	.foldLeft(new RlogAllTagParseState())(_ withLine _).tags.values.toSet
   }
@@ -267,7 +268,7 @@ case class CVSRepository(val cvsroot: Option[String],
   def resolveAllBranches: Set[CVSTag] = {
     val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
     log("running command:\n" + command)
-    val process = stringToProcess(command);
+    val process = stringToProcess(command)
     new ProcessAsTraversable(process, line => log(line))
     	.foldLeft(new RlogAllBranchParseState())(_ withLine _).tags.values.toSet
   }
@@ -280,7 +281,7 @@ case class CVSRepository(val cvsroot: Option[String],
     log("running command batch")
     commandStrings.foreach(log(_))
     log("end of batch")
-    val combinedProcess = commandStrings.map(stringToProcess(_)).reduce(_ ### _)
+    val combinedProcess = commandStrings.map(stringToProcess).reduce(_ ### _)
     parseRlogLines(combinedProcess)
   }
   
@@ -297,8 +298,8 @@ case class CVSRepository(val cvsroot: Option[String],
    * A branch of None means trunk. A empty (None) date means the search is not limited in that direction.
    */
   def getCommitList(branch: Option[String], start: Option[Date], end: Option[Date]): Seq[CVSCommit] = {
-    val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
-    val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format(_))
+    val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format)
+    val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format)
     val dateString = if (start.isDefined || end.isDefined) {
       "-d \"" + startString.getOrElse("") + "<" + endString.getOrElse("") + "\" "
      } else {
@@ -311,10 +312,11 @@ case class CVSRepository(val cvsroot: Option[String],
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
 
-  private case class RlogCommitParseState(val isInHeader: Boolean,
-		  							val commits: Seq[CVSCommit],
-		  							val headerBuffer: Vector[String],
-		  							val commitBuffer: Vector[String]) extends RlogParseState[RlogCommitParseState]{
+  private case class RlogCommitParseState(
+                                           isInHeader: Boolean,
+                                           commits: Seq[CVSCommit],
+                                           headerBuffer: Vector[String],
+                                           commitBuffer: Vector[String]) extends RlogParseState[RlogCommitParseState]{
     def this() = this(RlogParseState.isFirstLineHeader, Vector(), Vector(), Vector())
     def this(emptyCollection: Seq[CVSCommit]) = this(RlogParseState.isFirstLineHeader, emptyCollection, Vector(), Vector())
 
@@ -348,14 +350,14 @@ case class CVSRepository(val cvsroot: Option[String],
   private def commitFromRLog(header: IndexedSeq[String], commit: IndexedSeq[String]): CVSCommit = {
     val headerPairs = header.toList.map(_.split(": ")).toList.filter(_.length > 1).map((x) => x(0).trim -> x(1))
     val headerMap = headerPairs.toMap
-    val fileName = cleanRCSpath(headerMap.get("RCS file").getOrElse(missing("file name(RCS file)")))
+    val fileName = cleanRCSpath(headerMap.getOrElse("RCS file", missing("file name(RCS file)")))
 
-    val revisionStr = commit(0).trim.split(' ')(1)
+    val revisionStr = commit.head.trim.split(' ')(1)
     val revision = CVSFileVersion(revisionStr)
     val params = commit(1).trim.dropRight(1).split(';').map(_.split(": ")).map((x) => x(0).trim -> x(1).trim).toMap
-    val date = parseDate(params.get("date").getOrElse(missing("date")))
-    val author = params.get("author").getOrElse(missing("author"))
-    val commitId = params.get("commitid");
+    val date = parseDate(params.getOrElse("date",missing("date")))
+    val author = params.getOrElse("author",missing("author"))
+    val commitId = params.get("commitid")
     val isDead = params.get("state").exists(_ == "dead")
     //need a good way to determine where commit message starts
     val linesToDrop = if (commit(2).contains(": ")) { 3 } else { 2 }
@@ -376,8 +378,8 @@ case class CVSRepository(val cvsroot: Option[String],
 }
 
 object CVSRepository {
-  def apply() = new CVSRepository();
-  def apply(cvsroot: String, module: String) = new CVSRepository(cvsroot, module);
+  def apply() = new CVSRepository()
+  def apply(cvsroot: String, module: String) = new CVSRepository(cvsroot, module)
   private val DEFAULT_CVS_DATE_FORMAT= new SimpleDateFormat("yyyy-MM-dd kk:mm:ss Z",Locale.UK)
   private val ACCEPTED_DATE_FORMATS = {
 	val formatStrings = Seq("yyyy-MM-dd kk:mm:ss Z",

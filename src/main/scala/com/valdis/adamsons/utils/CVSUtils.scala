@@ -7,7 +7,7 @@ object CVSUtils {
     if (relative.startsWith(":pserver:")) {
       relative
     } else {
-      val nativepath = new File(relative).getAbsolutePath();
+      val nativepath = new File(relative).getAbsolutePath
       //if windows let's cygwin
       if (nativepath.contains('\\')) {
         "/cygdrive/" + nativepath(0).toLower + nativepath.drop(2).map((x) => {

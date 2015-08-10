@@ -37,8 +37,8 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       ref.flatMap((ref) => {
         val logs = git.log().add(ref).setMaxCount(1).call()
         val iterator = logs.iterator()
-        if (iterator.hasNext()) {
-          Some(revWalk.parseCommit(iterator.next()).getAuthorIdent().getWhen())
+        if (iterator.hasNext) {
+          Some(revWalk.parseCommit(iterator.next()).getAuthorIdent.getWhen)
         } else {
           None
         }
@@ -57,10 +57,10 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     }
     val lastImportPosition = sortedCommits.indexWhere {
       commit =>
-        previousCommit.map {
+        previousCommit.exists {
           prevCommit =>
             prevCommit.filename == commit.filename && prevCommit.revision == commit.revision
-        }.getOrElse(false)
+        }
     }
     log("last position: " + lastImportPosition)
     val notImportedCommits = if (lastImportPosition < 0) {
@@ -76,11 +76,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       val sortedCommits = commits.sorted
       log("Sorting done")
 	  log("Adding " + sortedCommits.length + " commits to branch " + branch)
-      appendSortedCommits(sortedCommits.filter(!_.isPointless), branch, cvsrepo, true)
+      appendSortedCommits(sortedCommits.filter(!_.isPointless), branch, cvsrepo, headRef =  true)
       
       // record any pointless commits gotten from trunk
       if (branch == trunkBranch) {
-        appendSortedCommits(sortedCommits.filter(_.isPointless), pointlessCommitsBranch, cvsrepo, false)
+        appendSortedCommits(sortedCommits.filter(_.isPointless), pointlessCommitsBranch, cvsrepo,headRef =  false)
       }
     }
 
@@ -92,10 +92,10 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     log("Filtered, adding " + relevantCommits.length + " useful commits to branch " + branch)
     relevantCommits.foreach {
       commit =>
-        log(commit.filename);
-        log(commit.author);
-        log(commit.revision);
-        log(commit.date);
+        log(commit.filename)
+        log(commit.author)
+        log(commit.revision)
+        log(commit.date)
         log("\n")
         log(commit.comment)
         log("\n")
@@ -108,10 +108,10 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
 
           val fileId = if (commit.isDead) { None } else {
             val file = cvsrepo.getFile(commit.filename, commit.revision)
-            log("tmp file:" + file.getAbsolutePath())
+            log("tmp file:" + file.getAbsolutePath)
             val fileId = inserter.insert(Constants.OBJ_BLOB, file.length, new FileInputStream(file))
             log("len:" + file.length)
-            log("fileID:" + fileId.name);
+            log("fileID:" + fileId.name)
             Some(fileId)
           }
 
@@ -121,7 +121,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
                 .getOrElse(createEmptyTree(inserter)))
 
           //commit
-          val author = new PersonIdent(commit.author, commit.author + "@nowhere.com", commit.date, TimeZone.getDefault())
+          val author = new PersonIdent(commit.author, commit.author + "@nowhere.com", commit.date, TimeZone.getDefault)
           val commitBuilder = new CommitBuilder
           commitBuilder.setTreeId(treeId)
           commitBuilder.setAuthor(author)
@@ -133,11 +133,11 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           }
 
           val commitId = inserter.insert(commitBuilder)
-          inserter.flush();
+          inserter.flush()
 
-          log("parentID:" + parentId.map(_.name));
-          log("treeID:" + treeId.name);
-          log("commitID:" + commitId.name);
+          log("parentID:" + parentId.map(_.name))
+          log("treeID:" + treeId.name)
+          log("commitID:" + commitId.name)
 
           updateRef(cvsRefPrefix + branch, commitId)
           //here can all tranformations take place
@@ -146,7 +146,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
           }
 
           val note = git.notesAdd().setMessage(commit.generateNote).setObjectId(revWalk.lookupCommit(commitId)).call()
-          log("noteId: " + note.getName());
+          log("noteId: " + note.getName)
         } finally {
           inserter.release()
         }
@@ -173,14 +173,14 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       withGoodCommit(objectId, commit)
     }
     def withGoodCommit(objectId: ObjectId, commit: CVSCommit): TagSeachState
-    override def toString = this.getClass().getSimpleName + "(" + objectId.map(_.name) + ")"
+    override def toString = this.getClass.getSimpleName + "(" + objectId.map(_.name) + ")"
     /**
      * for debugging
      */
     def dumpState: String = "\t" + tag
   }
     
-    private case class Found(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState{
+    private case class Found(tag: CVSTag, objectId2: ObjectId) extends TagSeachState{
       val isFound = true
       val isDone = true
       val objectId = Some(objectId2)
@@ -188,7 +188,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       def withTag(tag: CVSTag) = this
     }
 
-    private case class NotFound(val tag: CVSTag) extends TagSeachState {
+    private case class NotFound(tag: CVSTag) extends TagSeachState {
       val isFound = false
       val isDone = false
       val objectId = None
@@ -207,7 +207,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       }
     }
     
-    private case class OutOfSync(val tag: CVSTag, objectId2: ObjectId) extends TagSeachState {
+    private case class OutOfSync(tag: CVSTag, objectId2: ObjectId) extends TagSeachState {
       val isFound = false
       val isDone = true
       val objectId = Some(objectId2)
@@ -215,7 +215,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       def withTag(tag: CVSTag) = this
     }
 
-  private case class PartialFound(val tag: CVSTag, objectId2: ObjectId, val found: Set[String]) extends TagSeachState {
+  private case class PartialFound(tag: CVSTag, objectId2: ObjectId, found: Set[String]) extends TagSeachState {
     val objectId = Some(objectId2)
     val isFound = false
     val isDone = false
@@ -241,7 +241,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
     def withTag(tag: CVSTag) = if (found == tag.fileVersions.keys) Found(tag, objectId2) else PartialFound(tag, objectId2, found)
   }
   
-  private case class MultiTagSearchState(val searchers:Set[TagSeachState]){
+  private case class MultiTagSearchState(searchers:Set[TagSeachState]){
     def isDone = searchers.forall(_.isDone)
     def isAllFound = searchers.forall(_.isFound)
     def objectIds = searchers.flatMap{state => state.objectId.map(state.tag -> _)}
@@ -249,16 +249,20 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   }
   
   private object MultiTagSearchState{
-    def fromTags(tags:Set[CVSTag]) = new MultiTagSearchState(tags.map(NotFound(_)))
+    def fromTags(tags:Set[CVSTag]) = new MultiTagSearchState(tags.map(NotFound.apply))
   }
 
-  def getPointlessCVSCommits: Iterable[CVSCommit]= {
-      val objectId = Option(repo.resolve(cvsRefPrefix + pointlessCommitsBranch))
-      objectId.map((id) => {
+  def getPointlessCVSCommits: Iterable[CVSCommit] = {
+    val objectId = Option(repo.resolve(cvsRefPrefix + pointlessCommitsBranch))
+    objectId.map {
+      id =>
         val logs = git.log().add(id).call()
-        logs.map((commit) => (CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId))))
-      }).getOrElse(None)
-    }
+        logs.map {
+          commit =>
+            CVSCommit.fromGitCommit(commit, getNoteMessage(commit.getId))
+        }
+    }.getOrElse(None)
+  }
   
   /** 
    * Cleaning the tag with this method ignores all dead heads. 
@@ -284,7 +288,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   def lookupTags(tags: Set[CVSTag], branches: Iterable[String]): Map[CVSTag, ObjectId] = {
     //TODO find a way to stop earlier
     val seperateResults = branches.toIterator.flatMap(branch => lookupTagsImpl(tags, branch)).map(_.objectIds)
-    if (!seperateResults.isEmpty) {
+    if (seperateResults.nonEmpty) {
       seperateResults.reduce(_ ++ _).toMap
     } else {
       Map()
@@ -338,7 +342,7 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
   
   def addBranch(branch: String, id: ObjectId) = updateRef(cvsRefPrefix+branch, id)
 
-  def getCVSBranches = repo.getRefDatabase().getRefs(cvsRefPrefix)
+  def getCVSBranches = repo.getRefDatabase.getRefs(cvsRefPrefix)
   
   /**
    * @return true if a CVS branch with the given was imported into the repository.
@@ -360,23 +364,23 @@ class GitBridge(gitDir: String) extends GitUtilsImpl(gitDir) with SweetLogger {
       streamCVSDiffImpl(out)(commit1.get,commit2.get)
     } else {
       def reportMissing(id:ObjectId) = log("Could not find commit with id: "+id)
-      if (!commit1.isDefined) reportMissing(parent)
-      if (!commit2.isDefined) reportMissing(changed)
+      if (commit1.isEmpty) reportMissing(parent)
+      if (commit2.isEmpty) reportMissing(changed)
     }
   }
   private def streamCVSDiffImpl(out:OutputStream)(parent:RevCommit,changed:RevCommit): Unit = {
     val formatter = new CVSDiffFormatter(out)
     formatter.setRepository(repo)
     val treeWalk = new TreeWalk(repo)
-    treeWalk.addTree(parent.getTree())
-    treeWalk.addTree(changed.getTree())
-    val changes = DiffEntry.scan(treeWalk, true);
+    treeWalk.addTree(parent.getTree)
+    treeWalk.addTree(changed.getTree)
+    val changes = DiffEntry.scan(treeWalk, true)
     formatter.format(changes)
   }
 
   def addTag(place: ObjectId, tag: CVSTag) = {
     val revobj = revWalk.parseAny(place)
-    val previous = getRef(Constants.R_TAGS + tag.name).map(revWalk.parseTag(_).getObject())
+    val previous = getRef(Constants.R_TAGS + tag.name).map(revWalk.parseTag(_).getObject)
     val shouldRun = previous.map(_ != revobj).getOrElse(true)
     val force = previous.isDefined
     log("tagging previous: "+previous)

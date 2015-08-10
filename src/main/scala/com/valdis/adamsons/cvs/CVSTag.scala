@@ -3,7 +3,7 @@ package com.valdis.adamsons.cvs
 /**
  * Describes both tags and branches. In CVS branches are special tags.
  */
-case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion]) {
+case class CVSTag(name: String, fileVersions: Map[String, CVSFileVersion]) {
   def this(name: String) = this(name, Map())
   /**
    * @return a new tag object with the given file version changed.
@@ -34,7 +34,7 @@ case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion
    * @return if the file version resulted from the commit is included in this tag.
    */
   def includesCommit(commit: CVSCommit) = {
-    fileVersions.get(commit.filename).map(_ == commit.revision).getOrElse(false)
+    fileVersions.get(commit.filename).exists(_ == commit.revision)
   }
   def includesFile(path: String) = fileVersions.keys.exists(_ == path)
   
@@ -43,7 +43,7 @@ case class CVSTag(val name: String, val fileVersions: Map[String, CVSFileVersion
   def ignoreFile(file: String) = CVSTag(name, fileVersions - file)
   def ignoreFiles(files: Iterable[String]) = CVSTag(name, fileVersions -- files) 
   
-  def isBranch = fileVersions.headOption.map(_._2.isBranch).getOrElse(false)
+  def isBranch = fileVersions.headOption.exists(_._2.isBranch)
 }
 
 object CVSTag {

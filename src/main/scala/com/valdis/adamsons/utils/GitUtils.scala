@@ -18,9 +18,9 @@ import scala.collection.JavaConversions._
 class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   protected val logger = Logger
   lazy val repo = {
-    val builder = new RepositoryBuilder();
+    val builder = new RepositoryBuilder()
     builder.setGitDir(new File(gitDir)).
-      readEnvironment().findGitDir().build();
+      readEnvironment().findGitDir().build()
   }
 
   lazy val git = new Git(repo)
@@ -32,7 +32,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   /**
    * Releases allocated resources.
    */
-  def close = {
+  def close() = {
     revWalk.release()
     repo.close()
   } 
@@ -42,7 +42,7 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   def getNoteMessage(objectId: ObjectId): String = {
     val revObject = revWalk.lookupCommit(objectId)
     val note = git.notesShow().setObjectId(revObject).call()
-    val noteData = repo.open(note.getData()).getBytes()
+    val noteData = repo.open(note.getData).getBytes
     new String(noteData)
   }
 
@@ -56,9 +56,9 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     new File(gitDir + ref).exists()
   }
 
-  def getAllRefs = repo.getAllRefs().seq
+  def getAllRefs = repo.getAllRefs.seq
   
-  def getTags = repo.getTags().seq
+  def getTags = repo.getTags.seq
   
   def getRef(branch: String): Option[ObjectId] = {
     Option(repo.resolve(branch))
@@ -68,10 +68,10 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
   
   def updateRef(ref: String, id: ObjectId): Unit = {
     log("update ref:" + ref + "->" + id.name)
-    val updateCmd = repo.updateRef(ref);
-    updateCmd.setNewObjectId(id);
-    updateCmd.setForceUpdate(true);
-    updateCmd.update(revWalk);
+    val updateCmd = repo.updateRef(ref)
+    updateCmd.setNewObjectId(id)
+    updateCmd.setForceUpdate(true)
+    updateCmd.update(revWalk)
   }
 
   def getMergeBase(id1: ObjectId, id2: ObjectId): Option[RevCommit] = {
@@ -87,8 +87,8 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     val myRevWalk = new RevWalk(repo)
     try {
     	myRevWalk.setRevFilter(RevFilter.MERGE_BASE)
-    	myRevWalk.markStart(commit1);
-    	myRevWalk.markStart(commit2);
+    	myRevWalk.markStart(commit1)
+    	myRevWalk.markStart(commit2)
     	val base = Option(myRevWalk.next())
     	log("merge base for "+commit1.name+" "+commit2.name+" is "+base)
     	base
@@ -127,8 +127,8 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
     case folder :: tail =>
       val treeWalk = new TreeWalk(repo)
       val treeFormatter = new TreeFormatter
-      treeWalk.addTree(tree);
-      treeWalk.setRecursive(false);
+      treeWalk.addTree(tree)
+      treeWalk.setRecursive(false)
 
       val traversable = new SingleTreeWalkTraversable(treeWalk)
       //stores in memory
@@ -139,12 +139,12 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       def createdTree = fileId.map(id => createTree(tail, filename, id, inserter))
       //TODO can be optimized, simple algorithm
 
-      val newTree = mergedExistingTree orElse (createdTree)
+      val newTree = mergedExistingTree orElse createdTree
 
       val itemsToKeep = entries.filter(_.pathString != folder)
       val toBeAdded = newTree.map(itemsToKeep :+ TreeEntry(folder, FileMode.TREE, _)).getOrElse(itemsToKeep)
 
-      if (!toBeAdded.isEmpty) {
+      if (toBeAdded.nonEmpty) {
         toBeAdded.sortBy(_.pathString).foreach(entry => treeFormatter.append(entry.pathString, entry.fileMode, entry.objectId))
         Some(inserter.insert(treeFormatter))
       } else {
@@ -155,15 +155,15 @@ class GitUtilsImpl(val gitDir: String) extends SweetLogger{
       val treeWalk = new TreeWalk(repo)
       val treeFormatter = new TreeFormatter
       log("tree: " + tree)
-      treeWalk.addTree(tree);
-      treeWalk.setRecursive(false);
+      treeWalk.addTree(tree)
+      treeWalk.setRecursive(false)
 
       val traversable = new SingleTreeWalkTraversable(treeWalk)
       //stores in memory
       val entries = traversable.toSeq
       //TODO can be optimized, simple algorithm
       val toBeAdded = entries.filter(_.pathString != filename) ++ fileId.map(TreeEntry(filename, FileMode.REGULAR_FILE, _))
-      if (!toBeAdded.isEmpty) {
+      if (toBeAdded.nonEmpty) {
         toBeAdded.sortBy(_.pathString).foreach(entry => treeFormatter.append(entry.pathString, entry.fileMode, entry.objectId))
         Some(inserter.insert(treeFormatter))
       } else {

@@ -9,10 +9,10 @@ import scala.sys.process.{ProcessBuilder, ProcessLogger}
  * Old values are not saved in memory.
  * @param errorLogger function, that is run for every standard error (stderr) line.
  */
-case class ProcessAsTraversable(val processBuilder: ProcessBuilder, val errorLogger: String => Unit) extends Traversable[String]{
+case class ProcessAsTraversable(processBuilder: ProcessBuilder, errorLogger: String => Unit) extends Traversable[String]{
 	def foreach[U](f: String => U): Unit = {
 	  val processLogger = ProcessLogger(line => f(line), line => errorLogger(line))
 	  val process = processBuilder.run(processLogger)
-	  process.exitValue
+	  process.exitValue()
 	}
 }

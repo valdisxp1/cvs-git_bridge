@@ -1,9 +1,9 @@
 package com.valdis.adamsons.cvs
 
 import scala.collection.concurrent.TrieMap
-import scala.collection.mutable.WrappedArray
+import scala.collection.mutable
 
-case class CVSFileVersion(val seq: Seq[AnyVal]) {
+case class CVSFileVersion(seq: Seq[AnyVal]) {
   def this(array:Array[Short]) = this(wrapShortArray(array))
   def this(array:Array[Byte]) = this(wrapByteArray(array))
   def this(array:Array[Int]) = this(wrapIntArray(array))
@@ -29,7 +29,7 @@ object CVSFileVersion {
   // Guaranteed to have at least one version
   cache += V1_1 -> V1_1
   
-  private val cacheLim = Byte.MaxValue;
+  private val cacheLim = Byte.MaxValue
   def apply(s: String): CVSFileVersion = {
     val intArray = wrapIntArray(s.split('.').map(_.toInt))
     val max = intArray.max
@@ -44,7 +44,7 @@ object CVSFileVersion {
 
   private def findCachedValue(newInstance: CVSFileVersion) = cache.putIfAbsent(newInstance, newInstance).getOrElse(newInstance)
   
-  private def findSmallestWrappedArray(intArray: WrappedArray[Int], max: Int) = {
+  private def findSmallestWrappedArray(intArray: mutable.WrappedArray[Int], max: Int) = {
     if (max <= Byte.MaxValue) {
         intArray.map(_.toByte)
       } else if (max <= Short.MaxValue) {

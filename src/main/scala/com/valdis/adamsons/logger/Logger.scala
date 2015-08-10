@@ -14,8 +14,8 @@ class LoggerImpl(logPath: String, val shouldMakeDataDumps: Boolean) {
   
   def log(any: => Any) = any match {
     case s: String => logImpl(s)
-    case obj: AnyRef => logImpl(obj.toString())
-    case value: Any => logImpl(value.toString())
+    case obj: AnyRef => logImpl(obj.toString)
+    case value: Any => logImpl(value.toString)
   }
   
   /**
