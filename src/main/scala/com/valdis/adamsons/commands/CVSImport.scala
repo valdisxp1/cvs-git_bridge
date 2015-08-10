@@ -1,5 +1,7 @@
 package com.valdis.adamsons.commands
 
+import org.rogach.scallop.Scallop
+
 import scala.sys.process._
 import com.valdis.adamsons.cvs.CVSRepository
 import com.valdis.adamsons.cvs.CVSFileVersion
@@ -18,17 +20,17 @@ import java.text.SimpleDateFormat
 /**
  * Parser for CVS repository importing command.
  */
-object CVSImport extends CommandParser{
+object CVSImport extends NewCommandParser {
   /**
-   * @param onlyNew true if only add new branches and do not update allready imported ones.
+   * @param onlyNew true if only add new branches and do not update already imported ones.
    */
   case class CVSImportCommand(
-    val cvsRoot: Option[String] = None,
-    val module: Option[String] = None,
-    val serverDateFormat: Option[DateFormat] = None,
-    val resolveTags: Boolean = true,
-    val autoGraft: Boolean = true,
-    val onlyNew: Boolean = false) extends Command with SweetLogger {
+    cvsRoot: Option[String] = None,
+    module: Option[String] = None,
+    serverDateFormat: Option[DateFormat] = None,
+    resolveTags: Boolean = true,
+    autoGraft: Boolean = true,
+    onlyNew: Boolean = false) extends Command with SweetLogger {
     
     protected val logger = Logger
     
@@ -38,10 +40,10 @@ object CVSImport extends CommandParser{
     val cvsrepo = serverDateFormat.map(dateFormat => CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module,dateFormat))
     									  .getOrElse(CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module))
     
-    def apply = {
+    def apply() = {
       val shouldNotImportTrunk = onlyNew && bridge.isCVSBranch(bridge.trunkBranch)
       if (!shouldNotImportTrunk) {
-        importTrunk
+        importTrunk()
       }
       log("looking up all other branches and tags")
       //other branches follow
@@ -88,36 +90,39 @@ object CVSImport extends CommandParser{
           } else {
             branchesByDepth.get(depth - 1).toSet.flatten.map(_.name)
           }
-          branchesForDepth.foreach { branch =>
-            val lastUpdatedVal = bridge.lastUpdated(branch.name)
-            log("last updated:" + lastUpdatedVal)
-            val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
-            if (lastUpdatedVal.isEmpty) {
-              log("possibleParentBranches:" + possibleParentBranches)
-              val graftLocation = bridge.getGraftLocation(branch, possibleParentBranches)
-              //graft it
-              log("graft:" + graftLocation)
-              graftLocation.map(location => bridge.addBranch(branch.name, location))
-                //if no graft found at least add the missing commits from the branch parent
-                .getOrElse(createBranchPoint(branch))
-            }
-            bridge.appendCommits(commits, branch.name, cvsrepo)
+          branchesForDepth.foreach {
+            branch =>
+              val lastUpdatedVal = bridge.lastUpdated(branch.name)
+              log("last updated:" + lastUpdatedVal)
+              val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
+              if (lastUpdatedVal.isEmpty) {
+                log("possibleParentBranches:" + possibleParentBranches)
+                val graftLocation = bridge.getGraftLocation(branch, possibleParentBranches)
+                //graft it
+                log("graft:" + graftLocation)
+                graftLocation.map(
+                  location =>
+                    bridge.addBranch(branch.name, location))
+                  //if no graft found at least add the missing commits from the branch parent
+                  .getOrElse(createBranchPoint(branch))
+              }
+              bridge.appendCommits(commits, branch.name, cvsrepo)
           }
       }
     }
-    
-    private def importTrunk = {
+
+    private def importTrunk() = {
       //main branch at master
       //get last the last updated date
       val lastUpdatedVal = bridge.lastUpdated(bridge.trunkBranch)
       log("last updated:" + lastUpdatedVal)
-      val commits = cvsrepo.getCommitList(lastUpdatedVal,None)
+      val commits = cvsrepo.getCommitList(lastUpdatedVal, None)
       bridge.appendCommits(commits, bridge.trunkBranch, cvsrepo)
-      }
+    }
     
     private def createBranchPoint(branch: CVSTag) = {
       val branchPointName = branch.name + bridge.branchPointNameSuffix
-      bridge.appendCommits(cvsrepo.getCommitsForTag(branch.getBranchParent).toSeq, branchPointName, cvsrepo)
+      bridge.appendCommits(cvsrepo.getCommitsForTag(branch.getBranchParent), branchPointName, cvsrepo)
       val ref = bridge.getRef(bridge.cvsRefPrefix + branchPointName)
       ref.foreach(bridge.updateRef(bridge.cvsRefPrefix + branch.name, _))
     }
@@ -141,31 +146,35 @@ object CVSImport extends CommandParser{
       }
     }
   }
-  
-  object CVSImportCommand{
-      def apply()= new CVSImportCommand()
-      def apply(cvsroot: String, module: String) = new CVSImportCommand(cvsroot, module);
-  }
-  protected def parseCommand(args: List[String]) = args match {
-    case List("-d", root, mod) => Some(CVSImportCommand(root, mod))
-    case Nil => Some(CVSImportCommand())
-    case _ => None
+
+  object CVSImportCommand {
+    def apply() = new CVSImportCommand()
+
+    def apply(cvsroot: String, module: String) = new CVSImportCommand(cvsroot, module)
   }
 
-  override protected def applyFlags(command: Command) = {
-    command match {
-      case cmd: CVSImportCommand =>
-        val resolveTags = !hasFlag("skipTags") || hasFlag("resolveTags")
-        val autoGraft = !hasFlag("noGraft") || hasFlag("graft")
-        val onlyNew = !hasFlag("allBranches") && hasFlag("onlyNew")
-        val serverDateFormat = getValue("dateFormat").map(new SimpleDateFormat(_))
-        cmd.copy(resolveTags = resolveTags, autoGraft = autoGraft, onlyNew = onlyNew, serverDateFormat = serverDateFormat)
-      case _ => super.applyFlags(command)
-    }
+  def parse(scallop: Scallop) = {
+    //TODO validate cvsroot and date format
+    val opts = scallop
+      .opt[String]("cvsroot", short = 'd')
+      .opt[Boolean]("skipTags").opt[Boolean]("resolveTags")
+      .opt[Boolean]("noGraft").opt[Boolean]("graft")
+      .opt[Boolean]("allBranches").opt[Boolean]("onlyNew")
+      .opt[String]("dateFormat",short = 'f')
+      .trailArg[String]("module")
+      .verify
+
+    CVSImportCommand(
+      cvsRoot = opts.get[String]("cvsroot"),
+      module = opts.get[String]("module"),
+      serverDateFormat = opts.get[String]("dateFormat").map(new SimpleDateFormat(_)),
+      resolveTags = !opts[Boolean]("skipTags") || opts[Boolean]("resolveTags"),
+      autoGraft = !opts[Boolean]("noGraft") || opts[Boolean]("graft"),
+      onlyNew = !opts[Boolean]("allBranches") && opts[Boolean]("onlyNew")
+    )
   }
-  
+
   val aliases = List("cvsimport","import")
 
   val help = "imports all branches of the given CVS repository"
-  val usage = "cvsimport -d <repository path> <module name>\n Note: <repository path> supports relative path\n cvsimport <module name>"
 }

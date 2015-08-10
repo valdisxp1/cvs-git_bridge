@@ -38,9 +38,8 @@ object CVSDiff extends NewCommandParser {
 
   def parse(scallop: Scallop) = {
     val opts = scallop
-      .trailArg[String]("parent")
-      .trailArg("branch")
-      .banner(help)
+      .trailArg[String]("parent", required = true)
+      .trailArg("branch", required = true)
       .verify
 
     CVSDiffCommand(
