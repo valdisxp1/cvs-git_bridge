@@ -43,10 +43,10 @@ object CVSDiff extends NewCommandParser {
       .banner(help)
       .verify
 
-    val parent = opts[String]("parent")
-    val branch = opts[String]("branch")
-
-    CVSDiffCommand(parent, branch)
+    CVSDiffCommand(
+      parentBranch = opts[String]("parent"),
+      branch = opts[String]("branch")
+    )
 
   }
 
