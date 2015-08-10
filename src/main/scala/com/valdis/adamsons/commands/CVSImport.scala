@@ -1,6 +1,6 @@
 package com.valdis.adamsons.commands
 
-import org.rogach.scallop.Scallop
+import org.rogach.scallop.{ScallopConf, Scallop}
 
 import scala.sys.process._
 import com.valdis.adamsons.cvs.CVSRepository
@@ -153,25 +153,28 @@ object CVSImport extends NewCommandParser {
     def apply(cvsroot: String, module: String) = new CVSImportCommand(cvsroot, module)
   }
 
-  def config(scallop: Scallop) = {
-    //TODO validate cvsroot and date format
-    scallop
-      .opt[String]("cvsroot", short = 'd')
-      .opt[Boolean]("skipTags").opt[Boolean]("resolveTags")
-      .opt[Boolean]("noGraft").opt[Boolean]("graft")
-      .opt[Boolean]("allBranches").opt[Boolean]("onlyNew")
-      .opt[String]("dateFormat",short = 'f')
-      .trailArg[String]("module")
-  }
+  def parse(args: Seq[String]) = {
+    object Conf extends ScallopConf(args) {
+      banner(help)
+      val cvsroot = opt[String]("cvsroot", short = 'd')
+      val skipTags = opt[Boolean]("skipTags")
+      val resolveTags = opt[Boolean]("resolveTags")
+      val noGraft = opt[Boolean]("noGraft")
+      val graft = opt[Boolean]("graft")
+      val allBranches = opt[Boolean]("allBranches")
+      val onlyNew = opt[Boolean]("onlyNew")
+      val dateFormatString = opt[String]("dateFormat",short = 'f')
+      val module = trailArg[String]("module")
+    }
 
-  def parse(opts: Scallop) = {
+    import Conf._
     CVSImportCommand(
-      cvsRoot = opts.get[String]("cvsroot"),
-      module = opts.get[String]("module"),
-      serverDateFormat = opts.get[String]("dateFormat").map(new SimpleDateFormat(_)),
-      resolveTags = !opts[Boolean]("skipTags") || opts[Boolean]("resolveTags"),
-      autoGraft = !opts[Boolean]("noGraft") || opts[Boolean]("graft"),
-      onlyNew = !opts[Boolean]("allBranches") && opts[Boolean]("onlyNew")
+      cvsRoot = cvsroot.get,
+      module = module.get,
+      serverDateFormat = dateFormatString.get.map(new SimpleDateFormat(_)),
+      resolveTags = !skipTags() || resolveTags(),
+      autoGraft = !noGraft() || graft(),
+      onlyNew = !allBranches() && onlyNew()
     )
   }
 

@@ -6,6 +6,7 @@ import com.valdis.adamsons.bridge.Bridge
 import java.io.File
 import java.io.FileOutputStream
 import com.valdis.adamsons.bridge.GitBridge
+import org.rogach.scallop
 import org.rogach.scallop.{ScallopConf, Scallop}
 
 /**
@@ -36,19 +37,18 @@ object CVSDiff extends NewCommandParser {
     }
   }
 
+  def parse(args: Seq[String]) = {
+    object Conf extends ScallopConf(args) {
+      banner(help)
+      val parent = trailArg[String]("parent", required = true)
+      val branch = trailArg[String]("branch", required = true)
+    }
 
-  def config(scallop: Scallop) = {
-    scallop
-      .trailArg[String]("parent", required = true)
-      .trailArg("branch", required = true)
-  }
-
-  def parse(opts: Scallop) = {
+    import Conf._
     CVSDiffCommand(
-      parentBranch = opts[String]("parent"),
-      branch = opts[String]("branch")
+      parentBranch = parent(),
+      branch = branch()
     )
-
   }
 
   val aliases = List("cvsdiff")

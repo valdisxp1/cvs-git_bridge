@@ -1,6 +1,6 @@
 package com.valdis.adamsons.commands
 
-import org.rogach.scallop.Scallop
+import org.rogach.scallop.{ScallopConf, Scallop}
 
 import scala.collection.immutable.List
 import scala.sys.process._
@@ -33,9 +33,10 @@ object Init extends NewCommandParser {
   }
   val help = "creates directory structure and initialzes git repository"
 
-  def config(scallop: Scallop) = scallop
-
-  def parse(opts: Scallop) = {
+  def parse(args: Seq[String]) = {
+    object Conf extends ScallopConf(args) {
+      banner(help)
+    }
     InitCommand
   }
 
