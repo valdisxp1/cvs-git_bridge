@@ -15,18 +15,41 @@ object App extends CommandParser {
   val usage = "use a subcommand"
   val help = "use a subcommand"
 
-  def parse(args: Seq[String]) = {
+  def parse(args: Seq[String]): Command = {
     object Conf extends ScallopConf(args) {
-      banner(help)
-      val init = Seq(new Subcommand("init") with InitParse, new Subcommand("initialize") with InitParse)
-      val cvsimport = Seq(new Subcommand("import") with CVSImportParse, new Subcommand("cvsimport") with CVSImportParse)
-      val diff = new Subcommand("cvsdiff") with CVSDiffParse
+      //      banner(help)
+      val init1 = new Subcommand("init") with InitParse {
+        //XXX workaround
+        val dontcare2 = opt[Boolean]("dontcare", hidden = true)
+      }
+      val initialize = new Subcommand("initialize") with InitParse {
+        //XXX workaround
+        val dontcare2 = opt[Boolean]("dontcare", hidden = true)
+      }
+      val `import` = new Subcommand("import") with CVSImportParse{
+        //XXX workaround
+        val dontcare2 = opt[Boolean]("dontcare", hidden = true)
+      }
+      val cvsimport = new Subcommand("cvsimport") with CVSImportParse{
+        //XXX workaround
+        val dontcare2 = opt[Boolean]("dontcare", hidden = true)
+      }
+      val diff = new Subcommand("cvsdiff") with CVSDiffParse{
+        //XXX workaround
+        val dontcare2 = opt[Boolean]("dontcare", hidden = true)
+      }
     }
 
-    Conf.subcommand match {
-      case _: Some[ScallopConf with InitParse] => InitCommand
-      case parsed: Some[ScallopConf with CVSImportParse] => CVSImportCommand(parsed.get)
-      case parsed: Some[ScallopConf with CVSDiffParse] => CVSDiffCommand(parsed.get)
+    Conf.subcommand.getOrElse {
+      Conf.printHelp()
+      throw new IllegalArgumentException
+    } match {
+      case _: ScallopConf with InitParse => InitCommand
+      case parsed: ScallopConf with CVSImportParse => CVSImportCommand(parsed)
+      case parsed: ScallopConf with CVSDiffParse => CVSDiffCommand(parsed)
+      case _ =>
+        Conf.printHelp()
+        throw new IllegalArgumentException
     }
   }
 }
