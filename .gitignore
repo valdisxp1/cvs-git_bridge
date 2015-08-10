@@ -4,6 +4,7 @@
 .project
 /temp
 target
+/.idea
 
 /git_clone
 
