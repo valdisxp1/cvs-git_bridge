@@ -10,4 +10,6 @@ resolvers += "jgit-repository" at "http://download.eclipse.org/jgit/maven"
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.9" % "test"
 
+libraryDependencies += "org.rogach" %% "scallop" % "0.9.5"
+
 EclipseKeys.withSource := true
