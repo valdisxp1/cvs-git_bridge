@@ -33,9 +33,9 @@ object Init extends NewCommandParser {
   }
   val help = "creates directory structure and initialzes git repository"
 
-  def parse(scallop: Scallop) = {
-    scallop.verify
+  def config(scallop: Scallop) = scallop
 
+  def parse(opts: Scallop) = {
     InitCommand
   }
 

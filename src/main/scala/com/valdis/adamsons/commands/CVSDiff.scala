@@ -6,7 +6,7 @@ import com.valdis.adamsons.bridge.Bridge
 import java.io.File
 import java.io.FileOutputStream
 import com.valdis.adamsons.bridge.GitBridge
-import org.rogach.scallop.Scallop
+import org.rogach.scallop.{ScallopConf, Scallop}
 
 /**
  * Parser for patch creating command. 
@@ -36,12 +36,14 @@ object CVSDiff extends NewCommandParser {
     }
   }
 
-  def parse(scallop: Scallop) = {
-    val opts = scallop
+
+  def config(scallop: Scallop) = {
+    scallop
       .trailArg[String]("parent", required = true)
       .trailArg("branch", required = true)
-      .verify
+  }
 
+  def parse(opts: Scallop) = {
     CVSDiffCommand(
       parentBranch = opts[String]("parent"),
       branch = opts[String]("branch")

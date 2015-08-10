@@ -31,15 +31,15 @@ object CVSImport extends NewCommandParser {
     resolveTags: Boolean = true,
     autoGraft: Boolean = true,
     onlyNew: Boolean = false) extends Command with SweetLogger {
-    
+
     protected val logger = Logger
-    
+
     def this(cvsroot: String, module: String) = this(Some(cvsroot), Some(module))
-    
+
     val bridge: GitBridge = Bridge
     val cvsrepo = serverDateFormat.map(dateFormat => CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module,dateFormat))
     									  .getOrElse(CVSRepository(cvsRoot.map(CVSUtils.absolutepath),module))
-    
+
     def apply() = {
       val shouldNotImportTrunk = onlyNew && bridge.isCVSBranch(bridge.trunkBranch)
       if (!shouldNotImportTrunk) {
@@ -47,12 +47,12 @@ object CVSImport extends NewCommandParser {
       }
       log("looking up all other branches and tags")
       //other branches follow
-      
+
       //allows the large allBranches collection to be garbageCollected
       val (allBranchNames,branchesToImport) = {
         val allBranches = cvsrepo.resolveAllBranches
         val importable = if (onlyNew) allBranches.filter(branch => !bridge.isCVSBranch(branch.name)) else allBranches
-        
+
         (allBranches.map(_.name),importable)
       }
       log("processing " + branchesToImport.size + " branches")
@@ -119,7 +119,7 @@ object CVSImport extends NewCommandParser {
       val commits = cvsrepo.getCommitList(lastUpdatedVal, None)
       bridge.appendCommits(commits, bridge.trunkBranch, cvsrepo)
     }
-    
+
     private def createBranchPoint(branch: CVSTag) = {
       val branchPointName = branch.name + bridge.branchPointNameSuffix
       bridge.appendCommits(cvsrepo.getCommitsForTag(branch.getBranchParent), branchPointName, cvsrepo)
@@ -153,17 +153,18 @@ object CVSImport extends NewCommandParser {
     def apply(cvsroot: String, module: String) = new CVSImportCommand(cvsroot, module)
   }
 
-  def parse(scallop: Scallop) = {
+  def config(scallop: Scallop) = {
     //TODO validate cvsroot and date format
-    val opts = scallop
+    scallop
       .opt[String]("cvsroot", short = 'd')
       .opt[Boolean]("skipTags").opt[Boolean]("resolveTags")
       .opt[Boolean]("noGraft").opt[Boolean]("graft")
       .opt[Boolean]("allBranches").opt[Boolean]("onlyNew")
       .opt[String]("dateFormat",short = 'f')
       .trailArg[String]("module")
-      .verify
+  }
 
+  def parse(opts: Scallop) = {
     CVSImportCommand(
       cvsRoot = opts.get[String]("cvsroot"),
       module = opts.get[String]("module"),
