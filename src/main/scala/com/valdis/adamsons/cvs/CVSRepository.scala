@@ -46,8 +46,6 @@ case class CVSRepository(
     absolutePath.drop(pathOnServer.getOrElse("").length + 1 + module.getOrElse("").length + 1).trim.dropRight(2).replace("Attic/", "")
   }
 
-  private def argument(str: String) = "\"" + str + "\""
-
   private def fileContentsProcess(name: String, version: CVSFileVersion) = {
     val fullFileName = module.map(_ + "/").getOrElse("") + name
     val args = cvsRepoCommandPrefix ++ Seq("co", "-p", "-r", version.toString, fullFileName)
@@ -285,7 +283,7 @@ case class CVSRepository(
   def getCommitsForTag(tag: CVSTag) = {
     val commandStrings = tag.fileVersions.map {
       case (path, version) =>
-        val fullFileName = argument(module.map(_ + "/").getOrElse("") + path)
+        val fullFileName = module.map(_ + "/").getOrElse("") + path
         cvsRepoCommandPrefix ++ Seq ("rlog", "-r" + version.toString, fullFileName)
     }
     log("running command batch")
@@ -296,7 +294,7 @@ case class CVSRepository(
   }
   
   def getCommit(filename: String, version: CVSFileVersion): Option[CVSCommit] = {
-    val fullFileName = argument(module.map(_ + "/").getOrElse("") + filename)
+    val fullFileName = module.map(_ + "/").getOrElse("") + filename
     val command = cvsRepoCommandPrefix ++ Seq ("rlog", "-r" + version.toString, fullFileName)
     log("running command:\n" + command)
     parseRlogLines(Process(command)).headOption
