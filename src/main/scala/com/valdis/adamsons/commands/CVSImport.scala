@@ -93,7 +93,7 @@ object CVSImport extends CommandParser {
                 log("graft:" + graftLocation)
                 graftLocation.map{
                   location =>
-                    bridge.addBranch(branch.name, _)
+                    bridge.addBranch(branch.name, location)
                 }
                   //if no graft found at least add the missing commits from the branch parent
                   .getOrElse(createBranchPoint(branch))
