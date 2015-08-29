@@ -63,7 +63,7 @@ object CVSImport extends CommandParser {
         branch =>
           val lastUpdatedVal = bridge.lastUpdated(branch.name)
           log("last updated:" + lastUpdatedVal)
-          val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
+          val commits = cvsrepo.getCommitList(Some(branch.name), lastUpdatedVal, None)
           // only create branch points when branch is not created
           if (!bridge.isCVSBranch(branch.name)) {
             createBranchPoint(branch)
@@ -85,7 +85,7 @@ object CVSImport extends CommandParser {
             branch =>
               val lastUpdatedVal = bridge.lastUpdated(branch.name)
               log("last updated:" + lastUpdatedVal)
-              val commits = cvsrepo.getCommitList(branch.name, lastUpdatedVal, None)
+              val commits = cvsrepo.getCommitList(Some(branch.name), lastUpdatedVal, None)
               if (lastUpdatedVal.isEmpty) {
                 log("possibleParentBranches:" + possibleParentBranches)
                 val graftLocation = bridge.getGraftLocation(branch, possibleParentBranches)
@@ -108,7 +108,7 @@ object CVSImport extends CommandParser {
       //get last the last updated date
       val lastUpdatedVal = bridge.lastUpdated(bridge.trunkBranch)
       log("last updated:" + lastUpdatedVal)
-      val commits = cvsrepo.getCommitList(lastUpdatedVal, None)
+      val commits = cvsrepo.getCommitList(None,lastUpdatedVal, None)
       bridge.appendCommits(commits, bridge.trunkBranch, cvsrepo)
     }
 

@@ -297,24 +297,23 @@ case class CVSRepository(
     log("running command:\n" + command)
     parseRlogLines(stringToProcess(command)).headOption
   }
-  
-  def getCommitList: Seq[CVSCommit] = getCommitList(None, None)
-  def getCommitList(start: Option[Date], end: Option[Date]): Seq[CVSCommit] = getCommitList(None, start, end)
-  def getCommitList(branch:String, start:Option[Date], end:Option[Date]):Seq[CVSCommit] = getCommitList(Some(branch),start, end)
+
+
   /**
    * A branch of None means trunk. A empty (None) date means the search is not limited in that direction.
    */
-  def getCommitList(branch: Option[String], start: Option[Date], end: Option[Date]): Seq[CVSCommit] = {
+  def getCommitList(branch: Option[String]=None, start: Option[Date]=None, end: Option[Date]=None): Seq[CVSCommit] = {
     val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format)
     val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format)
     val dateString = if (start.isDefined || end.isDefined) {
-      "-d \"" + startString.getOrElse("") + "<" + endString.getOrElse("") + "\" "
+      "-d \"" + startString.getOrElse("") + "<" + endString.getOrElse("") + "\""
      } else {
       ""
      }
-    val command = cvsString + "rlog " + branch.map(" -r" + _ + " ").getOrElse(" -b ") + dateString + module.getOrElse("")
+    val revisonSeq = branch.map("-r" :: _ :: Nil) getOrElse Seq("-b")
+    val command = cvsRepo ++ Seq("rlog") ++ revisonSeq ++ Seq(dateString) ++ module
     log("running command:\n" + command)
-    parseRlogLines(stringToProcess(command))
+    parseRlogLines(Process(command))
   }
   
   private def missing(field:String) = throw new IllegalStateException("cvs rlog malformed. Mandatory field '"+field+"' missing")
