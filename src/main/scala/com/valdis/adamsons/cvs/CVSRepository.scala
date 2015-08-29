@@ -49,9 +49,10 @@ case class CVSRepository(
 
   private def argument(str: String) = "\"" + str + "\""
 
-  private def fileContentsProcess(name: String, version: CVSFileVersion): Seq[String] = {
+  private def fileContentsProcess(name: String, version: CVSFileVersion) = {
     val fullFileName = module.map(_ + "/").getOrElse("") + name
-    cvsRepo ++ Seq("co", "-p", "-r", version.toString, fullFileName)
+    val args = cvsRepo ++ Seq("co", "-p", "-r", version.toString, fullFileName)
+    Process(args)
   }
 
   /**
@@ -59,18 +60,17 @@ case class CVSRepository(
    * Binary files get corrupted because Java tries to convert them to UTF8.
    */
   def getFileContents(name: String, version: CVSFileVersion) = {
-    val process: Seq[String] = fileContentsProcess(name, version)
+    val process = fileContentsProcess(name, version)
     log("running command:\n" + process)
     process.!!
   }
 
   def getFile(name: String, version: CVSFileVersion) = {
-    val processSeq: Seq[String] = fileContentsProcess(name, version)
-    log("running command:\n" + processSeq)
+    val process = fileContentsProcess(name, version)
+    log("running command:\n" + process)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
-    val process = processSeq.#>(file).run()
-    val exitvalue = process.exitValue()
+    process.#>(file).!
     file.deleteOnExit()
     file
   }
