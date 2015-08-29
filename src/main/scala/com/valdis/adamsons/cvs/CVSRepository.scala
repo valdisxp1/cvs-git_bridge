@@ -250,34 +250,35 @@ case class CVSRepository(
     
   }
 
-  def resolveTag(tagName: String): CVSTag = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
+  private def rlogHeader: ProcessBuilder = {
+    val command = cvsRepo ++ Seq("rlog", "-h") ++ module
     log("running command:\n" + command)
-    val process = stringToProcess(command)
+    Process(command)
+  }
+
+  def resolveTag(tagName: String): CVSTag = {
+    val process: ProcessBuilder = rlogHeader
     new ProcessAsTraversable(process, line => log(line))
     	.foldLeft(new RlogSingleTagParseState(tagName))(_ withLine _).tag
   }
-  
+
   def resolveTags(tagNames: Iterable[String]): Iterable[CVSTag] = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command)
+    val process: ProcessBuilder = rlogHeader
+
     new ProcessAsTraversable(process, line => log(line))
     	.foldLeft(new SmartRlogMultiTagParseState(tagNames))(_ withLine _).tags.flatten
   }
   
   def resolveAllTagsAndBranches: Set[CVSTag] = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command)
+    val process: ProcessBuilder = rlogHeader
+
     new ProcessAsTraversable(process, line => log(line))
     	.foldLeft(new RlogAllTagParseState())(_ withLine _).tags.values.toSet
   }
   
   def resolveAllBranches: Set[CVSTag] = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
-    log("running command:\n" + command)
-    val process = stringToProcess(command)
+    val process: ProcessBuilder = rlogHeader
+
     new ProcessAsTraversable(process, line => log(line))
     	.foldLeft(new RlogAllBranchParseState())(_ withLine _).tags.values.toSet
   }
