@@ -314,7 +314,7 @@ case class CVSRepository(
      } else {
       None
      }
-    val revisonSeq = branch.map("-r" :: _ :: Nil) getOrElse Seq("-b")
+    val revisonSeq = branch.map(id => ("-r" + id) :: Nil) getOrElse Seq("-b")
     val command = cvsRepoCommandPrefix ++ Seq("rlog") ++ revisonSeq ++ dateString ++ module
     log("running command:\n" + command)
     parseRlogLines(Process(command))
