@@ -28,7 +28,7 @@ class CVSRepositoryTest {
       val spaceManFile = repo.getFile("space man.bin", CVSFileVersion("1.1"))
       assertEquals("this is not empty", Source.fromFile(spaceManFile).getLines().mkString)
       
-      val simpleFile = repo.getFile("My documents/simple file.txt", CVSFileVersion("1.1"))
+      val simpleFile = repo.getFile("My Documents/simple file.txt", CVSFileVersion("1.1"))
       assertEquals("simple file", Source.fromFile(simpleFile).getLines().mkString)
     }
   }
