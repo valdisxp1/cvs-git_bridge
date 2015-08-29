@@ -48,21 +48,24 @@ case class CVSRepository(
   }
 
   private def argument(str: String) = "\"" + str + "\""
-  
+
+  private def fileContentsProcess(name: String, version: CVSFileVersion): Seq[String] = {
+    val fullFileName = module.map(_ + "/").getOrElse("") + name
+    cvsRepo ++ Seq("co", "-p", "-r", version.toString, fullFileName)
+  }
+
   /**
-   * Should only be used for text files.
+    * Should only be used for text files.
    * Binary files get corrupted because Java tries to convert them to UTF8.
    */
   def getFileContents(name: String, version: CVSFileVersion) = {
-    val fullFileName = module.map(_ + "/").getOrElse("") + name
-    val process = cvsRepo ++ Seq( "co", "-p" ,"-r", version.toString, fullFileName)
-    log("running command:\n" + process)    
+    val process: Seq[String] = fileContentsProcess(name, version)
+    log("running command:\n" + process)
     process.!!
   }
-  
+
   def getFile(name: String, version: CVSFileVersion) = {
-    val fullFileName = module.map(_ + "/").getOrElse("") + name
-    val processSeq = cvsRepo ++ Seq( "co", "-p" ,"-r", version.toString, fullFileName)
+    val processSeq: Seq[String] = fileContentsProcess(name, version)
     log("running command:\n" + processSeq)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
@@ -71,8 +74,9 @@ case class CVSRepository(
     file.deleteOnExit()
     file
   }
+
   def fileNameList = {
-    val responseLines = stringToProcess(cvsString+ "rlog -R " + module.map(argument).getOrElse("")).lines
+    val responseLines = (cvsRepo ++ Seq("rlog", "-R") ++ module.toSeq).lines_!
     responseLines.toList.map(cleanRCSpath)
   }
 
