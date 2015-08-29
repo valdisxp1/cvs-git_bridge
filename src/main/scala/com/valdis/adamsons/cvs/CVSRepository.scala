@@ -21,7 +21,7 @@ case class CVSRepository(
   /**
    * The path to repository root.
    */
-  def root = cvsroot.getOrElse("echo $CVSROOT"!!)
+  def root = cvsroot.getOrElse(System.getenv("CVSROOT"))
   
   /**
    * Creates a new repository object with the given module.
@@ -29,7 +29,8 @@ case class CVSRepository(
   def module(module: String) = CVSRepository(this.cvsroot, Some(module))
 
   private def cvsString = "cvs " + cvsroot.map("-d " + argument(_) + " ").getOrElse("")
-  
+  private def cvsRepo = "cvs" +:  cvsroot.toSeq.flatMap(root => Seq("-d" , root))
+
   /**
    * @return relative path against chosen module.
    */
@@ -53,17 +54,19 @@ case class CVSRepository(
    * Binary files get corrupted because Java tries to convert them to UTF8.
    */
   def getFileContents(name: String, version: CVSFileVersion) = {
-    val process = cvsString + "co -p -r " + version + " " + argument(module.map(_ + "/").getOrElse("") + name)
+    val fullFileName = module.map(_ + "/").getOrElse("") + name
+    val process = cvsRepo ++ Seq( "co", "-p" ,"-r", version.toString, fullFileName)
     log("running command:\n" + process)    
-    process!! 
+    process.!!
   }
   
   def getFile(name: String, version: CVSFileVersion) = {
-    val processStr = cvsString + "co -p -r " + version + " " + argument(module.map( _ + "/").getOrElse("") + name)
-    log("running command:\n" + processStr)
+    val fullFileName = module.map(_ + "/").getOrElse("") + name
+    val processSeq = cvsRepo ++ Seq( "co", "-p" ,"-r", version.toString, fullFileName)
+    log("running command:\n" + processSeq)
     val file = FileUtils.createTempFile("tmp", ".bin")
     //forces the to wait until process finishes.
-    val process = processStr.#>(file).run()
+    val process = processSeq.#>(file).run()
     val exitvalue = process.exitValue()
     file.deleteOnExit()
     file
