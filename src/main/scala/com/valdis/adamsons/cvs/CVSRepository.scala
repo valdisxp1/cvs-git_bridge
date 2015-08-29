@@ -76,14 +76,16 @@ case class CVSRepository(
   }
 
   def fileNameList = {
-    val responseLines = (cvsRepo ++ Seq("rlog", "-R") ++ module.toSeq).lines_!
+    val command = cvsRepo ++ Seq("rlog", "-R") ++ module
+    log("running command:\n" + command)
+    val responseLines = command.lines_!
     responseLines.toList.map(cleanRCSpath)
   }
 
   private def getTagProcess = {
-    val command = cvsString + "rlog -h " + module.map(argument).getOrElse("")
+    val command = cvsRepo ++ Seq("rlog", "-h") ++ module
     log("running command:\n" + command)
-    stringToProcess(command)
+    Process(command)
   }
   
 
@@ -306,12 +308,12 @@ case class CVSRepository(
     val startString = start.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format)
     val endString = end.map(CVSRepository.CVS_SHORT_DATE_FORMAT.format)
     val dateString = if (start.isDefined || end.isDefined) {
-      "-d \"" + startString.getOrElse("") + "<" + endString.getOrElse("") + "\""
+      Some("-d \"" + startString.getOrElse("") + "<" + endString.getOrElse("") + "\"")
      } else {
-      ""
+      None
      }
     val revisonSeq = branch.map("-r" :: _ :: Nil) getOrElse Seq("-b")
-    val command = cvsRepo ++ Seq("rlog") ++ revisonSeq ++ Seq(dateString) ++ module
+    val command = cvsRepo ++ Seq("rlog") ++ revisonSeq ++ dateString ++ module
     log("running command:\n" + command)
     parseRlogLines(Process(command))
   }
