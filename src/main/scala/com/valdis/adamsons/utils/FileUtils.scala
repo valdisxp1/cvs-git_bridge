@@ -14,7 +14,9 @@ object FileUtils extends SweetLogger {
       if (file.isDirectory) {
         file.listFiles().foreach(deleteRec)
       }
-      file.delete
+      while(file.exists()) {
+        file.delete
+      }
     }
     deleteRec(file)
   }
@@ -48,11 +50,11 @@ object FileUtils extends SweetLogger {
    * This file will NOT be deleted automatically.
    */
   def createTempFile(prefix: String, suffix: String): File = {
+    if (!tempDirectory.exists()) {
+      tempDirectory.mkdirs()
+    }
     val file = new File(tempPath, prefix + System.currentTimeMillis() + "_" + random.nextInt(10000) + suffix)
     if (file.exists()) {
-      if (!tempDirectory.exists()) {
-    	  tempDirectory.mkdirs()
-      }
       createTempFile(prefix, suffix)
     } else {
       log("creating a temporary file " + file.getAbsolutePath)
