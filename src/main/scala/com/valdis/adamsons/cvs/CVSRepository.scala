@@ -28,8 +28,7 @@ case class CVSRepository(
    */
   def module(module: String) = CVSRepository(this.cvsroot, Some(module))
 
-  private def cvsString = "cvs " + cvsroot.map("-d " + argument(_) + " ").getOrElse("")
-  private def cvsRepo = "cvs" +:  cvsroot.toSeq.flatMap(root => Seq("-d" , root))
+  private def cvsRepoCommandPrefix = "cvs" +:  cvsroot.toSeq.flatMap(root => Seq("-d" , root))
 
   /**
    * @return relative path against chosen module.
@@ -51,7 +50,7 @@ case class CVSRepository(
 
   private def fileContentsProcess(name: String, version: CVSFileVersion) = {
     val fullFileName = module.map(_ + "/").getOrElse("") + name
-    val args = cvsRepo ++ Seq("co", "-p", "-r", version.toString, fullFileName)
+    val args = cvsRepoCommandPrefix ++ Seq("co", "-p", "-r", version.toString, fullFileName)
     Process(args)
   }
 
@@ -76,14 +75,14 @@ case class CVSRepository(
   }
 
   def fileNameList = {
-    val command = cvsRepo ++ Seq("rlog", "-R") ++ module
+    val command = cvsRepoCommandPrefix ++ Seq("rlog", "-R") ++ module
     log("running command:\n" + command)
     val responseLines = command.lines_!
     responseLines.toList.map(cleanRCSpath)
   }
 
   private def getTagProcess = {
-    val command = cvsRepo ++ Seq("rlog", "-h") ++ module
+    val command = cvsRepoCommandPrefix ++ Seq("rlog", "-h") ++ module
     log("running command:\n" + command)
     Process(command)
   }
@@ -251,7 +250,7 @@ case class CVSRepository(
   }
 
   private def rlogHeader: ProcessBuilder = {
-    val command = cvsRepo ++ Seq("rlog", "-h") ++ module
+    val command = cvsRepoCommandPrefix ++ Seq("rlog", "-h") ++ module
     log("running command:\n" + command)
     Process(command)
   }
@@ -286,19 +285,21 @@ case class CVSRepository(
   def getCommitsForTag(tag: CVSTag) = {
     val commandStrings = tag.fileVersions.map {
       case (path, version) =>
-        cvsString + "rlog " + " -r" + version.toString + " " + argument(module.map(_ + "/").getOrElse("") + path)
+        val fullFileName = argument(module.map(_ + "/").getOrElse("") + path)
+        cvsRepoCommandPrefix ++ Seq ("rlog", "-r", version.toString, fullFileName)
     }
     log("running command batch")
     commandStrings.foreach(log(_))
     log("end of batch")
-    val combinedProcess = commandStrings.map(stringToProcess).reduce(_ ### _)
+    val combinedProcess = commandStrings.map(Process.apply).reduce(_ ### _)
     parseRlogLines(combinedProcess)
   }
   
   def getCommit(filename: String, version: CVSFileVersion): Option[CVSCommit] = {
-    val command = cvsString + "rlog " + " -r" + version.toString +" "+ argument(module.map( _ + "/").getOrElse("") + filename)
+    val fullFileName = argument(module.map(_ + "/").getOrElse("") + filename)
+    val command = cvsRepoCommandPrefix ++ Seq ("rlog", "-r", version.toString, fullFileName)
     log("running command:\n" + command)
-    parseRlogLines(stringToProcess(command)).headOption
+    parseRlogLines(Process(command)).headOption
   }
 
 
@@ -314,7 +315,7 @@ case class CVSRepository(
       None
      }
     val revisonSeq = branch.map("-r" :: _ :: Nil) getOrElse Seq("-b")
-    val command = cvsRepo ++ Seq("rlog") ++ revisonSeq ++ dateString ++ module
+    val command = cvsRepoCommandPrefix ++ Seq("rlog") ++ revisonSeq ++ dateString ++ module
     log("running command:\n" + command)
     parseRlogLines(Process(command))
   }
