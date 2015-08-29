@@ -286,7 +286,7 @@ case class CVSRepository(
     val commandStrings = tag.fileVersions.map {
       case (path, version) =>
         val fullFileName = argument(module.map(_ + "/").getOrElse("") + path)
-        cvsRepoCommandPrefix ++ Seq ("rlog", "-r", version.toString, fullFileName)
+        cvsRepoCommandPrefix ++ Seq ("rlog", "-r" + version.toString, fullFileName)
     }
     log("running command batch")
     commandStrings.foreach(log(_))
@@ -297,7 +297,7 @@ case class CVSRepository(
   
   def getCommit(filename: String, version: CVSFileVersion): Option[CVSCommit] = {
     val fullFileName = argument(module.map(_ + "/").getOrElse("") + filename)
-    val command = cvsRepoCommandPrefix ++ Seq ("rlog", "-r", version.toString, fullFileName)
+    val command = cvsRepoCommandPrefix ++ Seq ("rlog", "-r" + version.toString, fullFileName)
     log("running command:\n" + command)
     parseRlogLines(Process(command)).headOption
   }
